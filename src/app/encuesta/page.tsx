@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Header from "@/components/encuesta/Header";
 
-// 🔥 CARGA DIFERIDA DEL FLUJO PESADO
+
 const EncuestaFlow = dynamic(
   () => import("@/components/encuesta/EncuestaFlow"),
   {

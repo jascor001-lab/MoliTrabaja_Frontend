@@ -40,17 +40,60 @@ export function useEncuesta() {
     validateOnBlur: false,
     validateOnChange: false,
 
+
     onSubmit: async (values) => {
       try {
-        // 👉 AQUÍ VA TU API
-        console.log("ENVIANDO ENCUESTA", values);
+        const payload = {
+          servicio_descripcion: values.servicio,
+          ventanilla: Number(values.ventanilla),
+          terminalista: values.terminalista,
+          fecha: new Date(values.fecha).toISOString(),
+
+          amabilidad: values.amabilidad,
+          claridad: values.claridad,
+          conocimiento: values.conocimiento,
+
+          tiempoespera: Number(values.tiempoEspera),
+          tiempototal: Number(values.tiempoTotal),
+
+          comodidad: values.comodidad,
+          facilidad: values.facilidad,
+          percepcion: values.percepcion,
+
+          // junta todas las sugerencias en una sola
+          sugerencia: [
+            values.sugerencia1,
+            values.sugerencia2,
+            values.sugerencia3,
+            values.sugerencia4,
+            values.sugerencia5,
+          ]
+            .filter(Boolean)
+            .join(" | "),
+        };
+
+        console.log("PAYLOAD FINAL 👉", payload);
+
+        const res = await fetch("http://localhost:3001/EncPlat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          throw new Error("Error en API EncPlat");
+        }
 
         clearPersistedForm();
         router.push("/gracias");
       } catch (e) {
         console.error("Error al enviar encuesta", e);
+        alert("No se pudo enviar la encuesta");
       }
     },
+
   });
 
   // Guardado parcial automático
