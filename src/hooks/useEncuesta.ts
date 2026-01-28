@@ -74,7 +74,7 @@ export function useEncuesta() {
 
         console.log("PAYLOAD FINAL 👉", payload);
 
-        const res = await fetch("http://localhost:3001/EncPlat", {
+        const res = await fetch("http://192.168.3.16:3001/EncPlat", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
