@@ -72,8 +72,9 @@ export function useEncuesta() {
             .join(" | "),
         };
 
-        console.log("PAYLOAD FINAL 👉", payload);
 
+        /*
+       
         const res = await fetch("http://192.168.3.16:3001/EncPlat", {
           method: "POST",
           headers: {
@@ -81,6 +82,19 @@ export function useEncuesta() {
           },
           body: JSON.stringify(payload),
         });
+        */
+
+
+         const res = await fetch("https://moliencuesta.munimolina.gob.pe/api/EncPlat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+
+        
 
         if (!res.ok) {
           throw new Error("Error en API EncPlat");

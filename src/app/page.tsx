@@ -1,86 +1,101 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import HeroImg from "@/sources/images/LogoInicio.png";
+
+import ImagenAsistente from "../sources/images/asistente.png";
+import LogoImagen from "../sources/images/LogoMolina.png";
+import Fondo from "../sources/images/FondoInicio.png";
 
 export default function HomePage() {
   const router = useRouter();
 
-  // 🔥 Prefetch real para eliminar delay
-  useEffect(() => {
-    router.prefetch("/encuesta");
-  }, [router]);
-
   return (
-    <div className="min-h-screen bg-[#1F4D2E] flex flex-col items-center">
-      {/* ESPACIO SUPERIOR VERDE */}
-      <div className="h-32 w-full" />
+    <div className="relative min-h-screen bg-[#1E7F3B] overflow-hidden">
 
-      {/* IMAGEN CIRCULAR */}
-      <div className="relative z-10 -mt-20 mb-6">
-        <div className="relative w-36 h-36 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white">
-          <Image
-            src={HeroImg}
-            alt="Encuesta de satisfacción"
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
-      </div>
+      {/* IMAGEN DECORATIVA CON TRANSPARENCIA */}
+      <Image
+        src={Fondo}
+        alt="Patrón institucional"
+        fill
+        priority
+        className="object-cover opacity-90"
+      />
 
-      {/* CONTENEDOR BLANCO CON ARCO */}
+      {/* CONTENIDO */}
       <div
         className="
-          w-full flex-1 bg-white
-          rounded-t-[100%]
-          pt-24 px-6
-          text-center
+          relative z-10
+          min-h-screen
+          flex flex-col md:flex-row
+          items-center
+          justify-start md:justify-center
+          gap-10
+          px-6 md:px-16
+          py-16
         "
       >
-        {/* TITULO */}
-        <h1 className="text-xl font-bold text-gray-700 leading-tight">
-          Encuesta de satisfacción
-          <br />
-          de Plataforma
-        </h1>
+        {/* BLOQUE IZQUIERDO */}
+        <div className="w-full max-w-lg text-white text-center md:text-left">
 
-        {/* TEXTO */}
-        <p className="mt-4 text-sm leading-relaxed text-gray-600 max-w-xs mx-auto">
-          ¡Hola! Queremos conocer tu opinión para mejorar continuamente la
-          atención que recibes. Tus respuestas son anónimas y solo nos ayudarán
-          a mejorar.
-        </p>
+          {/* LOGO */}
+          <div className="mb-10 flex justify-center md:justify-start">
+            <Image
+              src={LogoImagen}
+              alt="Municipalidad de La Molina"
+              width={240}
+              priority
+            />
+          </div>
 
-        {/* BOTÓN INICIAR (OPTIMIZADO) */}
-        <div className="mt-10 flex justify-center">
-          <Link
-            href="/encuesta"
-            prefetch
-            className="
-              w-32 h-32 rounded-full
-              bg-[#234F2E]
-              text-white font-bold text-lg
-              shadow-[0_0_20px_rgba(35,79,46,0.45)]
-              active:scale-95 transition
-              flex items-center justify-center
-            "
-          >
-            INICIAR
-          </Link>
+          {/* TÍTULO */}
+          <h1 className="text-3xl md:text-5xl font-extrabold leading-tight">
+            Encuesta de satisfacción <br />
+            de Plataforma
+          </h1>
+
+          {/* TEXTO */}
+          <p className="mt-6 text-base md:text-lg text-white/90 leading-relaxed max-w-md ">
+            <strong>¡Hola!</strong><br />
+            Queremos conocer tu opinión para mejorar continuamente la atención
+            que recibes. Tus respuestas son anónimas y solo nos ayudarán a mejorar.
+          </p>
+
+          {/* BOTÓN REDONDO */}
+          <div className="mt-10 flex justify-center md:justify-start">
+            <button
+              onClick={() => router.push("/encuesta")}
+              className="
+      w-28 h-28
+      rounded-full
+      bg-[#34C759]
+      hover:bg-green-600
+      active:scale-95
+      text-white
+      font-bold
+      text-sm
+      flex items-center justify-center
+      transition-all
+      shadow-[0_10px_30px_rgba(0,0,0,0.35)]
+      hover:shadow-[0_15px_40px_rgba(0,0,0,0.45)]
+    "
+            >
+              INICIAR
+            </button>
+          </div>
+
+
         </div>
 
-        {/* FOOTER */}
-        <div className="mt-10 flex justify-between text-xs text-gray-400">
-          <button className="hover:underline">
-            Políticas de privacidad
-          </button>
-          <button className="hover:underline">
-            Políticas de cookies
-          </button>
+        {/* BLOQUE DERECHO */}
+        <div className="w-full flex justify-center md:justify-end -mt-10 md:mt-0">
+          <Image
+            src={ImagenAsistente}
+            alt="Asistente digital"
+            width={420}
+            priority
+            className="drop-shadow-2xl"
+          />
         </div>
       </div>
     </div>
