@@ -1,9 +1,19 @@
 import DashboardClient from "@/components/dashboard/DashboardClient";
 
-async function getDashboardData() {
-  const base = "https://moliencuesta.munimolina.gob.pe/api/Dashboard";
+async function safeFetch(url: string) {
+  try {
+    const res = await fetch(url, { cache: "no-store" });
 
- 
+    if (!res.ok) return null;
+
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+async function getDashboardData() {
+  const base = "http://localhost:3005/Dashboard";
 
   const [
     percepcion,
@@ -13,21 +23,21 @@ async function getDashboardData() {
     atenciones,
     promedios
   ] = await Promise.all([
-    fetch(`${base}/percepcion/ult30dias`, { cache: "no-store" }).then(r => r.json()),
-    fetch(`${base}/tiempoespera/ult30dias`, { cache: "no-store" }).then(r => r.json()),
-    fetch(`${base}/servicios/ult30dias`, { cache: "no-store" }).then(r => r.json()),
-    fetch(`${base}/empleados/evaluacion?page=1`, { cache: "no-store" }).then(r => r.json()),
-    fetch(`${base}/atenciones/ult5diashab`, { cache: "no-store" }).then(r => r.json()),
-    fetch(`${base}/promediosmensuales?year=2026&month=2`, { cache: "no-store" }).then(r => r.json()),
+    safeFetch(`${base}/percepcion/ult30dias`),
+    safeFetch(`${base}/tiempoespera/ult30dias`),
+    safeFetch(`${base}/servicios/ult30dias`),
+    safeFetch(`${base}/empleados/evaluacion?page=1`),
+    safeFetch(`${base}/atenciones/ult5diashab`),
+    safeFetch(`${base}/promediosmensuales?year=2026&month=2`)
   ]);
 
   return {
-    percepcion,
-    tiempo,
-    servicios,
-    empleados,
-    atenciones,
-    promedios
+    percepcion: percepcion ?? {},
+    tiempo: tiempo ?? {},
+    servicios: servicios ?? {},
+    empleados: empleados ?? {},
+    atenciones: atenciones ?? [],
+    promedios: promedios ?? {}
   };
 }
 
