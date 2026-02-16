@@ -66,20 +66,20 @@ export default function HomePage() {
             <button
               onClick={() => router.push("/encuesta")}
               className="
-      w-28 h-28
-      rounded-full
-      bg-[#34C759]
-      hover:bg-green-600
-      active:scale-95
-      text-white
-      font-bold
-      text-sm
-      flex items-center justify-center
-      transition-all
-      shadow-[0_10px_30px_rgba(0,0,0,0.35)]
-      hover:shadow-[0_15px_40px_rgba(0,0,0,0.45)]
-    "
-            >
+                    w-28 h-28
+                    rounded-full
+                  bg-[#34C759]
+                  hover:bg-green-600
+                    active:scale-95
+                  text-white
+                    font-bold
+                    text-sm
+                    flex items-center justify-center
+                    transition-all
+                    shadow-[0_10px_30px_rgba(0,0,0,0.35)]
+                    hover:shadow-[0_15px_40px_rgba(0,0,0,0.45)]
+                    "
+                    >
               INICIAR
             </button>
           </div>
