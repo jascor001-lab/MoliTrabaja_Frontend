@@ -13,7 +13,8 @@ async function safeFetch(url: string) {
 }
 
 async function getDashboardData() {
-  const base = "http://localhost:3005/Dashboard";
+  const base = "https://moliencuesta.munimolina.gob.pe/api/Dashboard";
+
 
   const [
     percepcion,
