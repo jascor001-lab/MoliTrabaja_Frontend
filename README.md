@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MoliTrabaja
 
-## Getting Started
+Plataforma de bolsa de trabajo con portal público para postulantes y panel para empresas (Next.js, Prisma, SQLite, Zustand).
 
-First, run the development server:
+## Inicio rápido
 
 ```bash
+npm install
+npm run db:seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Portal: [http://localhost:3000](http://localhost:3000)
+- Panel empresa: [http://localhost:3000/empresa](http://localhost:3000/empresa)
+- Seguimiento postulante: [http://localhost:3000/personal](http://localhost:3000/personal)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## API de postulaciones (JSON dual)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Método | Ruta | Contexto |
+|--------|------|----------|
+| `POST` | `/api/postulaciones` | Registro + CV → `job_metadata`, `pestaña_empresa_view`, `pestaña_personal_view` |
+| `GET` | `/api/postulaciones/seguimiento?dni=&job_id=` | Solo pestaña Personal (sin PII de otros) |
+| `GET` | `/api/ofertas/[id]/postulaciones` | Pestaña Empresa (embudo + match %) |
+| `PATCH` | `/api/postulaciones/accion` | `{ dni, job_id, action: Aceptar \| Rechazar \| Mover a Entrevista }` |
+| `PATCH` | `/api/postulaciones/[id]` | Cambio por código de postulación |
 
-## Learn More
+Estados del postulante: `En Revisión`, `Aceptado / Seleccionado`, `No Seleccionado (Fuera del Proceso)`.
+Embudo empresa: en_revision, entrevistas, aceptados, no_seleccionados.
 
-To learn more about Next.js, take a look at the following resources:
+## Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Comando | Descripción |
+|---------|-------------|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Build de producción |
+| `npm run db:seed` | Datos demo en SQLite |
+| `npm run db:studio` | Prisma Studio |

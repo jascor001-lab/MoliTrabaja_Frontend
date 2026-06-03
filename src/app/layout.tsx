@@ -1,9 +1,18 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+
+import { APP_DESCRIPTION, APP_TITLE } from "@/lib/brand";
+
 import "./globals.css";
 
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Encuesta de Satisfacción - Municipalidad",
-  description: "Encuesta de atención al contribuyente",
+  title: APP_TITLE,
+  description: APP_DESCRIPTION,
 };
 
 export default function RootLayout({
@@ -13,7 +22,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className="antialiased bg-white text-gray-900">
+      <body className={`${inter.className} antialiased text-slate-900`}>
         {children}
       </body>
     </html>

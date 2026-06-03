@@ -1,0 +1,260 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Empresa (UML) ───────────────────────────────────────────────
+model Empresa {
+  id           String            @id @default(cuid())
+  nombre       String
+  razonSocial  String            @default("")
+  ruc          String            @unique
+  email        String            @unique
+  passwordHash String
+  logo         String?
+  telefono     String            @default("")
+  paginaWeb    String            @default("")
+  rubro        String
+  descripcion  String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  contactos    ContactoEmpresa[]
+  ofertas      OfertaLaboral[]
+  sesiones     Sesion[]
+}
+
+model ContactoEmpresa {
+  id              Int     @id @default(autoincrement())
+  empresaId       String
+  empresa         Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  nombres         String
+  apellidoPaterno String
+  correo          String
+  celular         String
+  esPrincipal     Boolean @default(false)
+  esGerente       Boolean @default(false)
+
+  @@index([empresaId])
+}
+
+// ─── Dirección (UML) ─────────────────────────────────────────────
+model Direccion {
+  id               String          @id @default(cuid())
+  direccionLiteral String
+  latitud          String?
+  longitud         String?
+  ofertas          OfertaLaboral[]
+  postulantes      Postulante[]
+}
+
+// ─── Oferta laboral (UML) ────────────────────────────────────────
+model OfertaLaboral {
+  id                 String               @id @default(cuid())
+  empresaId          String
+  empresa            Empresa              @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  direccionTrabajoId String?
+  direccionTrabajo   Direccion?           @relation(fields: [direccionTrabajoId], references: [id])
+  titulo             String
+  perfil             String               @default("")
+  descripcion        String
+  tipoContrato       String               @default("Indefinido")
+  modalidad          String
+  salario            String               @default("A convenir")
+  estado             String               @default("Activa")
+  fechaPublicacion   DateTime             @default(now())
+  logoArchivos       String               @default("[]")
+  basesArchivo       String               @default("")
+  tipoPuesto         String               @default("[]")
+  cantidadVacantes   Int                  @default(1)
+  funciones          String
+  beneficios         String
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  cronogramas        Cronograma[]
+  carreras           OfertaCarrera[]
+  conocimientos      OfertaConocimiento[]
+  postulaciones      Postulacion[]
+
+  @@index([empresaId])
+  @@index([estado])
+}
+
+model Cronograma {
+  id          String        @id @default(cuid())
+  ofertaId    String
+  oferta      OfertaLaboral @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
+  etapa       String
+  urlConsulta String        @default("")
+  inicio      DateTime
+  fin         DateTime?
+  responsable String        @default("")
+
+  @@index([ofertaId])
+}
+
+// ─── Catálogos (UML) ─────────────────────────────────────────────
+model TipoDoc {
+  id             Int          @id @default(autoincrement())
+  nombreCompleto String
+  abrev          String       @unique
+  postulantes    Postulante[]
+}
+
+model Pais {
+  id             Int          @id @default(autoincrement())
+  nombre         String
+  prefijoCelular String
+  postulantes    Postulante[]
+}
+
+model CatalogoCarrera {
+  id          Int             @id @default(autoincrement())
+  nombre      String          @unique
+  educaciones Educacion[]
+  ofertas     OfertaCarrera[]
+}
+
+model CatalogoConocimiento {
+  id          Int                      @id @default(autoincrement())
+  nombre      String
+  grupo       String
+  postulantes ConocimientoPostulante[]
+  ofertas     OfertaConocimiento[]
+
+  @@unique([nombre, grupo])
+}
+
+model CatalogoInstitucion {
+  id          Int    @id @default(autoincrement())
+  razonSocial String
+  nombre      String
+}
+
+model OfertaCarrera {
+  ofertaId  String
+  carreraId Int
+  oferta    OfertaLaboral   @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
+  carrera   CatalogoCarrera @relation(fields: [carreraId], references: [id])
+
+  @@id([ofertaId, carreraId])
+}
+
+model OfertaConocimiento {
+  ofertaId       String
+  conocimientoId Int
+  oferta         OfertaLaboral        @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
+  conocimiento   CatalogoConocimiento @relation(fields: [conocimientoId], references: [id])
+
+  @@id([ofertaId, conocimientoId])
+}
+
+// ─── Perfil postulante (UML) ─────────────────────────────────────
+model Postulante {
+  id              String                   @id @default(cuid())
+  tipoDocId       Int
+  tipoDoc         TipoDoc                  @relation(fields: [tipoDocId], references: [id])
+  numeroDocumento String
+  nombres         String
+  apellidoPaterno String
+  apellidoMaterno String
+  fechaNacimiento DateTime
+  paisId          Int
+  pais            Pais                     @relation(fields: [paisId], references: [id])
+  genero          String
+  estadoCivil     String                   @default("Soltero")
+  correo          String                   @unique
+  passwordHash    String
+  telefono        String
+  direccionId     String?
+  direccion       Direccion?               @relation(fields: [direccionId], references: [id])
+  cvPath          String?
+  cvParsed        String                   @default("{}")
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+  experiencias    ExpLaboral[]
+  educaciones     Educacion[]
+  conocimientos   ConocimientoPostulante[]
+  postulaciones   Postulacion[]
+  sesiones        Sesion[]
+
+  @@unique([tipoDocId, numeroDocumento])
+}
+
+model ExpLaboral {
+  id           String     @id @default(cuid())
+  postulanteId String
+  postulante   Postulante @relation(fields: [postulanteId], references: [id], onDelete: Cascade)
+  sector       String
+  empresa      String
+  puesto       String
+  tiempoMeses  Int        @default(0)
+  fechaInicio  DateTime
+  fechaFin     DateTime?
+
+  @@index([postulanteId])
+}
+
+model Educacion {
+  id           String          @id @default(cuid())
+  postulanteId String
+  postulante   Postulante      @relation(fields: [postulanteId], references: [id], onDelete: Cascade)
+  carreraId    Int
+  carrera      CatalogoCarrera @relation(fields: [carreraId], references: [id])
+  tipoEstudio  String
+  institucion  String
+  ordenMerito  String          @default("No aplica")
+  fechaIngreso DateTime
+  fechaEgreso  DateTime?
+
+  @@index([postulanteId])
+}
+
+model ConocimientoPostulante {
+  id             String               @id @default(cuid())
+  postulanteId   String
+  postulante     Postulante           @relation(fields: [postulanteId], references: [id], onDelete: Cascade)
+  conocimientoId Int
+  conocimiento   CatalogoConocimiento @relation(fields: [conocimientoId], references: [id])
+  institucion    String               @default("")
+
+  @@index([postulanteId])
+}
+
+// ─── Postulación (UML) ───────────────────────────────────────────
+model Postulacion {
+  id                String        @id @default(cuid())
+  codigo            String        @unique
+  ofertaId          String
+  postulanteId      String
+  oferta            OfertaLaboral @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
+  postulante        Postulante    @relation(fields: [postulanteId], references: [id], onDelete: Cascade)
+  estadoSeguimiento String        @default("En Revisión")
+  matchScore        Int           @default(0)
+  rankingFit        String        @default("Medium")
+  lastUpdate        DateTime      @default(now())
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@unique([ofertaId, postulanteId])
+  @@index([ofertaId])
+  @@index([postulanteId])
+}
+
+model Sesion {
+  id           String      @id @default(cuid())
+  token        String      @unique
+  tipoUsuario  String
+  empresaId    String?
+  postulanteId String?
+  expiresAt    DateTime
+  createdAt    DateTime    @default(now())
+  empresa      Empresa?    @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  postulante   Postulante? @relation(fields: [postulanteId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([expiresAt])
+}
