@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { CvViewerModal } from "@/components/empresa/CvViewerModal";
+import { PostulantePerfilResumen } from "@/components/empresa/PostulantePerfilResumen";
 import { Button } from "@/components/ui/Button";
 import { MOTION_REDUCE, staggerDelay } from "@/lib/motion";
 import type {
@@ -20,6 +21,12 @@ export function PostulantesOfertaPanel({ ofertaId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [cvAbierto, setCvAbierto] = useState<CandidateActionable | null>(null);
+  const [docAbierto, setDocAbierto] = useState<{
+    viewUrl: string;
+    title: string;
+    fileName?: string;
+  } | null>(null);
+  const [perfilAbierto, setPerfilAbierto] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -68,6 +75,17 @@ export function PostulantesOfertaPanel({ ofertaId }: Props) {
         />
       )}
 
+      {docAbierto && (
+        <CvViewerModal
+          candidateName={docAbierto.title}
+          viewUrl={docAbierto.viewUrl}
+          fileName={docAbierto.fileName}
+          formato="pdf"
+          sectionLabel="Documento de respaldo"
+          onClose={() => setDocAbierto(null)}
+        />
+      )}
+
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase text-emerald-600">Pestaña Empresa</p>
@@ -108,7 +126,7 @@ export function PostulantesOfertaPanel({ ofertaId }: Props) {
           {candidate_pool_actionable.map((p, i) => (
             <li
               key={p.dni}
-              className={`rounded-xl border border-emerald-100 bg-white p-4 shadow-sm hover:shadow-md transition-shadow duration-300 animate-reveal-up ${MOTION_REDUCE}`}
+              className={`rounded-xl border border-emerald-100 bg-white p-4 shadow-sm hover:shadow-md transition-shadow duration-500 ease-fluid motion-stagger-in motion-gpu ${MOTION_REDUCE}`}
               style={{ animationDelay: `${staggerDelay(i, 40)}ms` }}
             >
               <div className="flex flex-wrap justify-between gap-2">
@@ -129,6 +147,15 @@ export function PostulantesOfertaPanel({ ofertaId }: Props) {
                 {p.current_status}
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Button
+                  variant="secondary"
+                  className="!py-1.5 !px-3 !text-xs"
+                  onClick={() =>
+                    setPerfilAbierto((prev) => (prev === p.dni ? null : p.dni))
+                  }
+                >
+                  {perfilAbierto === p.dni ? "Ocultar perfil" : "Ver perfil académico"}
+                </Button>
                 {p.cv_available && p.cv_view_url ? (
                   <Button
                     variant="secondary"
@@ -156,6 +183,13 @@ export function PostulantesOfertaPanel({ ofertaId }: Props) {
                   </button>
                 ))}
               </div>
+              {perfilAbierto === p.dni && (
+                <PostulantePerfilResumen
+                  perfil={p.perfil_resumen}
+                  candidateName={p.nombre}
+                  onViewDocument={setDocAbierto}
+                />
+              )}
             </li>
           ))}
         </ul>

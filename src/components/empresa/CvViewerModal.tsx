@@ -11,6 +11,7 @@ type Props = {
   viewUrl: string;
   fileName?: string;
   formato?: CvFormato;
+  sectionLabel?: string;
   onClose: () => void;
 };
 
@@ -19,6 +20,7 @@ export function CvViewerModal({
   viewUrl,
   fileName,
   formato = "pdf",
+  sectionLabel = "Curriculum",
   onClose,
 }: Props) {
   const [txtContent, setTxtContent] = useState<string | null>(null);
@@ -67,7 +69,7 @@ export function CvViewerModal({
       >
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-emerald-100 px-4 sm:px-6 py-4">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase text-emerald-600">Curriculum</p>
+            <p className="text-xs font-semibold uppercase text-emerald-600">{sectionLabel}</p>
             <h2 className="text-lg font-bold text-slate-900 truncate">{candidateName}</h2>
             {fileName && (
               <p className="text-xs text-slate-500 mt-0.5 truncate">{fileName}</p>
@@ -99,7 +101,7 @@ export function CvViewerModal({
             <iframe
               title={`CV de ${candidateName}`}
               src={viewUrl}
-              className="w-full h-[min(75vh,720px)] bg-white animate-fade-in motion-reduce:animate-none"
+              className="w-full h-[min(75vh,720px)] bg-white motion-enter-fade motion-gpu motion-reduce:animate-none"
             />
           )}
 

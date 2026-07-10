@@ -20,7 +20,7 @@ export function SearchBar({
       className="w-full max-w-4xl mx-auto"
       onSubmit={(e) => e.preventDefault()}
     >
-      <div className="flex flex-col sm:flex-row rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-emerald-200 focus-within:border-emerald-300 transition-shadow">
+      <div className="flex flex-col sm:flex-row rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-emerald-200 focus-within:border-emerald-300 transition-all duration-300 ease-fluid focus-within:shadow-md motion-reduce:transition-none">
         <div className="flex flex-1 min-w-0">
           <input
             type="search"

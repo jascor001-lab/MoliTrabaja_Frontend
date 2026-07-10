@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/layout/AppShell";
-import { PerfilPostulanteForm } from "@/components/auth/PerfilPostulanteForm";
+import { PerfilPostulantePanel } from "@/components/postulante/perfil/PerfilPostulantePanel";
 import { requirePostulante } from "@/lib/require-auth";
 
 export default async function PerfilPostulantePage() {
@@ -7,12 +7,18 @@ export default async function PerfilPostulantePage() {
 
   return (
     <AppShell variant="portal">
-      <header className="mb-8 px-4 md:px-6 pt-6">
-        <h1 className="text-2xl font-bold text-slate-900">Mi perfil</h1>
-        <p className="text-slate-500 mt-1">Mantén tus datos de contacto actualizados.</p>
+      <header className="mb-8 px-4 md:px-6 pt-6 motion-enter-fade motion-gpu motion-reduce:animate-none">
+        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+          Mi cuenta
+        </p>
+        <h1 className="text-2xl font-bold text-slate-900 mt-1">Mi perfil</h1>
+        <p className="text-slate-500 mt-2 max-w-xl">
+          Completa tu perfil con datos personales, formación académica, experiencia
+          laboral y conocimientos. Mejora tu coincidencia con las ofertas.
+        </p>
       </header>
       <div className="px-4 md:px-6 pb-10">
-        <PerfilPostulanteForm />
+        <PerfilPostulantePanel />
       </div>
     </AppShell>
   );

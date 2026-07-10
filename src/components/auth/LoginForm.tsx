@@ -2,39 +2,63 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import type { TipoUsuario } from "@/lib/auth";
+import { SlideView } from "@/components/ui/SlideView";
+import { useAuthUiStore } from "@/stores/authUiStore";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const tipoInicial = searchParams.get("tipo") === "postulante" ? "postulante" : "empresa";
+  const tipoParam = searchParams.get("tipo");
+  const tipoInicial =
+    tipoParam === "postulante" ? "postulante" : tipoParam === "empresa" ? "empresa" : "postulante";
 
-  const [tipo, setTipo] = useState<TipoUsuario>(tipoInicial);
+  const loginTipo = useAuthUiStore((s) => s.loginTipo);
+  const loginTipoDirection = useAuthUiStore((s) => s.loginTipoDirection);
+  const setLoginTipo = useAuthUiStore((s) => s.setLoginTipo);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    setLoginTipo(tipoInicial);
+  }, [tipoInicial, setLoginTipo]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+
+    const fd = new FormData(e.currentTarget);
+    const emailVal = (email || String(fd.get("email") ?? "")).trim();
+    const passwordVal = password || String(fd.get("password") ?? "");
+
+    if (!emailVal) {
+      setError("Ingresa tu correo electrónico");
+      return;
+    }
+    if (!passwordVal) {
+      setError("Ingresa tu contraseña");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tipo, email, password }),
+        body: JSON.stringify({ tipo: loginTipo, email: emailVal, password: passwordVal }),
       });
       const data = (await res.json()) as {
         error?: string;
         redirect?: string;
       };
       if (!res.ok) throw new Error(data.error ?? "Error al ingresar");
-      router.push(data.redirect ?? (tipo === "empresa" ? "/empresa" : "/personal"));
+      router.push(data.redirect ?? (loginTipo === "empresa" ? "/empresa" : "/personal"));
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al ingresar");
@@ -44,13 +68,13 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} noValidate className="space-y-5">
       <div className="flex gap-2">
         <button
           type="button"
-          onClick={() => setTipo("postulante")}
+          onClick={() => setLoginTipo("postulante")}
           className={`flex-1 rounded-xl py-2.5 text-sm font-semibold border transition ${
-            tipo === "postulante"
+            loginTipo === "postulante"
               ? "bg-emerald-600 text-white border-emerald-600"
               : "border-slate-200 text-slate-600 hover:border-emerald-300"
           }`}
@@ -59,9 +83,9 @@ export function LoginForm() {
         </button>
         <button
           type="button"
-          onClick={() => setTipo("empresa")}
+          onClick={() => setLoginTipo("empresa")}
           className={`flex-1 rounded-xl py-2.5 text-sm font-semibold border transition ${
-            tipo === "empresa"
+            loginTipo === "empresa"
               ? "bg-emerald-600 text-white border-emerald-600"
               : "border-slate-200 text-slate-600 hover:border-emerald-300"
           }`}
@@ -70,24 +94,30 @@ export function LoginForm() {
         </button>
       </div>
 
-      <Input
-        label="Correo electrónico"
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder={tipo === "empresa" ? "rrhh@miempresa.pe" : "tu@correo.com"}
-        required
-      />
-      <Input
-        label="Contraseña"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
+      <SlideView viewKey={loginTipo} direction={loginTipoDirection} className="space-y-5">
+        <Input
+          id={`login-email-${loginTipo}`}
+          name="email"
+          label="Correo electrónico"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder={loginTipo === "empresa" ? "rrhh@miempresa.pe" : "tu@correo.com"}
+        />
+        <Input
+          id={`login-password-${loginTipo}`}
+          name="password"
+          label="Contraseña"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </SlideView>
 
       {error && (
-        <p className="text-sm text-red-600 rounded-lg bg-red-50 px-3 py-2 border border-red-100">
+        <p className="text-sm text-red-600 rounded-lg bg-red-50 px-3 py-2 border border-red-100 motion-enter-fade motion-gpu motion-reduce:animate-none">
           {error}
         </p>
       )}
@@ -99,10 +129,10 @@ export function LoginForm() {
       <p className="text-sm text-center text-slate-500">
         ¿No tienes cuenta?{" "}
         <Link
-          href={tipo === "empresa" ? "/registro/empresa" : "/registro/postulante"}
+          href={loginTipo === "empresa" ? "/registro/empresa" : "/registro/postulante"}
           className="font-semibold text-emerald-700 hover:underline"
         >
-          Regístrate aquí
+          {loginTipo === "empresa" ? "Registrar empresa" : "Crear perfil de postulante"}
         </Link>
       </p>
     </form>

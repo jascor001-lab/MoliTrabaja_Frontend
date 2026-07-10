@@ -102,6 +102,8 @@ export type ExpLaboralDTO = {
   tiempoMeses: number;
   fechaInicio: string;
   fechaFin: string | null;
+  documentoDisponible: boolean;
+  documentoNombre?: string;
 };
 
 export type EducacionDTO = {
@@ -113,6 +115,8 @@ export type EducacionDTO = {
   ordenMerito: string;
   fechaIngreso: string;
   fechaEgreso: string | null;
+  documentoDisponible: boolean;
+  documentoNombre?: string;
 };
 
 export type ConocimientoPostulanteDTO = {
@@ -121,4 +125,6 @@ export type ConocimientoPostulanteDTO = {
   conocimientoNombre: string;
   grupo: string;
   institucion: string;
+  documentoDisponible: boolean;
+  documentoNombre?: string;
 };

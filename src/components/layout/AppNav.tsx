@@ -102,26 +102,12 @@ export function AppNav({ variant }: Props) {
   return (
     <nav className="flex items-center gap-2 text-sm font-semibold">
       {variant === "portal" ? (
-        <>
-          <Link
-            href="/ingreso?tipo=postulante"
-            className="rounded-lg px-3 py-2 text-slate-600 hover:bg-emerald-50"
-          >
-            Ingresar
-          </Link>
-          <Link
-            href="/registro/postulante"
-            className="rounded-lg px-3 py-2 text-emerald-700 hover:bg-emerald-50"
-          >
-            Crear perfil
-          </Link>
-          <Link
-            href="/ingreso?tipo=empresa"
-            className="rounded-lg px-3 py-2 text-slate-600 hover:bg-emerald-50 hidden sm:inline"
-          >
-            Empresa
-          </Link>
-        </>
+        <Link
+          href="/ingreso"
+          className="rounded-lg px-3 py-2 text-emerald-700 hover:bg-emerald-50"
+        >
+          Acceder
+        </Link>
       ) : (
         <Link
           href="/ingreso?tipo=empresa"

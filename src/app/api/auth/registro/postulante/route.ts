@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createSession, sessionCookieOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { hashPassword, validarPasswordRegistro } from "@/lib/password";
+import { hashPassword, validarCuentaRegistro } from "@/lib/password";
 import { crearPostulanteConDireccion } from "@/lib/postulante-persist";
 import { validarPostulanteInput } from "@/lib/validacion-postulante";
 
@@ -11,6 +11,14 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as Record<string, string | number>;
     const password = String(body.password ?? "");
+
+    const cuentaErrors = validarCuentaRegistro(String(body.correo ?? ""), password);
+    if (Object.keys(cuentaErrors).length > 0) {
+      return NextResponse.json(
+        { error: "Revisa tu correo y contraseña", errors: cuentaErrors },
+        { status: 422 }
+      );
+    }
 
     const validation = validarPostulanteInput({
       tipoDocId: Number(body.tipoDocId ?? 1),
@@ -28,14 +36,18 @@ export async function POST(request: NextRequest) {
     });
 
     if (!validation.ok) {
+      const errors = { ...validation.errors };
+      if (errors.numeroDocumento) {
+        errors.dni = errors.numeroDocumento;
+      }
+      if (errors.direccionLiteral) {
+        errors.direccion = errors.direccionLiteral;
+      }
       return NextResponse.json(
-        { error: "Datos inválidos", errors: validation.errors },
+        { error: "Datos inválidos", errors },
         { status: 422 }
       );
     }
-
-    const pwdErr = validarPasswordRegistro(password);
-    if (pwdErr) return NextResponse.json({ error: pwdErr }, { status: 400 });
 
     const existsDoc = await prisma.postulante.findFirst({
       where: {

@@ -9,7 +9,7 @@ export default async function PublicarPage() {
 
   return (
     <AppShell variant="empresa">
-      <div className="mb-8 animate-fade-in motion-reduce:animate-none">
+      <div className="mb-8 motion-enter-fade motion-gpu motion-reduce:animate-none">
         <h1 className="text-2xl font-bold text-slate-900">Publicar empleo</h1>
         <p className="text-slate-500 mt-1">
           Completa los pasos para publicar en {empresa.nombre}.

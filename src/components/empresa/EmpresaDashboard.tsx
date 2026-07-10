@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 
 import { APP_NAME } from "@/lib/brand";
 import { MOTION_REDUCE, staggerDelay } from "@/lib/motion";
 import { SlideView } from "@/components/ui/SlideView";
+import { useEmpresaDashboardUiStore } from "@/stores/empresaDashboardUiStore";
 import { Button } from "@/components/ui/Button";
 import { PostulantesOfertaPanel } from "@/components/empresa/PostulantesOfertaPanel";
 import { EmpresaLogo } from "@/components/ui/EmpresaLogo";
@@ -17,13 +17,15 @@ type Props = {
 };
 
 export function EmpresaDashboard({ empresaNombre, ofertas }: Props) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const expandedId = useEmpresaDashboardUiStore((s) => s.expandedId);
+  const expandDirection = useEmpresaDashboardUiStore((s) => s.expandDirection);
+  const toggleExpand = useEmpresaDashboardUiStore((s) => s.toggleExpand);
   const activas = ofertas.filter((o) => o.estado === "Activa").length;
 
   return (
     <div className="space-y-8">
       <header
-        className={`flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 animate-fade-in ${MOTION_REDUCE}`}
+        className={`flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 motion-enter-fade motion-gpu ${MOTION_REDUCE}`}
       >
         <div>
           <p className="text-sm font-medium text-emerald-600">{APP_NAME} · Panel empresa</p>
@@ -53,8 +55,8 @@ export function EmpresaDashboard({ empresaNombre, ofertas }: Props) {
           {ofertas.map((oferta, i) => (
             <li
               key={oferta.id}
-              className={`rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow duration-300 animate-reveal-up ${MOTION_REDUCE}`}
-              style={{ animationDelay: `${staggerDelay(i, 50)}ms` }}
+              className={`rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow duration-500 ease-fluid motion-stagger-in motion-gpu ${MOTION_REDUCE}`}
+              style={{ animationDelay: `${staggerDelay(i, 40, 38)}ms`, animationFillMode: "both" }}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex gap-3 min-w-0">
@@ -102,16 +104,14 @@ export function EmpresaDashboard({ empresaNombre, ofertas }: Props) {
                 </Link>
                 <button
                   type="button"
-                  onClick={() =>
-                    setExpandedId(expandedId === oferta.id ? null : oferta.id)
-                  }
+                  onClick={() => toggleExpand(oferta.id)}
                   className="text-sm text-slate-500 hover:text-emerald-700"
                 >
                   {expandedId === oferta.id ? "Ocultar panel" : "Vista rápida"}
                 </button>
               </div>
               {expandedId === oferta.id && (
-                <SlideView viewKey={oferta.id} direction="forward">
+                <SlideView viewKey={oferta.id} direction={expandDirection}>
                   <div className="mt-4 border-t border-emerald-50 pt-4 overflow-hidden">
                     <PostulantesOfertaPanel ofertaId={oferta.id} />
                   </div>

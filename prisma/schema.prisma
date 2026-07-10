@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── Empresa (UML) ───────────────────────────────────────────────
+// ─── Empresa ───────────────────────────────────────────────
 model Empresa {
   id           String            @id @default(cuid())
   nombre       String
@@ -41,7 +41,7 @@ model ContactoEmpresa {
   @@index([empresaId])
 }
 
-// ─── Dirección (UML) ─────────────────────────────────────────────
+// ─── Dirección  ─────────────────────────────────────────────
 model Direccion {
   id               String          @id @default(cuid())
   direccionLiteral String
@@ -51,7 +51,7 @@ model Direccion {
   postulantes      Postulante[]
 }
 
-// ─── Oferta laboral (UML) ────────────────────────────────────────
+// ─── Oferta laboral  ────────────────────────────────────────
 model OfertaLaboral {
   id                 String               @id @default(cuid())
   empresaId          String
@@ -96,7 +96,7 @@ model Cronograma {
   @@index([ofertaId])
 }
 
-// ─── Catálogos (UML) ─────────────────────────────────────────────
+// ─── Catálogos  ─────────────────────────────────────────────
 model TipoDoc {
   id             Int          @id @default(autoincrement())
   nombreCompleto String
@@ -152,7 +152,7 @@ model OfertaConocimiento {
   @@id([ofertaId, conocimientoId])
 }
 
-// ─── Perfil postulante (UML) ─────────────────────────────────────
+// ─── Perfil postulante  ─────────────────────────────────────
 model Postulante {
   id              String                   @id @default(cuid())
   tipoDocId       Int
@@ -192,8 +192,9 @@ model ExpLaboral {
   empresa      String
   puesto       String
   tiempoMeses  Int        @default(0)
-  fechaInicio  DateTime
-  fechaFin     DateTime?
+  fechaInicio    DateTime
+  fechaFin       DateTime?
+  documentoPath  String?
 
   @@index([postulanteId])
 }
@@ -207,8 +208,9 @@ model Educacion {
   tipoEstudio  String
   institucion  String
   ordenMerito  String          @default("No aplica")
-  fechaIngreso DateTime
-  fechaEgreso  DateTime?
+  fechaIngreso   DateTime
+  fechaEgreso    DateTime?
+  documentoPath  String?
 
   @@index([postulanteId])
 }
@@ -220,11 +222,12 @@ model ConocimientoPostulante {
   conocimientoId Int
   conocimiento   CatalogoConocimiento @relation(fields: [conocimientoId], references: [id])
   institucion    String               @default("")
+  documentoPath  String?
 
   @@index([postulanteId])
 }
 
-// ─── Postulación (UML) ───────────────────────────────────────────
+// ─── Postulación  ───────────────────────────────────────────
 model Postulacion {
   id                String        @id @default(cuid())
   codigo            String        @unique

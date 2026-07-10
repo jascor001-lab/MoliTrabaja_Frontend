@@ -1,13 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 
 import { PostulacionForm } from "@/components/postulante/PostulacionForm";
 import { BasesConvocatoriaModal } from "@/components/portal/BasesConvocatoriaModal";
 import { Button } from "@/components/ui/Button";
 import { EmpresaLogo } from "@/components/ui/EmpresaLogo";
-import { SlideView, type SlideDirection } from "@/components/ui/SlideView";
+import { SlideView } from "@/components/ui/SlideView";
+import { useOfertaDetailUiStore } from "@/stores/ofertaDetailUiStore";
 import {
   formatFechaCorta,
   formatVigencia,
@@ -15,20 +16,12 @@ import {
   tiempoRelativo,
 } from "@/lib/format-fecha";
 import { MODALIDAD_LABEL, type OfertaLaboralDTO } from "@/types/bolsa";
-import type { DashboardDualResponse } from "@/types/postulacion";
 
 type Props = {
   oferta: OfertaLaboralDTO;
   variant?: "panel" | "drawer";
   onClose?: () => void;
 };
-
-type Modo = "detalle" | "postular" | "exito";
-
-function directionForModo(from: Modo, to: Modo): SlideDirection {
-  const order: Modo[] = ["detalle", "postular", "exito"];
-  return order.indexOf(to) >= order.indexOf(from) ? "forward" : "back";
-}
 
 function MetaBadge({
   label,
@@ -51,24 +44,18 @@ function MetaBadge({
 }
 
 export function OfertaDetail({ oferta, variant = "panel", onClose }: Props) {
-  const [modo, setModo] = useState<Modo>("detalle");
-  const [modoDirection, setModoDirection] = useState<SlideDirection>("fade");
-  const [resultado, setResultado] = useState<DashboardDualResponse | null>(null);
-  const [showBases, setShowBases] = useState(false);
-
-  const changeModo = useCallback((next: Modo) => {
-    setModo((prev) => {
-      setModoDirection(directionForModo(prev, next));
-      return next;
-    });
-  }, []);
+  const modo = useOfertaDetailUiStore((s) => s.modo);
+  const modoDirection = useOfertaDetailUiStore((s) => s.modoDirection);
+  const resultado = useOfertaDetailUiStore((s) => s.resultado);
+  const showBases = useOfertaDetailUiStore((s) => s.showBases);
+  const changeModo = useOfertaDetailUiStore((s) => s.changeModo);
+  const setShowBases = useOfertaDetailUiStore((s) => s.setShowBases);
+  const setResultado = useOfertaDetailUiStore((s) => s.setResultado);
+  const resetForOferta = useOfertaDetailUiStore((s) => s.resetForOferta);
 
   useEffect(() => {
-    setModo("detalle");
-    setModoDirection("fade");
-    setResultado(null);
-    setShowBases(false);
-  }, [oferta.id]);
+    resetForOferta(oferta.id);
+  }, [oferta.id, resetForOferta]);
 
   const empresa =
     oferta.empresa?.razonSocial || oferta.empresa?.nombre || "Empresa";
@@ -79,8 +66,8 @@ export function OfertaDetail({ oferta, variant = "panel", onClose }: Props) {
 
   const shellClass =
     variant === "drawer"
-      ? "flex flex-col h-full bg-white"
-      : "flex flex-col h-full rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden";
+      ? "flex flex-col h-full min-h-0 bg-white"
+      : "flex flex-col h-full min-h-0 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden";
 
   return (
     <article className={shellClass}>
@@ -157,8 +144,8 @@ export function OfertaDetail({ oferta, variant = "panel", onClose }: Props) {
       )}
 
       {/* Cuerpo con scroll */}
-      <div className="flex-1 overflow-y-auto px-5 py-5 lg:px-6">
-        <SlideView viewKey={modo} direction={modoDirection}>
+      <div className="scroll-panel flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-5 pb-8 lg:px-6 scroll-smooth">
+        <SlideView viewKey={modo} direction={modoDirection} className="min-h-0">
           {modo === "detalle" && (
             <div className="space-y-8">
               {/* Metadatos rápidos */}

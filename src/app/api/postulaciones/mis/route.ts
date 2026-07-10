@@ -8,6 +8,7 @@ import {
   statusCodeFromPipeline,
 } from "@/lib/dashboard-postulacion";
 import { calcularMatchScorePercentage } from "@/lib/match-score";
+import { construirHistorialActividad } from "@/lib/postulacion-actividad";
 import { prisma } from "@/lib/db";
 import { findPostulanteByDocumento, numeroDocumentoDe } from "@/lib/postulante-doc";
 import type { MisPostulacionItem } from "@/types/postulacion";
@@ -69,16 +70,24 @@ export async function GET(request: NextRequest) {
     const matchScore =
       p.matchScore > 0 ? p.matchScore : calcularMatchScorePercentage(cv, matchOferta);
 
+    const empresa = p.oferta.empresa.razonSocial || p.oferta.empresa.nombre;
+
     return {
       application_id: p.codigo,
       job_id: p.ofertaId,
       job_title: p.oferta.titulo,
-      empresa: p.oferta.empresa.razonSocial || p.oferta.empresa.nombre,
+      empresa,
       estado: estadoParaPostulante(pipeline),
       status_code: statusCodeFromPipeline(pipeline),
       match_score_percentage: matchScore,
       fecha_postulacion: p.createdAt.toISOString(),
       last_update: p.lastUpdate.toISOString(),
+      activity_history: construirHistorialActividad({
+        estadoSeguimiento: p.estadoSeguimiento,
+        fechaPostulacion: p.createdAt.toISOString(),
+        lastUpdate: p.lastUpdate.toISOString(),
+        empresa,
+      }),
     };
   });
 

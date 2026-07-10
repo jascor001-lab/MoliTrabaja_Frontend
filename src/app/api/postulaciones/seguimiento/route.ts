@@ -78,6 +78,7 @@ export async function GET(request: NextRequest) {
   const ofertaFull = await prisma.ofertaLaboral.findUnique({
     where: { id: oferta.id },
     include: {
+      empresa: true,
       carreras: { include: { carrera: true } },
       conocimientos: { include: { conocimiento: true } },
     },

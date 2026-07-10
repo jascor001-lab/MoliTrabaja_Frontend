@@ -1,12 +1,19 @@
 import type { OfertaLaboral, Postulacion, Postulante } from "@prisma/client";
 
 import { cvViewUrl } from "@/lib/cv-access";
+import {
+  nombreArchivoDocumento,
+  perfilDocumentoViewUrl,
+} from "@/lib/perfil-doc-access";
 import { calcularMatchScorePercentage } from "@/lib/match-score";
 import { numeroDocumentoDe } from "@/lib/postulante-doc";
 import { calcularEdad, nombreCompleto } from "@/lib/validacion-postulante";
+import { construirHistorialActividad } from "@/lib/postulacion-actividad";
 import type {
   AccionReclutador,
   CandidateActionable,
+  CandidatePerfilResumen,
+  CandidateRequisitosMatch,
   CvFormato,
   CvParsed,
   DashboardDualResponse,
@@ -141,27 +148,142 @@ function nombreArchivoCv(cvPath: string | null): string | undefined {
   return parts.length > 1 ? parts.slice(1).join("-") : base;
 }
 
+type CatalogoItem = { id: number; nombre: string };
+
 type OfertaMatch = OfertaLaboral & {
-  carreras?: { carrera: { nombre: string } }[];
-  conocimientos?: { conocimiento: { nombre: string } }[];
+  empresa?: { razonSocial: string; nombre: string };
+  carreras?: { carrera: CatalogoItem }[];
+  conocimientos?: { conocimiento: CatalogoItem & { grupo?: string } }[];
 };
 
 type Row = Postulacion & {
   postulante: Postulante & {
     direccion?: { direccionLiteral: string } | null;
-    conocimientos?: { conocimiento: { nombre: string } }[];
-    educaciones?: { carrera: { nombre: string } }[];
+    educaciones?: {
+      id: string;
+      carrera: { id: number; nombre: string };
+      tipoEstudio: string;
+      institucion: string;
+      ordenMerito: string;
+      fechaIngreso: Date;
+      fechaEgreso: Date | null;
+      documentoPath?: string | null;
+    }[];
+    experiencias?: {
+      id: string;
+      puesto: string;
+      empresa: string;
+      sector: string;
+      tiempoMeses: number;
+      documentoPath?: string | null;
+    }[];
+    conocimientos?: {
+      id: string;
+      conocimiento: { id: number; nombre: string; grupo: string };
+      documentoPath?: string | null;
+    }[];
   };
 };
 
+function matchRequisitos(
+  reqCarreras: CatalogoItem[],
+  reqConoc: CatalogoItem[],
+  postCarreraIds: number[],
+  postConocIds: number[]
+): CandidateRequisitosMatch {
+  const postCSet = new Set(postCarreraIds);
+  const postKSet = new Set(postConocIds);
+
+  return {
+    carreras_requeridas: reqCarreras.map((c) => c.nombre),
+    carreras_cumplidas: reqCarreras
+      .filter((c) => postCSet.has(c.id))
+      .map((c) => c.nombre),
+    conocimientos_requeridos: reqConoc.map((k) => k.nombre),
+    conocimientos_cumplidos: reqConoc
+      .filter((k) => postKSet.has(k.id))
+      .map((k) => k.nombre),
+  };
+}
+
+function buildPerfilResumen(
+  postulante: Row["postulante"],
+  reqCarreras: CatalogoItem[],
+  reqConoc: CatalogoItem[],
+  ofertaId: string,
+  dni: string
+): CandidatePerfilResumen {
+  const docMeta = (tipo: "educacion" | "experiencia" | "conocimiento", itemId: string, path?: string | null) => {
+    const disponible = Boolean(path?.startsWith("/uploads/perfil/"));
+    return {
+      documento_disponible: disponible,
+      ...(disponible && {
+        documento_view_url: perfilDocumentoViewUrl(ofertaId, dni, tipo, itemId),
+        documento_filename: nombreArchivoDocumento(path),
+      }),
+    };
+  };
+
+  return {
+    educaciones:
+      postulante.educaciones?.map((e) => ({
+        id: e.id,
+        carrera: e.carrera.nombre,
+        tipo_estudio: e.tipoEstudio,
+        institucion: e.institucion,
+        orden_merito: e.ordenMerito,
+        fecha_ingreso: e.fechaIngreso.toISOString().slice(0, 10),
+        fecha_egreso: e.fechaEgreso
+          ? e.fechaEgreso.toISOString().slice(0, 10)
+          : null,
+        ...docMeta("educacion", e.id, e.documentoPath),
+      })) ?? [],
+    conocimientos:
+      postulante.conocimientos?.map((k) => ({
+        id: k.id,
+        nombre: k.conocimiento.nombre,
+        grupo: k.conocimiento.grupo,
+        ...docMeta("conocimiento", k.id, k.documentoPath),
+      })) ?? [],
+    experiencias:
+      postulante.experiencias?.map((x) => ({
+        id: x.id,
+        puesto: x.puesto,
+        empresa: x.empresa,
+        sector: x.sector,
+        meses: x.tiempoMeses,
+        ...docMeta("experiencia", x.id, x.documentoPath),
+      })) ?? [],
+    requisitos: matchRequisitos(
+      reqCarreras,
+      reqConoc,
+      postulante.educaciones?.map((e) => e.carrera.id) ?? [],
+      postulante.conocimientos?.map((k) => k.conocimiento.id) ?? []
+    ),
+  };
+}
+
 function ofertaMatchInput(oferta: OfertaMatch) {
+  const carreras =
+    oferta.carreras?.map((c) => ({
+      id: c.carrera.id,
+      nombre: c.carrera.nombre,
+    })) ?? [];
+  const conocimientos =
+    oferta.conocimientos?.map((k) => ({
+      id: k.conocimiento.id,
+      nombre: k.conocimiento.nombre,
+    })) ?? [];
+
   return {
     titulo: oferta.titulo,
     funciones: oferta.funciones,
     descripcion: oferta.descripcion,
     perfil: oferta.perfil,
-    carreras: oferta.carreras?.map((c) => c.carrera.nombre) ?? [],
-    conocimientos: oferta.conocimientos?.map((k) => k.conocimiento.nombre) ?? [],
+    carreras: carreras.map((c) => c.nombre),
+    conocimientos: conocimientos.map((k) => k.nombre),
+    carrerasCatalogo: carreras,
+    conocimientosCatalogo: conocimientos,
   };
 }
 
@@ -174,6 +296,9 @@ export function buildDashboardDual(params: {
   const { oferta, postulaciones, targetDni, includeProfile } = params;
   const total = postulaciones.length;
   const matchOferta = ofertaMatchInput(oferta);
+
+  const reqCarreras = matchOferta.carrerasCatalogo;
+  const reqConoc = matchOferta.conocimientosCatalogo;
 
   const candidate_pool_actionable: CandidateActionable[] = postulaciones.map(
     (p) => {
@@ -202,6 +327,13 @@ export function buildDashboardDual(params: {
         current_status: estado,
         available_actions: accionesDisponibles(estado),
         cv_available: cvAvailable,
+        perfil_resumen: buildPerfilResumen(
+          p.postulante,
+          reqCarreras,
+          reqConoc,
+          oferta.id,
+          doc
+        ),
         ...(cvAvailable && {
           cv_filename: nombreArchivoCv(cvPath),
           cv_formato: formatoCvDesdePath(cvPath),
@@ -211,11 +343,14 @@ export function buildDashboardDual(params: {
     }
   );
 
+  const empresaNombre = oferta.empresa?.razonSocial || oferta.empresa?.nombre || "";
+
   const response: DashboardDualResponse = {
     application_id: "",
     job_metadata: {
       job_id: oferta.id,
       title: oferta.titulo,
+      empresa: empresaNombre,
     },
     pestaña_empresa_view: {
       analytics: {
@@ -242,6 +377,12 @@ export function buildDashboardDual(params: {
           context_message: CONTEXT_MESSAGES[pipeline],
           competencia_info: { total_rivales_postulando: total },
           last_activity_timestamp: row.lastUpdate.toISOString(),
+          activity_history: construirHistorialActividad({
+            estadoSeguimiento: row.estadoSeguimiento,
+            fechaPostulacion: row.createdAt.toISOString(),
+            lastUpdate: row.lastUpdate.toISOString(),
+            empresa: empresaNombre,
+          }),
         },
       };
 

@@ -1,4 +1,5 @@
 @import "leaflet/dist/leaflet.css";
+@import "./motion.css";
 
 @tailwind base;
 @tailwind components;
@@ -47,11 +48,35 @@ button {
   .text-balance {
     text-wrap: balance;
   }
+
+  .scroll-panel {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: #a7f3d0 transparent;
+  }
+
+  .scroll-panel::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scroll-panel::-webkit-scrollbar-thumb {
+    background-color: #6ee7b7;
+    border-radius: 9999px;
+  }
+
+  .scroll-panel::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  :root {
+    --motion-duration: 0.01ms;
+    --motion-duration-fast: 0.01ms;
   }
 
   *,

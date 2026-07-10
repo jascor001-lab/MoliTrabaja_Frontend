@@ -7,7 +7,7 @@ export default async function PersonalPage() {
 
   return (
     <AppShell variant="portal">
-      <header className="mb-8 px-4 md:px-6 pt-6 animate-fade-in motion-reduce:animate-none">
+      <header className="mb-8 px-4 md:px-6 pt-6 motion-enter-fade motion-gpu motion-reduce:animate-none">
         <p className="text-sm font-semibold text-emerald-600 uppercase tracking-wide">
           Hola, {postulante.nombres}
         </p>
@@ -15,8 +15,8 @@ export default async function PersonalPage() {
           Mis postulaciones
         </h1>
         <p className="text-slate-500 mt-2 max-w-xl">
-          Aquí puedes ver el estado de todas tus postulaciones y consultar el detalle
-          de cada una.
+          Revisa las empresas donde postulaste, el estado de cada vacante y el historial
+          de actividad desde la espera de evaluación hasta el resultado.
         </p>
       </header>
       <div className="px-4 md:px-6 pb-16">

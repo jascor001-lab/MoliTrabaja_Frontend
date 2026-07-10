@@ -2,9 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { MOTION_REDUCE } from "@/lib/motion";
-
-const CLOSE_MS = 340;
+import { DRAWER_DURATION_MS, MOTION_REDUCE } from "@/lib/motion";
 
 export function useModalMotion(isOpen: boolean, onClosed: () => void) {
   const [visible, setVisible] = useState(isOpen);
@@ -36,16 +34,16 @@ export function useModalMotion(isOpen: boolean, onClosed: () => void) {
       setClosing(false);
       setVisible(false);
       onClosed();
-    }, CLOSE_MS);
+    }, DRAWER_DURATION_MS);
   }, [visible, onClosed]);
 
   const backdropClass = closing
-    ? `animate-modal-backdrop-out ${MOTION_REDUCE}`
-    : `animate-modal-backdrop-in ${MOTION_REDUCE}`;
+    ? `motion-modal-backdrop-out ${MOTION_REDUCE}`
+    : `motion-modal-backdrop-in ${MOTION_REDUCE}`;
 
   const panelClass = closing
-    ? `animate-modal-panel-out sm:animate-modal-panel-out-md ${MOTION_REDUCE}`
-    : `animate-modal-panel-in sm:animate-modal-panel-in-md ${MOTION_REDUCE}`;
+    ? `motion-modal-panel-out motion-gpu ${MOTION_REDUCE}`
+    : `motion-modal-panel-in motion-gpu ${MOTION_REDUCE}`;
 
   return {
     show: visible,

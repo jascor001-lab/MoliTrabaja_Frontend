@@ -10,7 +10,8 @@ export default function IngresoPage() {
         <header className="text-center mb-8">
           <h1 className="text-2xl font-bold text-slate-900">Ingresar a MoliTrabaja</h1>
           <p className="text-sm text-slate-500 mt-2">
-            Accede como postulante o empresa con tu correo y contraseña.
+            Elige si eres postulante o empresa. Si no tienes cuenta, regístrate desde el
+            enlace al final del formulario.
           </p>
         </header>
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

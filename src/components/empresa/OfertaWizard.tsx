@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/Button";
-import { SlideView, type SlideDirection } from "@/components/ui/SlideView";
+import { SlideView } from "@/components/ui/SlideView";
 import { StepIndicator } from "@/components/ui/StepIndicator";
 import { readApiError } from "@/lib/api-error";
 import { formatSalarioForSave } from "@/lib/salario";
@@ -41,10 +41,17 @@ function basesStepError(s: ReturnType<typeof useOfertaFormStore.getState>): stri
 export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
   const isEdit = mode === "edit";
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [slideDirection, setSlideDirection] = useState<SlideDirection>("forward");
-  const { step, nextStep, prevStep, isSubmitting, setSubmitting, reset } =
-    useOfertaFormStore();
+  const {
+    step,
+    slideDirection,
+    submitError,
+    nextStep,
+    prevStep,
+    isSubmitting,
+    setSubmitting,
+    setSubmitError,
+    reset,
+  } = useOfertaFormStore();
 
   const validateCurrentStep = (): string | null => {
     const s = useOfertaFormStore.getState();
@@ -77,13 +84,12 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
   };
 
   const handleNext = () => {
-    setError(null);
+    setSubmitError(null);
     const msg = validateCurrentStep();
     if (msg) {
-      setError(msg);
+      setSubmitError(msg);
       return;
     }
-    setSlideDirection("forward");
     nextStep();
   };
 
@@ -134,10 +140,10 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
   });
 
   const handleSubmit = async () => {
-    setError(null);
+    setSubmitError(null);
     const msg = validateAll();
     if (msg) {
-      setError(msg);
+      setSubmitError(msg);
       return;
     }
 
@@ -170,7 +176,7 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
       router.push("/empresa");
       router.refresh();
     } catch (e) {
-      setError(
+      setSubmitError(
         e instanceof Error
           ? e.message
           : isEdit
@@ -196,29 +202,22 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
       />
 
       <div className="rounded-2xl border border-emerald-100 bg-white p-6 md:p-8 shadow-sm overflow-hidden">
-        <SlideView viewKey={step} direction={slideDirection}>
+        <SlideView viewKey={step} direction={slideDirection} className="min-h-[320px]">
           {step === 1 && <WizardStepEmpresa />}
           {step === 2 && <WizardStepVacante />}
           {step === 3 && <WizardStepContacto />}
           {step === 4 && <WizardStepResumen isEdit={isEdit} />}
         </SlideView>
 
-        {error && (
-          <p className="mt-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700 border border-red-100">
-            {error}
+        {submitError && (
+          <p className="mt-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700 border border-red-100 motion-enter-fade motion-gpu motion-reduce:animate-none">
+            {submitError}
           </p>
         )}
 
         <div className="mt-8 flex flex-wrap gap-3 justify-between">
           {step > 1 ? (
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setSlideDirection("back");
-                prevStep();
-              }}
-              disabled={isSubmitting}
-            >
+            <Button variant="secondary" onClick={prevStep} disabled={isSubmitting}>
               ← Anterior
             </Button>
           ) : (

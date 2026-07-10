@@ -25,7 +25,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
+# variables de entorno (cada desarrollador tiene la suya)
+.env
 .env*.local
 
 # vercel
@@ -35,6 +36,14 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-/prisma/dev.db
-/prisma/dev.db-journal
+# Prisma — base de datos SQLite local (no subir a GitHub)
+# Sí se suben: schema.prisma, migrations/, seed.ts
+prisma/**/*.db
+prisma/**/*.db-journal
+prisma/**/*.db-wal
+prisma/**/*.db-shm
+# Ruta antigua por error de DATABASE_URL (file:./prisma/dev.db)
+prisma/prisma/
+
+# archivos subidos por usuarios (CV, logos, bases)
 /public/uploads/

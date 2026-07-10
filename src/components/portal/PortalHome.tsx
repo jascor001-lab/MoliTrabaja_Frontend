@@ -1,7 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 
+import { SlideView } from "@/components/ui/SlideView";
+import {
+  MOTION_REDUCE,
+  drawerEnterClass,
+  drawerExitClass,
+  staggerStyleObj,
+} from "@/lib/motion";
+import { usePortalUiStore } from "@/stores/portalUiStore";
 import type { OfertaLaboralDTO } from "@/types/bolsa";
 
 import { OfertaCard } from "./OfertaCard";
@@ -13,10 +21,18 @@ type Props = {
 };
 
 export function PortalHome({ ofertas: initial }: Props) {
-  const [query, setQuery] = useState("");
-  const [modalidad, setModalidad] = useState("");
-  const [selected, setSelected] = useState<OfertaLaboralDTO | null>(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const query = usePortalUiStore((s) => s.query);
+  const modalidad = usePortalUiStore((s) => s.modalidad);
+  const selected = usePortalUiStore((s) => s.selected);
+  const detailDirection = usePortalUiStore((s) => s.detailDirection);
+  const mobileOpen = usePortalUiStore((s) => s.mobileOpen);
+  const drawerClosing = usePortalUiStore((s) => s.drawerClosing);
+  const listAnimKey = usePortalUiStore((s) => s.listAnimKey);
+  const setQuery = usePortalUiStore((s) => s.setQuery);
+  const setModalidad = usePortalUiStore((s) => s.setModalidad);
+  const selectOferta = usePortalUiStore((s) => s.selectOferta);
+  const syncFiltered = usePortalUiStore((s) => s.syncFiltered);
+  const closeMobileDrawer = usePortalUiStore((s) => s.closeMobileDrawer);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -28,7 +44,6 @@ export function PortalHome({ ofertas: initial }: Props) {
         o.descripcion,
         o.empresa?.nombre,
         o.empresa?.razonSocial,
-        o.empresa?.nombre,
         ...o.carrerasRequeridas.map((c) => c.nombre),
         ...o.conocimientosRequeridos.map((c) => c.nombre),
       ]
@@ -38,18 +53,16 @@ export function PortalHome({ ofertas: initial }: Props) {
     });
   }, [initial, query, modalidad]);
 
-  useEffect(() => {
-    setSelected((prev) => {
-      if (filtered.length === 0) return null;
-      if (prev && filtered.some((o) => o.id === prev.id)) return prev;
-      return filtered[0];
-    });
-  }, [filtered]);
+  const orderedIds = useMemo(() => filtered.map((o) => o.id), [filtered]);
 
   useEffect(() => {
-    if (!mobileOpen) return;
+    syncFiltered(filtered);
+  }, [filtered, syncFiltered]);
+
+  useEffect(() => {
+    if (!mobileOpen && !drawerClosing) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMobileOpen(false);
+      if (e.key === "Escape") closeMobileDrawer();
     };
     document.body.style.overflow = "hidden";
     document.addEventListener("keydown", onKey);
@@ -57,23 +70,15 @@ export function PortalHome({ ofertas: initial }: Props) {
       document.body.style.overflow = "";
       document.removeEventListener("keydown", onKey);
     };
-  }, [mobileOpen]);
+  }, [mobileOpen, drawerClosing, closeMobileDrawer]);
 
-  const handleSelect = (oferta: OfertaLaboralDTO) => {
-    setSelected(oferta);
-    if (window.matchMedia("(max-width: 1023px)").matches) {
-      setMobileOpen(true);
-    }
-  };
-
-  const handleCloseMobile = () => {
-    setMobileOpen(false);
-  };
+  const showDrawer = (mobileOpen || drawerClosing) && selected;
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)]">
-      {/* Zona de búsqueda */}
-      <section className="shrink-0 bg-white border-b border-slate-200 px-4 py-6 lg:py-8">
+      <section
+        className={`shrink-0 bg-white border-b border-slate-200 px-4 py-6 lg:py-8 motion-enter-fade motion-gpu ${MOTION_REDUCE}`}
+      >
         <div className="max-w-4xl mx-auto text-center mb-6 px-1">
           <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">
             Encuentra tu próxima oportunidad
@@ -92,10 +97,11 @@ export function PortalHome({ ofertas: initial }: Props) {
         />
       </section>
 
-      {/* Layout dos columnas */}
       <div className="flex-1 bg-slate-100">
         {filtered.length === 0 ? (
-          <div className="flex items-center justify-center py-24 px-4">
+          <div
+            className={`flex items-center justify-center py-24 px-4 motion-enter-fade motion-gpu ${MOTION_REDUCE}`}
+          >
             <div className="text-center max-w-md">
               <p className="text-lg font-semibold text-slate-700">
                 No hay ofertas que coincidan
@@ -106,17 +112,23 @@ export function PortalHome({ ofertas: initial }: Props) {
             </div>
           </div>
         ) : (
-          <div className="flex flex-col lg:flex-row lg:gap-0 lg:h-[calc(100vh-13rem)] lg:min-h-[520px]">
-            {/* Feed izquierdo — 40% */}
-            <aside className="w-full lg:w-[40%] lg:shrink-0 lg:border-r lg:border-slate-200 bg-slate-100">
-              <div className="lg:sticky lg:top-[4.5rem] lg:h-[calc(100vh-13rem)] lg:overflow-y-auto">
-                <ul className="flex flex-col gap-2 p-3 lg:p-4">
-                  {filtered.map((oferta) => (
-                    <li key={oferta.id}>
+          <div className="flex flex-col lg:flex-row lg:gap-0 lg:min-h-[520px] lg:h-[calc(100vh-13rem)] lg:max-h-[calc(100vh-13rem)] lg:overflow-hidden">
+            <aside className="w-full lg:w-[40%] lg:shrink-0 lg:min-h-0 lg:border-r lg:border-slate-200 bg-slate-100">
+              <div className="lg:h-full lg:min-h-0 lg:overflow-y-auto scroll-panel">
+                <ul
+                  key={listAnimKey}
+                  className="flex flex-col gap-2 p-3 lg:p-4"
+                >
+                  {filtered.map((oferta, index) => (
+                    <li
+                      key={oferta.id}
+                      className={`motion-stagger-in motion-gpu ${MOTION_REDUCE}`}
+                      style={staggerStyleObj(index, 30, 38)}
+                    >
                       <OfertaCard
                         oferta={oferta}
                         selected={selected?.id === oferta.id}
-                        onSelect={handleSelect}
+                        onSelect={() => selectOferta(oferta, orderedIds)}
                       />
                     </li>
                   ))}
@@ -124,13 +136,20 @@ export function PortalHome({ ofertas: initial }: Props) {
               </div>
             </aside>
 
-            {/* Panel derecho — 60% (solo desktop) */}
-            <div className="hidden lg:flex lg:w-[60%] lg:min-w-0 p-4 bg-slate-100">
-              <div className="sticky top-[4.5rem] w-full h-[calc(100vh-13rem)]">
+            <div className="hidden lg:flex lg:w-[60%] lg:min-w-0 lg:min-h-0 p-4 bg-slate-100 h-full">
+              <div className="flex flex-col w-full h-full min-h-0 max-h-full">
                 {selected ? (
-                  <OfertaDetail oferta={selected} variant="panel" />
+                  <SlideView
+                    viewKey={selected.id}
+                    direction={detailDirection}
+                    className="h-full min-h-0 flex-1"
+                  >
+                    <OfertaDetail oferta={selected} variant="panel" />
+                  </SlideView>
                 ) : (
-                  <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white">
+                  <div
+                    className={`flex h-full items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white motion-enter-fade motion-gpu ${MOTION_REDUCE}`}
+                  >
                     <p className="text-sm text-slate-400">
                       Selecciona una oferta del listado
                     </p>
@@ -142,18 +161,23 @@ export function PortalHome({ ofertas: initial }: Props) {
         )}
       </div>
 
-      {/* Drawer móvil — pantalla completa */}
-      {mobileOpen && selected && (
+      {showDrawer && (
         <div
-          className="lg:hidden fixed inset-0 z-50 flex flex-col bg-white animate-fade-in motion-reduce:animate-none"
+          className={`lg:hidden fixed inset-0 z-50 flex flex-col bg-white ${MOTION_REDUCE}`}
           role="dialog"
           aria-modal="true"
         >
-          <OfertaDetail
-            oferta={selected}
-            variant="drawer"
-            onClose={handleCloseMobile}
-          />
+          <div
+            className={`h-full w-full ${
+              drawerClosing ? drawerExitClass() : drawerEnterClass()
+            } ${MOTION_REDUCE}`}
+          >
+            <OfertaDetail
+              oferta={selected!}
+              variant="drawer"
+              onClose={closeMobileDrawer}
+            />
+          </div>
         </div>
       )}
     </div>

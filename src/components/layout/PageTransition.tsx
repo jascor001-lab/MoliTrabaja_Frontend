@@ -21,7 +21,7 @@ export function PageTransition({ children }: Props) {
   return (
     <div
       key={pathname}
-      className={`${pageEnterClass(direction)} ${MOTION_REDUCE} will-change-opacity`}
+      className={`${pageEnterClass(direction)} ${MOTION_REDUCE}`}
     >
       {children}
     </div>

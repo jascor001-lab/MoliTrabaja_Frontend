@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import L from "leaflet";
 import {
   MapContainer,
@@ -12,7 +19,11 @@ import {
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { geocodeAddress } from "@/lib/geocode";
+import {
+  geocodeAddress,
+  searchAddressSuggestions,
+  type AddressSuggestion,
+} from "@/lib/geocode";
 import {
   MAP_DEFAULT_CENTER,
   MAP_DEFAULT_ZOOM,
@@ -30,6 +41,8 @@ const markerIcon = L.icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41],
 });
+
+const SUGGEST_DEBOUNCE_MS = 400;
 
 type Props = {
   direccionLiteral: string;
@@ -73,6 +86,13 @@ export function DireccionMapPicker({
 }: Props) {
   const [geocoding, setGeocoding] = useState(false);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [highlightIndex, setHighlightIndex] = useState(-1);
+  const [debouncedQuery, setDebouncedQuery] = useState(direccionLiteral);
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const listId = "direccion-sugerencias";
 
   const position = useMemo(
     () => coordsFromStrings(latitud, longitud),
@@ -91,8 +111,57 @@ export function DireccionMapPicker({
     [onCoordsChange]
   );
 
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(direccionLiteral), SUGGEST_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [direccionLiteral]);
+
+  useEffect(() => {
+    const q = debouncedQuery.trim();
+    if (!showSuggestions || q.length < 3) {
+      setSuggestions([]);
+      setSuggestLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setSuggestLoading(true);
+
+    const run = async () => {
+      try {
+        const items = await searchAddressSuggestions(q);
+        if (!cancelled) {
+          setSuggestions(items);
+          setHighlightIndex(items.length > 0 ? 0 : -1);
+        }
+      } catch {
+        if (!cancelled) setSuggestions([]);
+      } finally {
+        if (!cancelled) setSuggestLoading(false);
+      }
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedQuery, showSuggestions]);
+
+  const selectSuggestion = useCallback(
+    (item: AddressSuggestion) => {
+      onDireccionChange(item.label);
+      setCoords(item.lat, item.lng);
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setHighlightIndex(-1);
+      setGeocodeError(null);
+    },
+    [onDireccionChange, setCoords]
+  );
+
   const handleGeocode = async () => {
     setGeocodeError(null);
+    setShowSuggestions(false);
     setGeocoding(true);
     try {
       const result = await geocodeAddress(direccionLiteral);
@@ -100,6 +169,7 @@ export function DireccionMapPicker({
         setGeocodeError("No se encontró la dirección. Ajusta el texto o marca el mapa.");
         return;
       }
+      onDireccionChange(result.displayName);
       setCoords(result.lat, result.lng);
     } catch {
       setGeocodeError("Error al buscar la dirección. Intenta de nuevo.");
@@ -118,16 +188,95 @@ export function DireccionMapPicker({
     onCoordsChange(lat !== null ? formatCoord(lat) : latitud, value);
   };
 
+  const handleDireccionKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || suggestions.length === 0) {
+      if (e.key === "ArrowDown" && direccionLiteral.trim().length >= 3) {
+        setShowSuggestions(true);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightIndex((i) => (i + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+    } else if (e.key === "Enter" && highlightIndex >= 0) {
+      e.preventDefault();
+      selectSuggestion(suggestions[highlightIndex]);
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+      setHighlightIndex(-1);
+    }
+  };
+
+  const listVisible = showSuggestions && direccionLiteral.trim().length >= 3;
+
   return (
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row sm:items-end gap-2">
-        <div className="flex-1 min-w-0">
+        <div className="relative flex-1 min-w-0">
           <Input
             label="Dirección literal *"
-            placeholder="Ej. Av. La Molina 123, La Molina"
+            placeholder="Escribe y elige una dirección de la lista…"
             value={direccionLiteral}
-            onChange={(e) => onDireccionChange(e.target.value)}
+            autoComplete="off"
+            role="combobox"
+            aria-expanded={listVisible && suggestions.length > 0}
+            aria-controls={listId}
+            aria-autocomplete="list"
+            onChange={(e) => {
+              onDireccionChange(e.target.value);
+              setShowSuggestions(true);
+              setGeocodeError(null);
+            }}
+            onFocus={() => {
+              if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+              setShowSuggestions(true);
+            }}
+            onBlur={() => {
+              blurTimeoutRef.current = setTimeout(() => {
+                setShowSuggestions(false);
+                setHighlightIndex(-1);
+              }, 180);
+            }}
+            onKeyDown={handleDireccionKeyDown}
           />
+
+          {(suggestLoading || listVisible) && (
+            <ul
+              id={listId}
+              role="listbox"
+              className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-xl border border-emerald-200 bg-white py-1 shadow-lg"
+            >
+              {suggestLoading && suggestions.length === 0 && (
+                <li className="px-4 py-2.5 text-sm text-slate-500">Buscando direcciones…</li>
+              )}
+              {suggestions.map((item, i) => (
+                <li key={item.id} role="option" aria-selected={highlightIndex === i}>
+                  <button
+                    type="button"
+                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                      highlightIndex === i
+                        ? "bg-emerald-50 text-emerald-900"
+                        : "text-slate-700 hover:bg-emerald-50/80"
+                    }`}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => selectSuggestion(item)}
+                    onMouseEnter={() => setHighlightIndex(i)}
+                  >
+                    {item.label}
+                  </button>
+                </li>
+              ))}
+              {!suggestLoading && listVisible && suggestions.length === 0 && (
+                <li className="px-4 py-2.5 text-sm text-slate-500">
+                  Sin coincidencias. Prueba con más detalle o usa «Ubicar en mapa».
+                </li>
+              )}
+            </ul>
+          )}
         </div>
         <Button
           type="button"
@@ -141,8 +290,8 @@ export function DireccionMapPicker({
       </div>
 
       <p className="text-xs text-slate-500">
-        Haz clic en el mapa o arrastra el marcador para fijar coordenadas. También puedes
-        editarlas manualmente.
+        Escribe la dirección y elige una opción de la lista, haz clic en el mapa o arrastra
+        el marcador. También puedes editar latitud y longitud manualmente.
       </p>
 
       <div className="overflow-hidden rounded-xl border border-emerald-200 shadow-sm">

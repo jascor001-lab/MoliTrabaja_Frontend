@@ -31,7 +31,7 @@ export default async function EditarOfertaPage({ params }: Props) {
 
   return (
     <AppShell variant="empresa">
-      <div className="mb-8 animate-fade-in motion-reduce:animate-none">
+      <div className="mb-8 motion-enter-fade motion-gpu motion-reduce:animate-none">
         <Link
           href="/empresa"
           className="text-sm text-emerald-700 hover:underline font-medium"

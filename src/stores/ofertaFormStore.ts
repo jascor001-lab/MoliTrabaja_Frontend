@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 import { isoToDateInput } from "@/lib/oferta-api-body";
+import type { SlideDirection } from "@/lib/motion";
 import { salarioFromStored } from "@/lib/salario";
 import type {
   ArchivoAdjuntoMeta,
@@ -52,8 +53,11 @@ export type OfertaFormState = OfertaFormFields & {
   existingLogos: LogoArchivoMeta[];
   existingBases: ArchivoAdjuntoMeta | null;
   step: number;
+  slideDirection: SlideDirection;
+  submitError: string | null;
   isSubmitting: boolean;
   setStep: (step: number) => void;
+  setSubmitError: (error: string | null) => void;
   nextStep: () => void;
   prevStep: () => void;
   setField: <K extends keyof OfertaFormFields>(
@@ -110,6 +114,8 @@ const initialMeta = {
   existingLogos: [] as LogoArchivoMeta[],
   existingBases: null as ArchivoAdjuntoMeta | null,
   step: 1,
+  slideDirection: "forward" as SlideDirection,
+  submitError: null as string | null,
   isSubmitting: false,
 };
 
@@ -119,14 +125,20 @@ export const useOfertaFormStore = create<OfertaFormState>((set, get) => ({
 
   setStep: (step) => set({ step }),
 
+  setSubmitError: (submitError) => set({ submitError }),
+
   nextStep: () => {
     const { step } = get();
-    if (step < WIZARD_STEPS) set({ step: step + 1 });
+    if (step < WIZARD_STEPS) {
+      set({ step: step + 1, slideDirection: "forward", submitError: null });
+    }
   },
 
   prevStep: () => {
     const { step } = get();
-    if (step > 1) set({ step: step - 1 });
+    if (step > 1) {
+      set({ step: step - 1, slideDirection: "back", submitError: null });
+    }
   },
 
   setField: (key, value) => set({ [key]: value }),
@@ -201,6 +213,8 @@ export const useOfertaFormStore = create<OfertaFormState>((set, get) => ({
       existingLogos: oferta.logoArchivos.filter((l) => l.path),
       existingBases: oferta.basesArchivo,
       step: 1,
+      slideDirection: "forward",
+      submitError: null,
       isSubmitting: false,
       logoFiles: [],
       basesFile: null,

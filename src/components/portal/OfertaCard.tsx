@@ -25,11 +25,12 @@ export function OfertaCard({ oferta, selected = false, onSelect }: Props) {
         }
       }}
       className={`
-        cursor-pointer rounded-lg border p-4 text-left transition-all duration-200
+        cursor-pointer rounded-lg border p-4 text-left transition-[transform,box-shadow,border-color,background-color] duration-500 ease-fluid
+        motion-reduce:transition-none
         ${
           selected
-            ? "border-emerald-500 bg-emerald-50/60 shadow-sm ring-1 ring-emerald-500/30"
-            : "border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30 hover:shadow-sm"
+            ? "border-emerald-500 bg-emerald-50/60 shadow-md ring-1 ring-emerald-500/30 scale-[1.01]"
+            : "border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30 hover:shadow-sm hover:scale-[1.005] active:scale-[0.99]"
         }
       `}
     >

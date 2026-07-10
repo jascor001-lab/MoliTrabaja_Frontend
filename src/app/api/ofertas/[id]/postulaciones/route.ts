@@ -21,6 +21,7 @@ export async function GET(request: NextRequest, { params }: Params) {
               direccion: true,
               conocimientos: { include: { conocimiento: true } },
               educaciones: { include: { carrera: true } },
+              experiencias: { orderBy: { fechaInicio: "desc" } },
             },
           },
         },

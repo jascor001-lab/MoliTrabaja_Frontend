@@ -80,6 +80,53 @@ export type FunnelSummary = {
 
 export type CvFormato = "pdf" | "txt" | "word" | "otro";
 
+export type CandidateEducacion = {
+  id: string;
+  carrera: string;
+  tipo_estudio: string;
+  institucion: string;
+  orden_merito: string;
+  fecha_ingreso: string;
+  fecha_egreso: string | null;
+  documento_disponible: boolean;
+  documento_view_url?: string;
+  documento_filename?: string;
+};
+
+export type CandidateConocimiento = {
+  id: string;
+  nombre: string;
+  grupo: string;
+  documento_disponible: boolean;
+  documento_view_url?: string;
+  documento_filename?: string;
+};
+
+export type CandidateExperiencia = {
+  id: string;
+  puesto: string;
+  empresa: string;
+  sector: string;
+  meses: number;
+  documento_disponible: boolean;
+  documento_view_url?: string;
+  documento_filename?: string;
+};
+
+export type CandidateRequisitosMatch = {
+  carreras_requeridas: string[];
+  carreras_cumplidas: string[];
+  conocimientos_requeridos: string[];
+  conocimientos_cumplidos: string[];
+};
+
+export type CandidatePerfilResumen = {
+  educaciones: CandidateEducacion[];
+  conocimientos: CandidateConocimiento[];
+  experiencias: CandidateExperiencia[];
+  requisitos: CandidateRequisitosMatch;
+};
+
 export type CandidateActionable = {
   dni: string;
   nombre: string;
@@ -91,6 +138,15 @@ export type CandidateActionable = {
   cv_filename?: string;
   cv_formato?: CvFormato;
   cv_view_url?: string;
+  perfil_resumen: CandidatePerfilResumen;
+};
+
+export type ActividadPostulacion = {
+  id: string;
+  etiqueta: string;
+  descripcion: string;
+  fecha: string | null;
+  estado: "completado" | "actual" | "pendiente";
 };
 
 export type MisPostulacionItem = {
@@ -103,6 +159,7 @@ export type MisPostulacionItem = {
   match_score_percentage: number;
   fecha_postulacion: string;
   last_update: string;
+  activity_history: ActividadPostulacion[];
 };
 
 export type DashboardDualResponse = {
@@ -110,6 +167,7 @@ export type DashboardDualResponse = {
   job_metadata: {
     job_id: string;
     title: string;
+    empresa: string;
   };
   pestaña_empresa_view: {
     analytics: {
@@ -129,6 +187,7 @@ export type DashboardDualResponse = {
         total_rivales_postulando: number;
       };
       last_activity_timestamp: string;
+      activity_history: ActividadPostulacion[];
     };
   };
   applicant_profile?: {

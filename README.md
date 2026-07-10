@@ -5,10 +5,13 @@ Plataforma de bolsa de trabajo con portal público para postulantes y panel para
 ## Inicio rápido
 
 ```bash
+cp .env.example .env
 npm install
-npm run db:seed
+npm run db:setup
 npm run dev
 ```
+
+La base de datos SQLite (`prisma/dev.db`) es **local** y no se sube a GitHub. Si ves *"table does not exist"*, ejecuta `npm run db:setup` y reinicia `npm run dev`.
 
 - Portal: [http://localhost:3000](http://localhost:3000)
 - Panel empresa: [http://localhost:3000/empresa](http://localhost:3000/empresa)

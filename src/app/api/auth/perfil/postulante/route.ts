@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import {
+  mapConocimiento,
+  mapEducacion,
+  mapExpLaboral,
+} from "@/lib/perfil-postulante";
 import { numeroDocumentoDe } from "@/lib/postulante-doc";
 import { actualizarDireccionPostulante } from "@/lib/postulante-persist";
 import { validarPostulanteInput } from "@/lib/validacion-postulante";
@@ -45,12 +50,12 @@ export async function GET() {
     telefono: p.telefono,
     direccionLiteral: p.direccion?.direccionLiteral ?? "",
     direccion: p.direccion?.direccionLiteral ?? "",
-    latitud: p.direccion?.latitud,
-    longitud: p.direccion?.longitud,
+    latitud: p.direccion?.latitud ?? "",
+    longitud: p.direccion?.longitud ?? "",
     cvPath: p.cvPath,
-    experiencias: p.experiencias,
-    educaciones: p.educaciones,
-    conocimientos: p.conocimientos,
+    experiencias: p.experiencias.map(mapExpLaboral),
+    educaciones: p.educaciones.map(mapEducacion),
+    conocimientos: p.conocimientos.map(mapConocimiento),
   });
 }
 
@@ -104,7 +109,7 @@ export async function PATCH(request: NextRequest) {
     validation.data.longitud
   );
 
-  const updated = await prisma.postulante.update({
+  await prisma.postulante.update({
     where: { id: session.postulanteId },
     data: {
       nombres: validation.data.nombres,
@@ -116,22 +121,44 @@ export async function PATCH(request: NextRequest) {
       estadoCivil: validation.data.estadoCivil,
       telefono: validation.data.telefono,
     },
-    include: { direccion: true },
   });
 
+  const full = await prisma.postulante.findUnique({
+    where: { id: session.postulanteId },
+    include: {
+      direccion: true,
+      tipoDoc: true,
+      pais: true,
+      experiencias: true,
+      educaciones: { include: { carrera: true } },
+      conocimientos: { include: { conocimiento: true } },
+    },
+  });
+
+  if (!full) {
+    return NextResponse.json({ error: "Perfil no encontrado" }, { status: 404 });
+  }
+
   return NextResponse.json({
-    id: updated.id,
-    dni: numeroDocumentoDe(updated),
-    numeroDocumento: updated.numeroDocumento,
-    nombres: updated.nombres,
-    apellidoPaterno: updated.apellidoPaterno,
-    apellidoMaterno: updated.apellidoMaterno,
-    fechaNacimiento: updated.fechaNacimiento.toISOString().slice(0, 10),
-    genero: updated.genero,
-    estadoCivil: updated.estadoCivil,
-    correo: updated.correo,
-    telefono: updated.telefono,
-    direccion: updated.direccion?.direccionLiteral ?? "",
-    cvPath: updated.cvPath,
+    id: full.id,
+    dni: numeroDocumentoDe(full),
+    numeroDocumento: full.numeroDocumento,
+    nombres: full.nombres,
+    apellidoPaterno: full.apellidoPaterno,
+    apellidoMaterno: full.apellidoMaterno,
+    fechaNacimiento: full.fechaNacimiento.toISOString().slice(0, 10),
+    paisId: full.paisId,
+    genero: full.genero,
+    estadoCivil: full.estadoCivil,
+    correo: full.correo,
+    telefono: full.telefono,
+    direccion: full.direccion?.direccionLiteral ?? "",
+    direccionLiteral: full.direccion?.direccionLiteral ?? "",
+    latitud: full.direccion?.latitud ?? "",
+    longitud: full.direccion?.longitud ?? "",
+    cvPath: full.cvPath,
+    experiencias: full.experiencias.map(mapExpLaboral),
+    educaciones: full.educaciones.map(mapEducacion),
+    conocimientos: full.conocimientos.map(mapConocimiento),
   });
 }

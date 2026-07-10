@@ -38,38 +38,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "El CV es obligatorio" }, { status: 400 });
     }
 
+    const perfilDb = await prisma.postulante.findUnique({
+      where: { id: session.postulanteId },
+      include: { direccion: true },
+    });
+    if (!perfilDb) {
+      return NextResponse.json({ error: "Perfil no encontrado" }, { status: 404 });
+    }
+
+    const telefonoForm = String(form.get("telefono") ?? "").trim();
+    const direccionForm = String(
+      form.get("direccionLiteral") ?? form.get("direccion") ?? ""
+    ).trim();
+
     const rawInput: Partial<PostulanteInput> = {
-      tipoDocId: Number(form.get("tipoDocId") ?? 1),
-      numeroDocumento: String(form.get("numeroDocumento") ?? form.get("dni") ?? ""),
-      nombres: String(form.get("nombres") ?? ""),
-      apellidoPaterno: String(form.get("apellidoPaterno") ?? ""),
-      apellidoMaterno: String(form.get("apellidoMaterno") ?? ""),
-      fechaNacimiento: String(form.get("fechaNacimiento") ?? ""),
-      paisId: Number(form.get("paisId") ?? 1),
-      genero: String(form.get("genero") ?? "") as PostulanteInput["genero"],
-      estadoCivil: String(form.get("estadoCivil") ?? "Soltero") as PostulanteInput["estadoCivil"],
-      correo: String(form.get("correo") ?? ""),
-      telefono: String(form.get("telefono") ?? ""),
-      direccionLiteral: String(form.get("direccionLiteral") ?? form.get("direccion") ?? ""),
+      tipoDocId: perfilDb.tipoDocId,
+      numeroDocumento: perfilDb.numeroDocumento,
+      nombres: perfilDb.nombres,
+      apellidoPaterno: perfilDb.apellidoPaterno,
+      apellidoMaterno: perfilDb.apellidoMaterno,
+      fechaNacimiento: perfilDb.fechaNacimiento.toISOString().slice(0, 10),
+      paisId: perfilDb.paisId,
+      genero: perfilDb.genero,
+      estadoCivil: perfilDb.estadoCivil,
+      correo: perfilDb.correo,
+      telefono: telefonoForm || perfilDb.telefono,
+      direccionLiteral:
+        direccionForm || perfilDb.direccion?.direccionLiteral || "",
     };
 
     const validation = validarPostulanteInput(rawInput);
     if (!validation.ok) {
       return NextResponse.json(
-        { error: "Validación fallida", errors: validation.errors },
+        {
+          error: "Completa tu perfil antes de postular",
+          errors: validation.errors,
+          redirect: "/personal/perfil",
+        },
         { status: 422 }
-      );
-    }
-
-    const perfil = await prisma.postulante.findUnique({
-      where: { id: session.postulanteId },
-      select: { numeroDocumento: true },
-    });
-
-    if (validation.data.numeroDocumento !== perfil?.numeroDocumento) {
-      return NextResponse.json(
-        { error: "El documento no coincide con tu perfil registrado" },
-        { status: 403 }
       );
     }
 
@@ -105,30 +111,16 @@ export async function POST(request: NextRequest) {
       cvFile
     );
 
-    const current = await prisma.postulante.findUnique({
-      where: { id: session.postulanteId },
-    });
-    if (!current) {
-      return NextResponse.json({ error: "Perfil no encontrado" }, { status: 404 });
-    }
-
     await actualizarDireccionPostulante(
       prisma,
       session.postulanteId,
-      current.direccionId,
+      perfilDb.direccionId,
       validation.data.direccionLiteral
     );
 
     const postulante = await prisma.postulante.update({
       where: { id: session.postulanteId },
       data: {
-        nombres: validation.data.nombres,
-        apellidoPaterno: validation.data.apellidoPaterno,
-        apellidoMaterno: validation.data.apellidoMaterno,
-        fechaNacimiento: new Date(validation.data.fechaNacimiento),
-        genero: validation.data.genero,
-        estadoCivil: validation.data.estadoCivil,
-        correo: validation.data.correo,
         telefono: validation.data.telefono,
         cvPath,
         cvParsed: JSON.stringify(cvParsed),
