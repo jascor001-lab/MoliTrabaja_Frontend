@@ -3,6 +3,10 @@ import { ESTADOS_CIVILES, GENEROS, type Genero } from "@/types/postulacion";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+export function parseBooleanFlag(value: unknown): boolean {
+  return value === true || value === "true" || value === 1 || value === "1";
+}
+
 export function capitalizarNombre(value: string): string {
   return value
     .trim()
@@ -23,6 +27,7 @@ export function calcularEdad(fechaNacimiento: string, ref = new Date()): number 
 
 export type PostulanteFormInput = {
   tipoDocId: number;
+  tipoDocAbrev?: string;
   numeroDocumento: string;
   nombres: string;
   apellidoPaterno: string;
@@ -36,6 +41,7 @@ export type PostulanteFormInput = {
   direccionLiteral: string;
   latitud?: string;
   longitud?: string;
+  tieneDiscapacidad: boolean;
 };
 
 export function validarPostulanteInput(
@@ -48,10 +54,24 @@ export function validarPostulanteInput(
     errors.tipoDocId = "Selecciona un tipo de documento.";
   }
 
-  const numeroDocumento = (data.numeroDocumento ?? data.dni ?? "").trim();
-  if (tipoDocId === 1 && !/^\d{8}$/.test(numeroDocumento)) {
-    errors.numeroDocumento = "El DNI debe tener exactamente 8 dígitos numéricos.";
-  } else if (numeroDocumento.length < 6) {
+  const numeroDocumento = (data.numeroDocumento ?? data.dni ?? "")
+    .trim()
+    .toUpperCase();
+  const tipoDocAbrev = data.tipoDocAbrev?.trim().toUpperCase();
+
+  if (tipoDocAbrev === "DNI" && !/^\d{8}$/.test(numeroDocumento)) {
+    errors.numeroDocumento = "El DNI debe tener exactamente 8 dígitos.";
+  } else if (tipoDocAbrev === "CE" && !/^[A-Z0-9]{9,12}$/.test(numeroDocumento)) {
+    errors.numeroDocumento = "El CE debe tener entre 9 y 12 caracteres.";
+  } else if (tipoDocAbrev === "CPP" && !/^\d{9}$/.test(numeroDocumento)) {
+    errors.numeroDocumento = "El CPP debe tener exactamente 9 dígitos.";
+  } else if (tipoDocAbrev === "RUC" && !/^\d{11}$/.test(numeroDocumento)) {
+    errors.numeroDocumento = "El RUC debe tener exactamente 11 dígitos.";
+  } else if (tipoDocAbrev === "PAS" && !/^[A-Z0-9]{6,12}$/.test(numeroDocumento)) {
+    errors.numeroDocumento = "El pasaporte debe tener entre 6 y 12 caracteres.";
+  } else if (!tipoDocAbrev && tipoDocId === 1 && !/^\d{8}$/.test(numeroDocumento)) {
+    errors.numeroDocumento = "El DNI debe tener exactamente 8 dígitos.";
+  } else if (!tipoDocAbrev && numeroDocumento.length < 6) {
     errors.numeroDocumento = "Ingresa un número de documento válido.";
   }
 
@@ -124,6 +144,7 @@ export function validarPostulanteInput(
       direccionLiteral,
       latitud: data.latitud,
       longitud: data.longitud,
+      tieneDiscapacidad: Boolean(data.tieneDiscapacidad),
     },
   };
 }

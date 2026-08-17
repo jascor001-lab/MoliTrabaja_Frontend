@@ -180,9 +180,12 @@ export function toOfertaDTO(oferta: OfertaWithRelations): OfertaLaboralDTO {
     logoArchivos,
     logoUrl: pickLogoFromArchivos(logoArchivos) ?? empresaDto?.logo ?? null,
     basesArchivo,
-    basesViewUrl: basesArchivo ? basesViewUrl(oferta.id) : null,
+    basesViewUrl: basesArchivo
+      ? basesViewUrl(oferta.id, basesArchivo.path.split("/").pop() ?? basesArchivo.name)
+      : null,
     tipoPuesto: asTipoPuesto(parseJsonArray(oferta.tipoPuesto)),
     cantidadVacantes: oferta.cantidadVacantes,
+    aptoDiscapacidad: Boolean(oferta.aptoDiscapacidad),
     funciones: oferta.funciones,
     beneficios: oferta.beneficios,
     direccionTrabajo: toDireccionDTO(oferta.direccionTrabajo),
@@ -213,7 +216,10 @@ export async function enrichOfertaDTOWithBases(
   return {
     ...dto,
     basesArchivo: bases,
-    basesViewUrl: basesViewUrl(ofertaId),
+    basesViewUrl: basesViewUrl(
+      ofertaId,
+      bases.path.split("/").pop() ?? bases.name
+    ),
   };
 }
 

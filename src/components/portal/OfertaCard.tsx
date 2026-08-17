@@ -52,6 +52,11 @@ export function OfertaCard({ oferta, selected = false, onSelect }: Props) {
             {t}
           </span>
         ))}
+        {oferta.aptoDiscapacidad && (
+          <span className="inline-flex items-center rounded-md bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700">
+            Inclusivo
+          </span>
+        )}
       </div>
 
       <div className="mt-3 flex items-end justify-between gap-2">

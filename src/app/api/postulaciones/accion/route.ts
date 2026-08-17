@@ -21,8 +21,8 @@ export async function PATCH(request: NextRequest) {
   const jobId = body.job_id?.trim();
   const action = body.action as AccionReclutador;
 
-  if (!dni || !/^\d{8}$/.test(dni)) {
-    return NextResponse.json({ error: "DNI inválido" }, { status: 400 });
+  if (!dni || dni.length < 5) {
+    return NextResponse.json({ error: "Documento inválido" }, { status: 400 });
   }
   if (!jobId) {
     return NextResponse.json({ error: "job_id es obligatorio" }, { status: 400 });

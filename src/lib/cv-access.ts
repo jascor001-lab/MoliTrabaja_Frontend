@@ -1,6 +1,10 @@
 import { access } from "fs/promises";
 import path from "path";
 
+import { cvViewUrl, nombreArchivoCv, perfilCvViewUrl } from "@/lib/cv-urls";
+
+export { cvViewUrl, nombreArchivoCv, perfilCvViewUrl };
+
 const CV_ROOT = path.join(process.cwd(), "public", "uploads", "cv");
 
 const MIME_BY_EXT: Record<string, string> = {
@@ -19,10 +23,7 @@ export type CvFileInfo = {
   inline: boolean;
 };
 
-export function cvViewUrl(ofertaId: string, dni: string): string {
-  return `/api/ofertas/${ofertaId}/postulaciones/${dni}/cv`;
-}
-
+/** Solo servidor: resuelve el archivo físico del CV. */
 export async function resolveCvFile(cvPath: string | null): Promise<CvFileInfo | null> {
   if (!cvPath?.startsWith("/uploads/cv/")) return null;
 

@@ -163,6 +163,9 @@ export function OfertaDetail({ oferta, variant = "panel", onClose }: Props) {
                     icon="👥"
                   />
                   <MetaBadge label="Contrato" value={oferta.tipoContrato} icon="📄" />
+                  {oferta.aptoDiscapacidad && (
+                    <MetaBadge label="Discapacidad" value="Puesto inclusivo" icon="♿" />
+                  )}
                   <MetaBadge
                     label="Inicio convocatoria"
                     value={conv ? formatFechaCorta(conv.inicio) : "—"}

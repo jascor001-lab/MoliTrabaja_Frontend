@@ -1,19 +1,22 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { SlideView } from "@/components/ui/SlideView";
-import {
-  MOTION_REDUCE,
-  drawerEnterClass,
-  drawerExitClass,
-  staggerStyleObj,
-} from "@/lib/motion";
+import { esOfertaNueva } from "@/lib/format-fecha";
+import { MOTION_REDUCE, drawerEnterClass, drawerExitClass, staggerStyleObj } from "@/lib/motion";
+import { ofertaCumpleFiltroSalario, salarioSortKey } from "@/lib/salario";
 import { usePortalUiStore } from "@/stores/portalUiStore";
-import type { OfertaLaboralDTO } from "@/types/bolsa";
+import type { OfertaLaboralDTO, TipoPuesto } from "@/types/bolsa";
 
 import { OfertaCard } from "./OfertaCard";
 import { OfertaDetail } from "./OfertaDetail";
+import {
+  OfertaFilters,
+  EMPTY_FILTERS,
+  filtersAreActive,
+  type OfertaFilterValue,
+} from "./OfertaFilters";
 import { SearchBar } from "./SearchBar";
 
 type Props = {
@@ -22,36 +25,144 @@ type Props = {
 
 export function PortalHome({ ofertas: initial }: Props) {
   const query = usePortalUiStore((s) => s.query);
-  const modalidad = usePortalUiStore((s) => s.modalidad);
   const selected = usePortalUiStore((s) => s.selected);
   const detailDirection = usePortalUiStore((s) => s.detailDirection);
   const mobileOpen = usePortalUiStore((s) => s.mobileOpen);
   const drawerClosing = usePortalUiStore((s) => s.drawerClosing);
   const listAnimKey = usePortalUiStore((s) => s.listAnimKey);
   const setQuery = usePortalUiStore((s) => s.setQuery);
-  const setModalidad = usePortalUiStore((s) => s.setModalidad);
   const selectOferta = usePortalUiStore((s) => s.selectOferta);
   const syncFiltered = usePortalUiStore((s) => s.syncFiltered);
   const closeMobileDrawer = usePortalUiStore((s) => s.closeMobileDrawer);
+  const [filters, setFilters] = useState<OfertaFilterValue>(EMPTY_FILTERS);
+
+  const filterOptions = useMemo(() => {
+    const empresas = Array.from(
+      new Map(
+        initial
+          .map((oferta) => oferta.empresa)
+          .filter((empresa): empresa is NonNullable<typeof empresa> => Boolean(empresa))
+          .map((empresa) => [
+            empresa.id,
+            {
+              value: empresa.id,
+              label: empresa.razonSocial || empresa.nombre,
+            },
+          ])
+      ).values()
+    ).sort((a, b) => a.label.localeCompare(b.label, "es"));
+
+    const contratos = Array.from(
+      new Set(initial.map((oferta) => oferta.tipoContrato).filter(Boolean))
+    ).sort((a, b) => a.localeCompare(b, "es"));
+
+    const carreras = Array.from(
+      new Map(
+        initial
+          .flatMap((oferta) => oferta.carrerasRequeridas)
+          .map((item) => [String(item.id), { value: String(item.id), label: item.nombre }])
+      ).values()
+    ).sort((a, b) => a.label.localeCompare(b.label, "es"));
+
+    const conocimientos = Array.from(
+      new Map(
+        initial
+          .flatMap((oferta) => oferta.conocimientosRequeridos)
+          .map((item) => [String(item.id), { value: String(item.id), label: item.nombre }])
+      ).values()
+    ).sort((a, b) => a.label.localeCompare(b.label, "es"));
+
+    return { empresas, contratos, carreras, conocimientos };
+  }, [initial]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return initial.filter((o) => {
-      if (modalidad && o.modalidad !== modalidad) return false;
+    const now = Date.now();
+
+    const result = initial.filter((oferta) => {
+      if (filters.empresa && oferta.empresaId !== filters.empresa) return false;
+      if (filters.modalidad && oferta.modalidad !== filters.modalidad) return false;
+      if (
+        filters.jornada &&
+        !oferta.tipoPuesto.includes(filters.jornada as TipoPuesto)
+      ) {
+        return false;
+      }
+      if (filters.contrato && oferta.tipoContrato !== filters.contrato) return false;
+      if (
+        filters.carrera &&
+        !oferta.carrerasRequeridas.some((item) => String(item.id) === filters.carrera)
+      ) {
+        return false;
+      }
+      if (
+        filters.conocimiento &&
+        !oferta.conocimientosRequeridos.some(
+          (item) => String(item.id) === filters.conocimiento
+        )
+      ) {
+        return false;
+      }
+      if (filters.salario && !ofertaCumpleFiltroSalario(oferta.salario, filters.salario)) {
+        return false;
+      }
+      if (filters.discapacidad === "si" && !oferta.aptoDiscapacidad) return false;
+      if (filters.fecha) {
+        const days = Number(filters.fecha);
+        const publishedAt = new Date(oferta.fechaPublicacion).getTime();
+        if (!Number.isFinite(publishedAt) || now - publishedAt > days * 86_400_000) {
+          return false;
+        }
+      }
+
       if (!q) return true;
       const text = [
-        o.titulo,
-        o.descripcion,
-        o.empresa?.nombre,
-        o.empresa?.razonSocial,
-        ...o.carrerasRequeridas.map((c) => c.nombre),
-        ...o.conocimientosRequeridos.map((c) => c.nombre),
+        oferta.titulo,
+        oferta.descripcion,
+        oferta.empresa?.nombre,
+        oferta.empresa?.razonSocial,
+        ...oferta.carrerasRequeridas.map((c) => c.nombre),
+        ...oferta.conocimientosRequeridos.map((c) => c.nombre),
       ]
         .join(" ")
         .toLowerCase();
       return text.includes(q);
     });
-  }, [initial, query, modalidad]);
+
+    return result.sort((a, b) => {
+      if (filters.ordenar === "salario-asc") {
+        return salarioSortKey(a.salario) - salarioSortKey(b.salario);
+      }
+      if (filters.ordenar === "antiguas") {
+        return (
+          new Date(a.fechaPublicacion).getTime() -
+          new Date(b.fechaPublicacion).getTime()
+        );
+      }
+      if (filters.ordenar === "titulo") {
+        return a.titulo.localeCompare(b.titulo, "es");
+      }
+      if (filters.ordenar === "recientes") {
+        return (
+          new Date(b.fechaPublicacion).getTime() -
+          new Date(a.fechaPublicacion).getTime()
+        );
+      }
+      return 0;
+    });
+  }, [initial, query, filters]);
+
+  const hasActiveFilters = filtersAreActive(filters);
+
+  const nuevasCount = useMemo(
+    () => filtered.filter((oferta) => esOfertaNueva(oferta.fechaPublicacion)).length,
+    [filtered]
+  );
+
+  const ofertasLabel =
+    filtered.length > 0 && nuevasCount === filtered.length
+      ? `nueva${filtered.length !== 1 ? "s" : ""}`
+      : `activa${filtered.length !== 1 ? "s" : ""}`;
 
   const orderedIds = useMemo(() => filtered.map((o) => o.id), [filtered]);
 
@@ -84,17 +195,27 @@ export function PortalHome({ ofertas: initial }: Props) {
             Encuentra tu próxima oportunidad
           </h1>
           <p className="text-sm text-slate-500 mt-2">
-            {filtered.length} oferta{filtered.length !== 1 ? "s" : ""} activa
-            {filtered.length !== 1 ? "s" : ""}
-            {query || modalidad ? " que coinciden con tu búsqueda" : ""}
+            {filtered.length} oferta{filtered.length !== 1 ? "s" : ""} {ofertasLabel}
+            {nuevasCount > 0 && nuevasCount !== filtered.length
+              ? ` · ${nuevasCount} nueva${nuevasCount !== 1 ? "s" : ""}`
+              : ""}
+            {query || hasActiveFilters ? " que coinciden con tu búsqueda" : ""}
           </p>
         </div>
         <SearchBar
           query={query}
-          modalidad={modalidad}
           onQueryChange={setQuery}
-          onModalidadChange={setModalidad}
         />
+        <div className="mx-auto max-w-4xl">
+          <OfertaFilters
+            value={filters}
+            empresas={filterOptions.empresas}
+            contratos={filterOptions.contratos}
+            carreras={filterOptions.carreras}
+            conocimientos={filterOptions.conocimientos}
+            onChange={setFilters}
+          />
+        </div>
       </section>
 
       <div className="flex-1 bg-slate-100">

@@ -21,8 +21,10 @@ export type BasesFileInfo = {
   inline: boolean;
 };
 
-export function basesViewUrl(ofertaId: string): string {
-  return `/api/ofertas/${ofertaId}/bases`;
+export function basesViewUrl(ofertaId: string, version?: string | null): string {
+  const base = `/api/ofertas/${ofertaId}/bases`;
+  if (!version) return base;
+  return `${base}?v=${encodeURIComponent(version)}`;
 }
 
 export function parseBasesArchivo(raw: string): ArchivoAdjuntoMeta | null {

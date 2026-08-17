@@ -31,10 +31,11 @@ export function DateInput({
 }: Props) {
   const inputId = useId();
   const [display, setDisplay] = useState(() => isoToDisplay(value));
+  const [focused, setFocused] = useState(false);
 
   useEffect(() => {
-    setDisplay(isoToDisplay(value));
-  }, [value]);
+    if (!focused) setDisplay(isoToDisplay(value));
+  }, [value, focused]);
 
   const handleChange = (raw: string) => {
     if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
@@ -64,12 +65,18 @@ export function DateInput({
         autoComplete="off"
         placeholder="DD/MM/AAAA"
         maxLength={10}
+        pattern="\d{2}/\d{2}/\d{4}"
+        title="Escribe 2 dígitos para el día, 2 para el mes y 4 para el año."
+        required={required}
         disabled={disabled}
         aria-required={required}
         value={display}
+        onFocus={() => setFocused(true)}
         onChange={(e) => handleChange(e.target.value)}
         onBlur={() => {
+          setFocused(false);
           if (display.length > 0 && display.length < 10) {
+            setDisplay("");
             onChange("");
           }
         }}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { SlideView } from "@/components/ui/SlideView";
@@ -41,6 +41,8 @@ function basesStepError(s: ReturnType<typeof useOfertaFormStore.getState>): stri
 export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
   const isEdit = mode === "edit";
   const router = useRouter();
+  const wizardRef = useRef<HTMLDivElement>(null);
+  const previousStepRef = useRef<number | null>(null);
   const {
     step,
     slideDirection,
@@ -52,6 +54,27 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
     setSubmitError,
     reset,
   } = useOfertaFormStore();
+
+  useEffect(() => {
+    if (previousStepRef.current === null) {
+      previousStepRef.current = step;
+      return;
+    }
+    if (previousStepRef.current === step) return;
+    previousStepRef.current = step;
+
+    const timer = window.setTimeout(() => {
+      const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+      wizardRef.current?.scrollIntoView({
+        behavior: reduceMotion ? "auto" : "smooth",
+        block: "start",
+      });
+    }, 40);
+
+    return () => window.clearTimeout(timer);
+  }, [step]);
 
   const validateCurrentStep = (): string | null => {
     const s = useOfertaFormStore.getState();
@@ -134,6 +157,7 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
     longitud: state.longitud || undefined,
     carreraIds: state.carreraIds,
     conocimientoIds: state.conocimientoIds,
+    aptoDiscapacidad: state.aptoDiscapacidad,
     contactoPrincipal: state.contactoPrincipal,
     contactoGerente: state.contactoGerente,
     ...(isEdit ? { estado: state.estado } : {}),
@@ -191,7 +215,7 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
   const lastStepLabel = isEdit ? "Guardar" : "Publicar";
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
+    <div ref={wizardRef} className="mx-auto max-w-2xl space-y-8 scroll-mt-24">
       <StepIndicator
         current={step}
         labels={
@@ -202,7 +226,11 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
       />
 
       <div className="rounded-2xl border border-emerald-100 bg-white p-6 md:p-8 shadow-sm overflow-hidden">
-        <SlideView viewKey={step} direction={slideDirection} className="min-h-[320px]">
+        <SlideView
+          viewKey={step}
+          direction={slideDirection}
+          className="motion-wizard min-h-[320px]"
+        >
           {step === 1 && <WizardStepEmpresa />}
           {step === 2 && <WizardStepVacante />}
           {step === 3 && <WizardStepContacto />}

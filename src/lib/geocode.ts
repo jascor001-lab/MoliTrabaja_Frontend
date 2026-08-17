@@ -23,6 +23,10 @@ type NominatimHit = {
   display_name: string;
 };
 
+type NominatimReverseHit = {
+  display_name?: string;
+};
+
 async function nominatimSearch(
   query: string,
   limit: number
@@ -84,4 +88,26 @@ export async function geocodeAddress(query: string): Promise<GeocodeResult | nul
 
   const hits = await nominatimSearch(q, 1);
   return hits[0] ? hitToResult(hits[0]) : null;
+}
+
+/** Obtiene la dirección correspondiente a un punto seleccionado en el mapa. */
+export async function reverseGeocodeAddress(
+  lat: number,
+  lng: number
+): Promise<string | null> {
+  const params = new URLSearchParams({
+    lat: String(lat),
+    lon: String(lng),
+    format: "json",
+    addressdetails: "0",
+  });
+
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?${params}`,
+    { headers: NOMINATIM_HEADERS }
+  );
+  if (!res.ok) return null;
+
+  const data = (await res.json()) as NominatimReverseHit;
+  return data.display_name?.trim() || null;
 }

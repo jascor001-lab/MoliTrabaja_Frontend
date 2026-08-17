@@ -30,7 +30,10 @@ export function BasesConvocatoriaModal({
   onClose,
 }: Props) {
   const formato = formatoDesdeNombre(fileName ?? viewUrl);
-  const { show, requestClose, backdropClass, panelClass } = useModalMotion(true, onClose);
+  const { show, closing, requestClose, backdropClass, panelClass } = useModalMotion(
+    true,
+    onClose
+  );
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -45,6 +48,17 @@ export function BasesConvocatoriaModal({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [show, requestClose]);
+
+  // Al cerrar: vaciar el iframe de inmediato para que no quede sombra del PDF.
+  useEffect(() => {
+    if (!closing) return;
+    const iframe = document.getElementById(
+      "bases-convocatoria-iframe"
+    ) as HTMLIFrameElement | null;
+    if (iframe) {
+      iframe.src = "about:blank";
+    }
+  }, [closing]);
 
   if (!show || !mounted) return null;
 
@@ -69,11 +83,13 @@ export function BasesConvocatoriaModal({
             <p className="text-sm text-slate-500 mt-0.5 truncate">{empresa}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <a href={viewUrl} target="_blank" rel="noopener noreferrer" download={fileName}>
-              <Button variant="secondary" className="text-xs py-2 px-3">
-                Descargar
-              </Button>
-            </a>
+            {!closing && (
+              <a href={viewUrl} target="_blank" rel="noopener noreferrer" download={fileName}>
+                <Button variant="secondary" className="text-xs py-2 px-3">
+                  Descargar
+                </Button>
+              </a>
+            )}
             <button
               type="button"
               onClick={requestClose}
@@ -86,8 +102,12 @@ export function BasesConvocatoriaModal({
         </div>
 
         <div className="relative flex-1 min-h-0 overflow-hidden bg-slate-100">
-          {formato === "pdf" || formato === "txt" ? (
+          {closing ? (
+            <div className="flex h-full items-center justify-center bg-white" aria-hidden />
+          ) : formato === "pdf" || formato === "txt" ? (
             <iframe
+              id="bases-convocatoria-iframe"
+              key={viewUrl}
               src={viewUrl}
               title={`Bases — ${titulo}`}
               className="absolute inset-0 h-full w-full border-0 bg-white"

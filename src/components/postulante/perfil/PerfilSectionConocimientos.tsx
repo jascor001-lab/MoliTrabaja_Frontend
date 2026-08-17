@@ -3,8 +3,8 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { PdfFileInput } from "@/components/ui/PdfFileInput";
+import { InstitutionCombobox } from "@/components/ui/InstitutionCombobox";
+import { KnowledgeCombobox } from "@/components/ui/KnowledgeCombobox";
 import { SectionHint } from "@/components/ui/SectionHint";
 import { usePerfilPostulanteStore } from "@/stores/perfilPostulanteStore";
 
@@ -16,49 +16,42 @@ export function PerfilSectionConocimientos() {
   const removeConocimiento = usePerfilPostulanteStore((s) => s.removeConocimiento);
 
   const [conocimientoId, setConocimientoId] = useState("");
+  const [conocimientoNombre, setConocimientoNombre] = useState("");
   const [institucion, setInstitucion] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [documento, setDocumento] = useState<File | null>(null);
-  const [docError, setDocError] = useState<string | null>(null);
+  const [knowledgeError, setKnowledgeError] = useState<string | null>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!documento) {
-      setDocError("Adjunta un PDF que certifique este conocimiento.");
+    if (!conocimientoId && conocimientoNombre.trim().length < 2) {
+      setKnowledgeError("Selecciona un conocimiento o escribe uno nuevo.");
       return;
     }
-    setDocError(null);
+    setKnowledgeError(null);
     const ok = await addConocimiento(
       {
-        conocimientoId: Number(conocimientoId),
+        conocimientoId: conocimientoId ? Number(conocimientoId) : undefined,
+        conocimientoNombre: conocimientoNombre.trim(),
         institucion,
       },
-      documento
+      null
     );
     if (ok) {
       setConocimientoId("");
+      setConocimientoNombre("");
       setInstitucion("");
-      setDocumento(null);
       setShowForm(false);
     }
   };
 
   if (!catalogos) return null;
 
-  const porGrupo = catalogos.conocimientos.reduce<Record<string, typeof catalogos.conocimientos>>(
-    (acc, k) => {
-      if (!acc[k.grupo]) acc[k.grupo] = [];
-      acc[k.grupo].push(k);
-      return acc;
-    },
-    {}
-  );
-
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap justify-between gap-3">
-        <SectionHint title="ConocimientoPostulante">
-          Habilidades del catálogo. Adjunta un PDF que certifique cada conocimiento.
+        <SectionHint title="Conocimientos">
+          Indica habilidades que mejoran tu porcentaje de encaje con las ofertas. La
+          empresa revisa el detalle en tu CV al postular.
         </SectionHint>
         {!showForm && (
           <Button type="button" onClick={() => setShowForm(true)}>
@@ -66,6 +59,12 @@ export function PerfilSectionConocimientos() {
           </Button>
         )}
       </div>
+
+      {conocimientos.length === 0 && !showForm && (
+        <p className="text-sm text-slate-500 rounded-xl border border-dashed border-slate-200 p-6 text-center">
+          Aún no has registrado conocimientos.
+        </p>
+      )}
 
       <ul className="flex flex-wrap gap-2">
         {conocimientos.map((c) => (
@@ -76,9 +75,6 @@ export function PerfilSectionConocimientos() {
             <span>
               {c.conocimientoNombre}
               <span className="text-emerald-700/80 text-xs ml-1">({c.grupo})</span>
-              {c.documentoDisponible && (
-                <span className="text-emerald-700/80 text-xs ml-1">· PDF</span>
-              )}
             </span>
             <button
               type="button"
@@ -95,39 +91,20 @@ export function PerfilSectionConocimientos() {
       {showForm && (
         <form onSubmit={submit} className="space-y-4 rounded-xl border border-emerald-200 p-4">
           <h3 className="font-bold text-slate-900">Nuevo conocimiento</h3>
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-700">Conocimiento *</label>
-            <select
-              required
-              value={conocimientoId}
-              onChange={(e) => setConocimientoId(e.target.value)}
-              className="w-full rounded-xl border border-emerald-100 px-4 py-3"
-            >
-              <option value="">Selecciona…</option>
-              {Object.entries(porGrupo).map(([grupo, items]) => (
-                <optgroup key={grupo} label={grupo}>
-                  {items.map((k) => (
-                    <option key={k.id} value={k.id}>
-                      {k.nombre}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </div>
-          <Input
-            label="Institución (opcional)"
-            value={institucion}
-            onChange={(e) => setInstitucion(e.target.value)}
-            placeholder="Ej. instituto o certificadora"
+          <KnowledgeCombobox
+            knowledge={catalogos.conocimientos}
+            value={conocimientoId}
+            customValue={conocimientoNombre}
+            onChange={(id, nombre) => {
+              setConocimientoId(id);
+              setConocimientoNombre(nombre);
+            }}
+            error={knowledgeError ?? undefined}
           />
-          <PdfFileInput
-            label="Certificado o constancia (PDF)"
-            hint="Adjunta el documento que certifique este conocimiento o habilidad."
-            required
-            value={documento}
-            onChange={setDocumento}
-            error={docError ?? undefined}
+          <InstitutionCombobox
+            institutions={catalogos.instituciones}
+            value={institucion}
+            onChange={setInstitucion}
           />
           <div className="flex gap-2">
             <Button type="submit" disabled={saving}>

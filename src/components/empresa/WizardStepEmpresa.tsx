@@ -1,6 +1,7 @@
 "use client";
 
 import { EmpresaLogo } from "@/components/ui/EmpresaLogo";
+import { DateInput } from "@/components/ui/DateInput";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { Input } from "@/components/ui/Input";
 import { SectionHint } from "@/components/ui/SectionHint";
@@ -65,22 +66,19 @@ export function WizardStepEmpresa() {
         onRemove={() => setField("logoFiles", [])}
       />
 
-      <SectionHint title="Cronograma — etapa Convocatoria">
-        Fechas de recepción de postulaciones según el diagrama UML (Cronograma).
-      </SectionHint>
+    
 
       <div className="grid sm:grid-cols-2 gap-4">
-        <Input
+        <DateInput
           label="Inicio convocatoria *"
-          type="date"
           value={conv.inicio}
-          onChange={(e) => updateCronograma({ inicio: e.target.value })}
+          onChange={(inicio) => updateCronograma({ inicio })}
+          required
         />
-        <Input
+        <DateInput
           label="Fin convocatoria (opcional)"
-          type="date"
           value={conv.fin ?? ""}
-          onChange={(e) => updateCronograma({ fin: e.target.value })}
+          onChange={(fin) => updateCronograma({ fin })}
         />
       </div>
 
@@ -99,7 +97,7 @@ export function WizardStepEmpresa() {
       />
 
       <SectionHint title="Bases del trabajo *">
-        Documento oficial (bases_perfil). Los postulantes podrán consultarlo antes de postular.
+        Documento oficial. Los postulantes podrán consultarlo antes de postular.
       </SectionHint>
 
       {existingBases && !basesFile && (

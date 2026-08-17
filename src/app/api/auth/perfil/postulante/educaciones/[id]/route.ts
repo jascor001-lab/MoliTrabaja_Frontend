@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/db";
 import {
+  asegurarInstitucionCatalogo,
   mapEducacion,
   parsePerfilItemForm,
   requirePostulanteConDni,
@@ -52,12 +53,9 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
     );
   }
 
-  if (!documento && !existing.documentoPath) {
-    return NextResponse.json(
-      { error: "Debes adjuntar un PDF que respalde esta formación." },
-      { status: 422 }
-    );
-  }
+  const institucionCatalogo = await asegurarInstitucionCatalogo(
+    validation.data.institucion
+  );
 
   let documentoPath = existing.documentoPath;
   if (documento) {
@@ -66,7 +64,7 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
       documentoPath = saved.path;
     } catch (e) {
       return NextResponse.json(
-        { error: e instanceof Error ? e.message : "No se pudo guardar el PDF" },
+        { error: e instanceof Error ? e.message : "No se pudo guardar el archivo" },
         { status: 422 }
       );
     }
@@ -88,7 +86,10 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
     include: { carrera: true },
   });
 
-  return NextResponse.json({ educacion: mapEducacion(row) });
+  return NextResponse.json({
+    educacion: mapEducacion(row),
+    institucion: institucionCatalogo,
+  });
 }
 
 export async function DELETE(_request: NextRequest, { params }: Ctx) {

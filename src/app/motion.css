@@ -29,6 +29,20 @@
     animation: motion-exit-back var(--motion-duration) var(--motion-ease) both;
   }
 
+  /* Asistente de publicación — desplazamiento amplio y notorio */
+  .motion-wizard .motion-enter-forward {
+    animation: motion-wizard-enter-forward 680ms var(--motion-ease) both;
+  }
+  .motion-wizard .motion-exit-forward {
+    animation: motion-wizard-exit-forward 680ms var(--motion-ease) both;
+  }
+  .motion-wizard .motion-enter-back {
+    animation: motion-wizard-enter-back 680ms var(--motion-ease) both;
+  }
+  .motion-wizard .motion-exit-back {
+    animation: motion-wizard-exit-back 680ms var(--motion-ease) both;
+  }
+
   /* Suave vertical */
   .motion-enter-fade {
     animation: motion-enter-fade var(--motion-duration) var(--motion-ease) both;
@@ -59,6 +73,56 @@
   /* Lista en cascada */
   .motion-stagger-in {
     animation: motion-stagger-in 0.55s var(--motion-ease) both;
+  }
+
+  /* Panel extra de filtros del portal */
+  .motion-filters-panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 480ms var(--motion-ease);
+  }
+  .motion-filters-panel.is-open {
+    grid-template-rows: 1fr;
+  }
+  .motion-filters-panel-inner {
+    overflow: hidden;
+    min-height: 0;
+  }
+  .motion-filter-chip {
+    display: inline-flex;
+    opacity: 0;
+    transform: translate3d(-18px, -8px, 0) scale(0.94);
+    transition:
+      opacity 280ms var(--motion-ease),
+      transform 420ms var(--motion-ease);
+  }
+  .motion-filters-panel.is-open .motion-filter-chip {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  .motion-filters-panel.is-open .motion-filter-chip:nth-child(1) { transition-delay: 40ms; }
+  .motion-filters-panel.is-open .motion-filter-chip:nth-child(2) { transition-delay: 80ms; }
+  .motion-filters-panel.is-open .motion-filter-chip:nth-child(3) { transition-delay: 120ms; }
+  .motion-filters-panel.is-open .motion-filter-chip:nth-child(4) { transition-delay: 160ms; }
+  .motion-filters-panel.is-open .motion-filter-chip:nth-child(5) { transition-delay: 200ms; }
+  .motion-filters-panel.is-open .motion-filter-chip:nth-child(6) { transition-delay: 240ms; }
+  .motion-filters-panel:not(.is-open) .motion-filter-chip:nth-child(1) { transition-delay: 120ms; }
+  .motion-filters-panel:not(.is-open) .motion-filter-chip:nth-child(2) { transition-delay: 90ms; }
+  .motion-filters-panel:not(.is-open) .motion-filter-chip:nth-child(3) { transition-delay: 60ms; }
+  .motion-filters-panel:not(.is-open) .motion-filter-chip:nth-child(4) { transition-delay: 40ms; }
+  .motion-filters-panel:not(.is-open) .motion-filter-chip:nth-child(5) { transition-delay: 20ms; }
+  .motion-filters-panel:not(.is-open) .motion-filter-chip:nth-child(6) { transition-delay: 0ms; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .motion-filters-panel,
+    .motion-filter-chip {
+      transition: none !important;
+    }
+    .motion-filters-panel.is-open .motion-filter-chip,
+    .motion-filter-chip {
+      opacity: 1;
+      transform: none;
+    }
   }
 
   /* Modal */
@@ -124,6 +188,58 @@
   to {
     opacity: 0;
     transform: translate3d(28px, 0, 0) scale(0.985);
+  }
+}
+
+@keyframes motion-wizard-enter-forward {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+    transform: translate3d(140px, 0, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes motion-wizard-exit-forward {
+  from {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    opacity: 0;
+    filter: blur(3px);
+    transform: translate3d(-110px, 0, 0) scale(0.96);
+  }
+}
+
+@keyframes motion-wizard-enter-back {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+    transform: translate3d(-140px, 0, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes motion-wizard-exit-back {
+  from {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    opacity: 0;
+    filter: blur(3px);
+    transform: translate3d(110px, 0, 0) scale(0.96);
   }
 }
 

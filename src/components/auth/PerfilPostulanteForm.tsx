@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { DateInput } from "@/components/ui/DateInput";
 import { Input } from "@/components/ui/Input";
 import { GENEROS, type Genero } from "@/types/postulacion";
 
@@ -79,7 +80,12 @@ export function PerfilPostulanteForm() {
         <Input label="Apellido materno" value={form.apellidoMaterno} onChange={(e) => setForm({ ...form, apellidoMaterno: e.target.value })} required />
       </div>
       <div className="grid sm:grid-cols-2 gap-4">
-        <Input label="Fecha nacimiento" type="date" value={form.fechaNacimiento} onChange={(e) => setForm({ ...form, fechaNacimiento: e.target.value })} required />
+        <DateInput
+          label="Fecha nacimiento"
+          value={form.fechaNacimiento}
+          onChange={(fechaNacimiento) => setForm({ ...form, fechaNacimiento })}
+          required
+        />
         <div className="space-y-1">
           <label className="text-sm font-medium text-slate-700">Género</label>
           <select value={form.genero} onChange={(e) => setForm({ ...form, genero: e.target.value as Genero })} className="w-full rounded-xl border border-emerald-100 px-4 py-3">

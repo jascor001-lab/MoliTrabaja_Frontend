@@ -45,6 +45,10 @@ export function WizardStepResumen({ isEdit = false }: Props) {
     { label: "Vacantes", value: state.cantidadVacantes },
     { label: "Modalidad", value: MODALIDAD_LABEL[state.modalidad] },
     {
+      label: "Discapacidad",
+      value: state.aptoDiscapacidad ? "Puesto inclusivo" : "No indicado",
+    },
+    {
       label: "Salario",
       value: formatSalarioForSave(state.salarioAConvenir, state.salarioMonto),
     },

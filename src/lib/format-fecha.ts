@@ -1,3 +1,12 @@
+const DIA_MS = 86_400_000;
+const OFERTA_NUEVA_DIAS = 7;
+
+export function esOfertaNueva(iso: string, now = Date.now()): boolean {
+  const publishedAt = new Date(iso).getTime();
+  if (!Number.isFinite(publishedAt)) return false;
+  return now - publishedAt <= OFERTA_NUEVA_DIAS * DIA_MS;
+}
+
 export function tiempoRelativo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60_000);

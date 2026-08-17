@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { DateInput } from "@/components/ui/DateInput";
 import { Input } from "@/components/ui/Input";
+import { PuestoInclusivoCheckbox } from "@/components/ui/PuestoInclusivoCheckbox";
 import { SectionHint } from "@/components/ui/SectionHint";
 import { ESTADOS_CIVILES } from "@/types/catalogos";
 import { GENEROS } from "@/types/postulacion";
@@ -25,9 +26,21 @@ export function PerfilSectionPersonal() {
 
   if (!personal || !catalogos) return null;
 
-  const docLabel =
-    catalogos.tiposDoc.find((t) => t.id === personal.tipoDocId)?.nombreCompleto ??
-    "Documento";
+  const tipoDocumento = catalogos.tiposDoc.find((t) => t.id === personal.tipoDocId);
+  const docAbrev = tipoDocumento?.abrev ?? "Documento";
+  const docConfig: Record<string, { maxLength: number; numeric: boolean }> = {
+    DNI: { maxLength: 8, numeric: true },
+    CE: { maxLength: 12, numeric: false },
+    CPP: { maxLength: 9, numeric: true },
+    RUC: { maxLength: 11, numeric: true },
+    PAS: { maxLength: 12, numeric: false },
+  };
+  const currentDocConfig = docConfig[docAbrev] ?? {
+    maxLength: 15,
+    numeric: false,
+  };
+  const paisSeleccionado = catalogos.paises.find((p) => p.id === personal.paisId);
+  const prefijoCelular = paisSeleccionado?.prefijoCelular ?? "";
 
   return (
     <div className="space-y-5">
@@ -37,11 +50,16 @@ export function PerfilSectionPersonal() {
 
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">Tipo de documento</label>
+          <label className="text-sm font-medium text-slate-700">
+            Tipo de documento *
+          </label>
           <select
             value={personal.tipoDocId}
-            disabled
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-600"
+            onChange={(event) => {
+              setPersonalField("tipoDocId", Number(event.target.value));
+              setPersonalField("numeroDocumento", "");
+            }}
+            className="w-full rounded-xl border border-emerald-100 bg-white px-4 py-3 text-slate-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
           >
             {catalogos.tiposDoc.map((t) => (
               <option key={t.id} value={t.id}>
@@ -50,7 +68,22 @@ export function PerfilSectionPersonal() {
             ))}
           </select>
         </div>
-        <Input label={docLabel} value={personal.numeroDocumento} disabled />
+        <Input
+          label={`${docAbrev} *`}
+          value={personal.numeroDocumento}
+          maxLength={currentDocConfig.maxLength}
+          inputMode={currentDocConfig.numeric ? "numeric" : "text"}
+          onChange={(event) => {
+            const raw = event.target.value.toUpperCase();
+            setPersonalField(
+              "numeroDocumento",
+              currentDocConfig.numeric
+                ? raw.replace(/\D/g, "")
+                : raw.replace(/[^A-Z0-9]/g, "")
+            );
+          }}
+          required
+        />
       </div>
 
       <Input
@@ -92,9 +125,6 @@ export function PerfilSectionPersonal() {
             ))}
           </select>
         </div>
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-1">
           <label className="text-sm font-medium text-slate-700">Género *</label>
           <select
@@ -111,6 +141,25 @@ export function PerfilSectionPersonal() {
             ))}
           </select>
         </div>
+        <label className="block space-y-1">
+          <span className="text-sm font-medium text-slate-700">Celular *</span>
+          <span className="flex overflow-hidden rounded-xl border border-emerald-100 bg-white focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-200">
+            <span className="flex items-center border-r border-emerald-100 bg-emerald-50 px-3 text-sm font-semibold text-emerald-800">
+              {prefijoCelular}
+            </span>
+            <input
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel-national"
+              value={personal.telefono}
+              onChange={(e) =>
+                setPersonalField("telefono", e.target.value.replace(/\D/g, ""))
+              }
+              placeholder="999 999 999"
+              className="min-w-0 flex-1 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none"
+            />
+          </span>
+        </label>
         <div className="space-y-1">
           <label className="text-sm font-medium text-slate-700">Estado civil *</label>
           <select
@@ -125,18 +174,13 @@ export function PerfilSectionPersonal() {
             ))}
           </select>
         </div>
+        <Input label="Correo" value={personal.correo} disabled />
       </div>
 
-      <Input label="Correo" value={personal.correo} disabled />
-      <Input
-        label="Celular *"
-        value={personal.telefono}
-        onChange={(e) => setPersonalField("telefono", e.target.value)}
-      />
-
-      <SectionHint title="Dirección">
-        Ubicación de residencia del postulante.
-      </SectionHint>
+      <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        Busca tu dirección en el mapa: haz clic en tu ubicación y la dirección aparecerá
+        automáticamente en el casillero.
+      </p>
       <DireccionMapPicker
         direccionLiteral={personal.direccionLiteral}
         latitud={personal.latitud}
@@ -146,6 +190,12 @@ export function PerfilSectionPersonal() {
           setPersonalField("latitud", lat);
           setPersonalField("longitud", lng);
         }}
+      />
+
+      <PuestoInclusivoCheckbox
+        variant="postulante"
+        checked={personal.tieneDiscapacidad}
+        onChange={(checked) => setPersonalField("tieneDiscapacidad", checked)}
       />
 
       <Button onClick={savePersonal} disabled={saving}>

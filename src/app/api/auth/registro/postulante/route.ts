@@ -5,11 +5,11 @@ import { createSession, sessionCookieOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { hashPassword, validarCuentaRegistro } from "@/lib/password";
 import { crearPostulanteConDireccion } from "@/lib/postulante-persist";
-import { validarPostulanteInput } from "@/lib/validacion-postulante";
+import { parseBooleanFlag, validarPostulanteInput } from "@/lib/validacion-postulante";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as Record<string, string | number>;
+    const body = (await request.json()) as Record<string, string | number | boolean>;
     const password = String(body.password ?? "");
 
     const cuentaErrors = validarCuentaRegistro(String(body.correo ?? ""), password);
@@ -20,8 +20,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const tipoDocAbrev = String(body.tipoDocAbrev ?? "DNI")
+      .trim()
+      .toUpperCase();
+    const tipoDoc = await prisma.tipoDoc.findUnique({
+      where: { abrev: tipoDocAbrev },
+    });
+    if (!tipoDoc) {
+      return NextResponse.json(
+        { error: "Tipo de documento inválido", errors: { tipoDocAbrev: "Selecciona un tipo de documento." } },
+        { status: 422 }
+      );
+    }
+
     const validation = validarPostulanteInput({
-      tipoDocId: Number(body.tipoDocId ?? 1),
+      tipoDocId: tipoDoc.id,
+      tipoDocAbrev: tipoDoc.abrev,
       numeroDocumento: String(body.numeroDocumento ?? body.dni ?? ""),
       nombres: String(body.nombres ?? ""),
       apellidoPaterno: String(body.apellidoPaterno ?? ""),
@@ -33,6 +47,7 @@ export async function POST(request: NextRequest) {
       correo: String(body.correo ?? ""),
       telefono: String(body.telefono ?? ""),
       direccionLiteral: String(body.direccionLiteral ?? body.direccion ?? ""),
+      tieneDiscapacidad: parseBooleanFlag(body.tieneDiscapacidad),
     });
 
     if (!validation.ok) {
@@ -85,7 +100,7 @@ export async function POST(request: NextRequest) {
     cookies().set(sessionCookieOptions(session.token));
 
     return NextResponse.json(
-      { ok: true, postulanteId: postulante.id, redirect: "/personal" },
+      { ok: true, postulanteId: postulante.id, redirect: "/" },
       { status: 201 }
     );
   } catch (e) {

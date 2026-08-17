@@ -11,7 +11,7 @@ export type Modalidad = (typeof MODALIDADES)[number];
 export const ESTADOS_OFERTA = ["Activa", "Pausada"] as const;
 export type EstadoOferta = (typeof ESTADOS_OFERTA)[number];
 
-export const TIPOS_PUESTO = ["Pick Time", "Part Time", "Full Time"] as const;
+export const TIPOS_PUESTO = ["Part Time", "Full Time"] as const;
 export type TipoPuesto = (typeof TIPOS_PUESTO)[number];
 
 export const MODALIDAD_LABEL: Record<Modalidad, string> = {
@@ -59,6 +59,7 @@ export type OfertaLaboralDTO = {
   basesViewUrl: string | null;
   tipoPuesto: TipoPuesto[];
   cantidadVacantes: number;
+  aptoDiscapacidad: boolean;
   funciones: string;
   beneficios: string;
   direccionTrabajo: DireccionDTO | null;
@@ -99,6 +100,7 @@ export type CrearOfertaInput = {
   longitud?: string;
   carreraIds: number[];
   conocimientoIds: number[];
+  aptoDiscapacidad?: boolean;
   cronogramas: CronogramaInput[];
   contactoPrincipal: ContactoInput;
   contactoGerente: ContactoInput;

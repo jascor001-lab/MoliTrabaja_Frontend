@@ -15,12 +15,14 @@ import type { Genero } from "@/types/postulacion";
 
 export type PerfilSection =
   | "personal"
+  | "curriculum"
   | "educacion"
   | "experiencia"
   | "conocimientos";
 
 const SECTION_ORDER: PerfilSection[] = [
   "personal",
+  "curriculum",
   "educacion",
   "experiencia",
   "conocimientos",
@@ -41,6 +43,7 @@ export type PerfilPersonal = {
   direccionLiteral: string;
   latitud: string;
   longitud: string;
+  tieneDiscapacidad: boolean;
 };
 
 export type CatalogosPerfil = {
@@ -60,6 +63,8 @@ type PerfilPostulanteState = {
   sectionDirection: SlideDirection;
   catalogos: CatalogosPerfil | null;
   personal: PerfilPersonal | null;
+  cvDisponible: boolean;
+  cvFilename: string | null;
   educaciones: EducacionDTO[];
   experiencias: ExpLaboralDTO[];
   conocimientos: ConocimientoPostulanteDTO[];
@@ -74,6 +79,7 @@ type PerfilPostulanteState = {
   setEducacionFormOpen: (open: boolean, editingId?: string | null) => void;
   loadAll: () => Promise<void>;
   savePersonal: () => Promise<boolean>;
+  uploadCv: (file: File) => Promise<boolean>;
   addEducacion: (
     payload: Record<string, unknown>,
     documento: File | null
@@ -126,6 +132,8 @@ export const usePerfilPostulanteStore = create<PerfilPostulanteState>((set, get)
   sectionDirection: "fade",
   catalogos: null,
   personal: null,
+  cvDisponible: false,
+  cvFilename: null,
   educaciones: [],
   experiencias: [],
   conocimientos: [],
@@ -190,7 +198,10 @@ export const usePerfilPostulanteStore = create<PerfilPostulanteState>((set, get)
           direccionLiteral: perfil.direccionLiteral ?? perfil.direccion ?? "",
           latitud: perfil.latitud ?? "",
           longitud: perfil.longitud ?? "",
+          tieneDiscapacidad: Boolean(perfil.tieneDiscapacidad),
         },
+        cvDisponible: Boolean(perfil.cvDisponible),
+        cvFilename: perfil.cvFilename ?? null,
         educaciones: perfil.educaciones ?? [],
         experiencias: perfil.experiencias ?? [],
         conocimientos: perfil.conocimientos ?? [],
@@ -217,6 +228,8 @@ export const usePerfilPostulanteStore = create<PerfilPostulanteState>((set, get)
       const data = await res.json();
       if (!res.ok) {
         const err =
+          data.errors?.numeroDocumento ??
+          data.errors?.tipoDocId ??
           data.errors?.direccionLiteral ??
           data.errors?.telefono ??
           data.error ??
@@ -226,10 +239,15 @@ export const usePerfilPostulanteStore = create<PerfilPostulanteState>((set, get)
       set({
         personal: {
           ...personal,
+          tipoDocId: data.tipoDocId,
+          numeroDocumento: data.numeroDocumento,
           nombres: data.nombres,
           apellidoPaterno: data.apellidoPaterno,
           apellidoMaterno: data.apellidoMaterno,
+          tieneDiscapacidad: Boolean(data.tieneDiscapacidad),
         },
+        cvDisponible: Boolean(data.cvDisponible ?? get().cvDisponible),
+        cvFilename: data.cvFilename ?? get().cvFilename,
         educaciones: data.educaciones ?? get().educaciones,
         experiencias: data.experiencias ?? get().experiencias,
         conocimientos: data.conocimientos ?? get().conocimientos,
@@ -241,6 +259,33 @@ export const usePerfilPostulanteStore = create<PerfilPostulanteState>((set, get)
       set({
         saving: false,
         error: e instanceof Error ? e.message : "Error al guardar",
+      });
+      return false;
+    }
+  },
+
+  uploadCv: async (file) => {
+    set({ saving: true, error: null, message: null });
+    try {
+      const fd = new FormData();
+      fd.append("cv", file);
+      const res = await fetch("/api/auth/perfil/postulante/cv", {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "No se pudo guardar el CV");
+      set({
+        cvDisponible: true,
+        cvFilename: data.cvFilename ?? file.name,
+        message: data.message ?? "CV guardado en tu perfil.",
+        saving: false,
+      });
+      return true;
+    } catch (e) {
+      set({
+        saving: false,
+        error: e instanceof Error ? e.message : "Error al subir el CV",
       });
       return false;
     }
@@ -264,6 +309,20 @@ export const usePerfilPostulanteStore = create<PerfilPostulanteState>((set, get)
       }
       set((s) => ({
         educaciones: [...s.educaciones, data.educacion],
+        catalogos:
+          s.catalogos &&
+          data.institucion &&
+          !s.catalogos.instituciones.some(
+            (institucion) => institucion.id === data.institucion.id
+          )
+            ? {
+                ...s.catalogos,
+                instituciones: [
+                  ...s.catalogos.instituciones,
+                  data.institucion,
+                ].sort((a, b) => a.nombre.localeCompare(b.nombre, "es")),
+              }
+            : s.catalogos,
         educacionFormOpen: false,
         editingEducacionId: null,
         message: "Formación académica agregada.",
@@ -289,6 +348,20 @@ export const usePerfilPostulanteStore = create<PerfilPostulanteState>((set, get)
         educaciones: s.educaciones.map((e) =>
           e.id === id ? data.educacion : e
         ),
+        catalogos:
+          s.catalogos &&
+          data.institucion &&
+          !s.catalogos.instituciones.some(
+            (institucion) => institucion.id === data.institucion.id
+          )
+            ? {
+                ...s.catalogos,
+                instituciones: [
+                  ...s.catalogos.instituciones,
+                  data.institucion,
+                ].sort((a, b) => a.nombre.localeCompare(b.nombre, "es")),
+              }
+            : s.catalogos,
         educacionFormOpen: false,
         editingEducacionId: null,
         message: "Formación académica actualizada.",
@@ -331,7 +404,9 @@ export const usePerfilPostulanteStore = create<PerfilPostulanteState>((set, get)
         body: buildPerfilFormData(payload, documento),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "No se pudo guardar");
+      if (!res.ok) {
+        throw new Error(data.error ?? "No se pudo guardar");
+      }
       set((s) => ({
         experiencias: [...s.experiencias, data.experiencia],
         message: "Experiencia laboral agregada.",
@@ -371,12 +446,55 @@ export const usePerfilPostulanteStore = create<PerfilPostulanteState>((set, get)
         body: buildPerfilFormData(payload, documento),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "No se pudo guardar");
-      set((s) => ({
-        conocimientos: [...s.conocimientos, data.conocimiento],
-        message: "Conocimiento agregado.",
-        saving: false,
-      }));
+      if (!res.ok) {
+        throw new Error(
+          data.errors?.conocimientoId ??
+            data.errors?.institucion ??
+            data.error ??
+            "No se pudo guardar"
+        );
+      }
+      set((s) => {
+        let catalogos = s.catalogos;
+
+        if (
+          catalogos &&
+          data.catalogoConocimiento &&
+          !catalogos.conocimientos.some(
+            (item) => item.id === data.catalogoConocimiento.id
+          )
+        ) {
+          catalogos = {
+            ...catalogos,
+            conocimientos: [
+              ...catalogos.conocimientos,
+              data.catalogoConocimiento,
+            ].sort((a, b) => a.nombre.localeCompare(b.nombre, "es")),
+          };
+        }
+
+        if (
+          catalogos &&
+          data.institucion &&
+          !catalogos.instituciones.some(
+            (item) => item.id === data.institucion.id
+          )
+        ) {
+          catalogos = {
+            ...catalogos,
+            instituciones: [...catalogos.instituciones, data.institucion].sort(
+              (a, b) => a.nombre.localeCompare(b.nombre, "es")
+            ),
+          };
+        }
+
+        return {
+          conocimientos: [...s.conocimientos, data.conocimiento],
+          catalogos,
+          message: "Conocimiento agregado.",
+          saving: false,
+        };
+      });
       return true;
     } catch (e) {
       set({ saving: false, error: e instanceof Error ? e.message : "Error" });

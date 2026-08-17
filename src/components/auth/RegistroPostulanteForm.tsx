@@ -5,14 +5,28 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { DateInput } from "@/components/ui/DateInput";
 import { Input } from "@/components/ui/Input";
+import { PuestoInclusivoCheckbox } from "@/components/ui/PuestoInclusivoCheckbox";
 import { SectionHint } from "@/components/ui/SectionHint";
 import { validarCuentaRegistro } from "@/lib/password";
 import { GENEROS } from "@/types/postulacion";
 
+const TIPOS_DOCUMENTO = [
+  { abrev: "DNI", nombre: "Documento Nacional de Identidad", maxLength: 8, numeric: true },
+  { abrev: "CE", nombre: "Carné de Extranjería", maxLength: 12, numeric: false },
+  {
+    abrev: "CPP",
+    nombre: "Carné de Permiso Temporal de Permanencia",
+    maxLength: 9,
+    numeric: true,
+  },
+  { abrev: "RUC", nombre: "Registro Único de Contribuyentes", maxLength: 11, numeric: true },
+  { abrev: "PAS", nombre: "Pasaporte", maxLength: 12, numeric: false },
+] as const;
+
 function mapApiErrors(errors: Record<string, string>): Record<string, string> {
   const mapped = { ...errors };
-  if (mapped.numeroDocumento) mapped.dni = mapped.numeroDocumento;
   if (mapped.direccionLiteral) mapped.direccion = mapped.direccionLiteral;
   return mapped;
 }
@@ -25,7 +39,8 @@ export function RegistroPostulanteForm() {
   const [form, setForm] = useState({
     correo: "",
     password: "",
-    dni: "",
+    tipoDocAbrev: "DNI",
+    numeroDocumento: "",
     nombres: "",
     apellidoPaterno: "",
     apellidoMaterno: "",
@@ -33,10 +48,15 @@ export function RegistroPostulanteForm() {
     genero: GENEROS[0],
     telefono: "",
     direccion: "",
+    tieneDiscapacidad: false,
   });
 
-  const set = (key: keyof typeof form, value: string) =>
+  const set = (key: keyof typeof form, value: string | boolean) =>
     setForm((f) => ({ ...f, [key]: value }));
+
+  const tipoDocumento =
+    TIPOS_DOCUMENTO.find((tipo) => tipo.abrev === form.tipoDocAbrev) ??
+    TIPOS_DOCUMENTO[0];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +86,7 @@ export function RegistroPostulanteForm() {
         if (data.errors) setFieldErrors(mapApiErrors(data.errors));
         throw new Error(data.error ?? "No se pudo registrar");
       }
-      router.push(data.redirect ?? "/personal");
+      router.push(data.redirect ?? "/");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al registrar");
@@ -112,16 +132,51 @@ export function RegistroPostulanteForm() {
           Información de tu perfil para postular (documento, nombres y contacto).
         </SectionHint>
 
-        <Input
-          label="DNI *"
-          value={form.dni}
-          maxLength={8}
-          inputMode="numeric"
-          placeholder="12345678"
-          onChange={(e) => set("dni", e.target.value.replace(/\D/g, ""))}
-          error={fieldErrors.dni}
-          required
-        />
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700">
+              Tipo de documento *
+            </label>
+            <select
+              value={form.tipoDocAbrev}
+              onChange={(e) => {
+                setForm((current) => ({
+                  ...current,
+                  tipoDocAbrev: e.target.value,
+                  numeroDocumento: "",
+                }));
+              }}
+              className="w-full rounded-xl border border-emerald-100 bg-white px-4 py-3 text-slate-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            >
+              {TIPOS_DOCUMENTO.map((tipo) => (
+                <option key={tipo.abrev} value={tipo.abrev}>
+                  {tipo.abrev} — {tipo.nombre}
+                </option>
+              ))}
+            </select>
+            {fieldErrors.tipoDocAbrev && (
+              <p className="text-xs text-red-600">{fieldErrors.tipoDocAbrev}</p>
+            )}
+          </div>
+          <Input
+            label={`${tipoDocumento.abrev} *`}
+            value={form.numeroDocumento}
+            maxLength={tipoDocumento.maxLength}
+            inputMode={tipoDocumento.numeric ? "numeric" : "text"}
+            placeholder={`Ingresa tu ${tipoDocumento.abrev}`}
+            onChange={(e) => {
+              const raw = e.target.value.toUpperCase();
+              set(
+                "numeroDocumento",
+                tipoDocumento.numeric
+                  ? raw.replace(/\D/g, "")
+                  : raw.replace(/[^A-Z0-9]/g, "")
+              );
+            }}
+            error={fieldErrors.numeroDocumento}
+            required
+          />
+        </div>
         <Input
           label="Nombres *"
           value={form.nombres}
@@ -146,11 +201,10 @@ export function RegistroPostulanteForm() {
           />
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Input
+          <DateInput
             label="Fecha de nacimiento *"
-            type="date"
             value={form.fechaNacimiento}
-            onChange={(e) => set("fechaNacimiento", e.target.value)}
+            onChange={(fechaNacimiento) => set("fechaNacimiento", fechaNacimiento)}
             error={fieldErrors.fechaNacimiento}
             required
           />
@@ -183,6 +237,11 @@ export function RegistroPostulanteForm() {
           onChange={(e) => set("direccion", e.target.value)}
           error={fieldErrors.direccion}
           required
+        />
+        <PuestoInclusivoCheckbox
+          variant="postulante"
+          checked={form.tieneDiscapacidad}
+          onChange={(checked) => set("tieneDiscapacidad", checked)}
         />
       </div>
 

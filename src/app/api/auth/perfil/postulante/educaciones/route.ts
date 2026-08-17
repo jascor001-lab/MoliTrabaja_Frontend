@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/db";
 import {
+  asegurarInstitucionCatalogo,
   mapEducacion,
   parsePerfilItemForm,
   requirePostulanteConDni,
@@ -32,19 +33,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!documento) {
-    return NextResponse.json(
-      { error: "Debes adjuntar un PDF que respalde esta formación." },
-      { status: 422 }
-    );
-  }
-
   const carrera = await prisma.catalogoCarrera.findUnique({
     where: { id: validation.data.carreraId },
   });
   if (!carrera) {
     return NextResponse.json({ error: "Carrera no encontrada" }, { status: 400 });
   }
+
+  const institucionCatalogo = await asegurarInstitucionCatalogo(
+    validation.data.institucion
+  );
 
   const row = await prisma.educacion.create({
     data: {
@@ -61,24 +59,40 @@ export async function POST(request: NextRequest) {
     include: { carrera: true },
   });
 
-  try {
-    const saved = await guardarDocumentoPerfil(
-      auth.dni,
-      "educacion",
-      row.id,
-      documento
-    );
-    const updated = await prisma.educacion.update({
-      where: { id: row.id },
-      data: { documentoPath: saved.path },
-      include: { carrera: true },
-    });
-    return NextResponse.json({ educacion: mapEducacion(updated) }, { status: 201 });
-  } catch (e) {
-    await prisma.educacion.delete({ where: { id: row.id } });
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "No se pudo guardar el PDF" },
-      { status: 422 }
-    );
+  if (documento) {
+    try {
+      const saved = await guardarDocumentoPerfil(
+        auth.dni,
+        "educacion",
+        row.id,
+        documento
+      );
+      const updated = await prisma.educacion.update({
+        where: { id: row.id },
+        data: { documentoPath: saved.path },
+        include: { carrera: true },
+      });
+      return NextResponse.json(
+        {
+          educacion: mapEducacion(updated),
+          institucion: institucionCatalogo,
+        },
+        { status: 201 }
+      );
+    } catch (e) {
+      await prisma.educacion.delete({ where: { id: row.id } });
+      return NextResponse.json(
+        { error: e instanceof Error ? e.message : "No se pudo guardar el archivo" },
+        { status: 422 }
+      );
+    }
   }
+
+  return NextResponse.json(
+    {
+      educacion: mapEducacion(row),
+      institucion: institucionCatalogo,
+    },
+    { status: 201 }
+  );
 }

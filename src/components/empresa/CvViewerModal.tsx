@@ -124,7 +124,7 @@ export function CvViewerModal({
           {!canPreviewInline && (
             <div className="flex flex-col items-center justify-center gap-4 p-8 text-center min-h-[280px]">
               <p className="text-slate-700 max-w-md">
-                Descarga el CV para revisarlo antes de aceptar o rechazar.
+                Descarga el CV para revisarlo en tu equipo.
               </p>
               <a href={viewUrl} download={fileName}>
                 <Button>Descargar CV</Button>

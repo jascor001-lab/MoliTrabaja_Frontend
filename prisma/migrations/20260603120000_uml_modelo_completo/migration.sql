@@ -43,7 +43,7 @@ CREATE TABLE "Direccion" (
     "longitud" TEXT
 );
 
--- Empresa: nuevos campos UML
+-- Empresa: nuevos campos 
 ALTER TABLE "Empresa" ADD COLUMN "razonSocial" TEXT NOT NULL DEFAULT '';
 ALTER TABLE "Empresa" ADD COLUMN "telefono" TEXT NOT NULL DEFAULT '';
 ALTER TABLE "Empresa" ADD COLUMN "paginaWeb" TEXT NOT NULL DEFAULT '';

@@ -30,6 +30,7 @@ export async function crearPostulanteConDireccion(
       telefono: data.telefono,
       direccionId: direccion.id,
       passwordHash,
+      tieneDiscapacidad: data.tieneDiscapacidad,
     },
     include: { direccion: true, tipoDoc: true, pais: true },
   });

@@ -22,16 +22,24 @@ const demoLogoJson = JSON.stringify([
 ]);
 
 async function seedCatalogos() {
-  await prisma.tipoDoc.upsert({
-    where: { abrev: "DNI" },
-    update: {},
-    create: { nombreCompleto: "Documento Nacional de Identidad", abrev: "DNI" },
-  });
-  await prisma.tipoDoc.upsert({
-    where: { abrev: "CE" },
-    update: {},
-    create: { nombreCompleto: "Carné de Extranjería", abrev: "CE" },
-  });
+  const tiposDocumento = [
+    { abrev: "DNI", nombreCompleto: "Documento Nacional de Identidad" },
+    { abrev: "CE", nombreCompleto: "Carné de Extranjería" },
+    {
+      abrev: "CPP",
+      nombreCompleto: "Carné de Permiso Temporal de Permanencia",
+    },
+    { abrev: "RUC", nombreCompleto: "Registro Único de Contribuyentes" },
+    { abrev: "PAS", nombreCompleto: "Pasaporte" },
+  ];
+
+  for (const tipoDoc of tiposDocumento) {
+    await prisma.tipoDoc.upsert({
+      where: { abrev: tipoDoc.abrev },
+      update: { nombreCompleto: tipoDoc.nombreCompleto },
+      create: tipoDoc,
+    });
+  }
 
   const peru = await prisma.pais.upsert({
     where: { id: 1 },
@@ -227,8 +235,65 @@ async function main() {
     }
   }
 
+  const dniTipo = await prisma.tipoDoc.findUnique({ where: { abrev: "DNI" } });
+  const peru = await prisma.pais.findFirst({ where: { nombre: "Perú" } });
+  if (dniTipo && peru) {
+    const extra = {
+      numeroDocumento: "87654321",
+      nombres: "Ana",
+      apellidoPaterno: "Torres",
+      apellidoMaterno: "Vega",
+      correo: "ana.torres@demo.pe",
+      telefono: "912345678",
+      fechaNacimiento: new Date("1998-07-22"),
+      genero: "Femenino",
+      direccionLiteral: "Av. Javier Prado Este 4625, La Molina, Lima",
+    };
+
+    const existingExtra = await prisma.postulante.findFirst({
+      where: {
+        OR: [
+          { correo: extra.correo },
+          {
+            tipoDocId: dniTipo.id,
+            numeroDocumento: extra.numeroDocumento,
+          },
+        ],
+      },
+    });
+
+    if (!existingExtra) {
+      const direccion = await prisma.direccion.create({
+        data: {
+          direccionLiteral: extra.direccionLiteral,
+          latitud: "-12.078498",
+          longitud: "-76.917167",
+        },
+      });
+
+      await prisma.postulante.create({
+        data: {
+          tipoDocId: dniTipo.id,
+          numeroDocumento: extra.numeroDocumento,
+          nombres: extra.nombres,
+          apellidoPaterno: extra.apellidoPaterno,
+          apellidoMaterno: extra.apellidoMaterno,
+          fechaNacimiento: extra.fechaNacimiento,
+          paisId: peru.id,
+          genero: extra.genero,
+          estadoCivil: "Soltero",
+          correo: extra.correo,
+          telefono: extra.telefono,
+          direccionId: direccion.id,
+          passwordHash: hashPassword(DEMO_PASSWORD),
+        },
+      });
+    }
+  }
+
   console.log("Seed OK — empresa demo:", empresa.id);
-  console.log("Login demo: demo@techmolina.pe / Demo1234");
+  console.log("Login empresa: demo@techmolina.pe / Demo1234");
+  console.log("Login postulante extra: ana.torres@demo.pe / Demo1234");
 }
 
 main()

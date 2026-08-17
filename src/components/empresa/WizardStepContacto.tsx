@@ -12,7 +12,7 @@ export function WizardStepContacto() {
       <header>
         <h2 className="text-xl font-bold text-slate-900">Contactos de empresa</h2>
         <p className="text-sm text-slate-500 mt-1">
-          Entidad ContactoEmpresa del diagrama UML (composición 1..* con Empresa).
+          
         </p>
       </header>
 
@@ -51,7 +51,7 @@ export function WizardStepContacto() {
 
       <section className="space-y-4 border-t border-emerald-100 pt-6">
         <SectionHint title="Gerente / supervisor">
-          Segundo contacto registrado en ContactoEmpresa.
+          Jefe del responsable del proceso de seleccion .
         </SectionHint>
 
         <div className="grid sm:grid-cols-2 gap-4">

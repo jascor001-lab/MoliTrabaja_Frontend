@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       ok: true,
       tipo: "postulante",
       nombre: session.nombre,
-      redirect: "/personal",
+      redirect: "/",
     });
   } catch (e) {
     console.error("[POST /api/auth/login]", e);

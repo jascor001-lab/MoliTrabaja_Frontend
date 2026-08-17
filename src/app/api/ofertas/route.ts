@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
       contactoPrincipal,
       contactoGerente,
       enviarLogoPorCorreo,
+      aptoDiscapacidad,
     } = payload;
 
     if (!empresaId || !modalidad || !MODALIDADES.includes(modalidad)) {
@@ -140,6 +141,7 @@ export async function POST(request: NextRequest) {
         ),
         tipoPuesto: serializeJsonArray(tipoPuesto ?? []),
         cantidadVacantes: Number(cantidadVacantes),
+        aptoDiscapacidad: Boolean(aptoDiscapacidad),
         funciones: funciones!.trim(),
         beneficios: beneficios!.trim(),
       },

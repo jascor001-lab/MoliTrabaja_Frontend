@@ -94,6 +94,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       contactoPrincipal,
       contactoGerente,
       estado,
+      aptoDiscapacidad,
     } = payload;
 
     if (empresaId !== oferta.empresaId) {
@@ -146,6 +147,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         logoArchivos: serializeJsonArray(logoArchivosMeta),
         tipoPuesto: serializeJsonArray(tiposValidos),
         cantidadVacantes: Number(cantidadVacantes),
+        aptoDiscapacidad: Boolean(aptoDiscapacidad),
         funciones: funciones!.trim(),
         beneficios: beneficios!.trim(),
       },

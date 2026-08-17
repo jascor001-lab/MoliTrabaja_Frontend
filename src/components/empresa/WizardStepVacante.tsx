@@ -3,7 +3,10 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
+import { CareerMultiSelect } from "@/components/ui/CareerMultiSelect";
 import { Input } from "@/components/ui/Input";
+import { KnowledgeMultiSelect } from "@/components/ui/KnowledgeMultiSelect";
+import { PuestoInclusivoCheckbox } from "@/components/ui/PuestoInclusivoCheckbox";
 import { SectionHint } from "@/components/ui/SectionHint";
 import { Textarea } from "@/components/ui/Textarea";
 import { useOfertaFormStore } from "@/stores/ofertaFormStore";
@@ -51,6 +54,7 @@ export function WizardStepVacante() {
     conocimientoIds,
     estado,
     editingOfertaId,
+    aptoDiscapacidad,
     setField,
     toggleTipoPuesto,
     toggleCarrera,
@@ -156,6 +160,12 @@ export function WizardStepVacante() {
         onChange={(e) => setField("beneficios", e.target.value)}
       />
 
+      <PuestoInclusivoCheckbox
+        variant="empresa"
+        checked={aptoDiscapacidad}
+        onChange={(checked) => setField("aptoDiscapacidad", checked)}
+      />
+
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium text-slate-700">Modalidad</legend>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -229,7 +239,7 @@ export function WizardStepVacante() {
         )}
       </fieldset>
 
-      <SectionHint title="Dirección del puesto (Direccion UML)">
+      <SectionHint title="Dirección del puesto ">
         Lugar de trabajo para la vacante. Marca el punto en el mapa o busca por dirección.
       </SectionHint>
 
@@ -245,52 +255,19 @@ export function WizardStepVacante() {
       />
 
       {carreras.length > 0 && (
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-medium text-slate-700">
-            Carreras requeridas (Oferta_Carrera)
-          </legend>
-          <div className="flex flex-wrap gap-2">
-            {carreras.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => toggleCarrera(c.id)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold border ${
-                  carreraIds.includes(c.id)
-                    ? "bg-emerald-600 text-white border-emerald-600"
-                    : "bg-white text-slate-600 border-slate-200"
-                }`}
-              >
-                {c.nombre}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+        <CareerMultiSelect
+          careers={carreras}
+          selectedIds={carreraIds}
+          onToggle={toggleCarrera}
+        />
       )}
 
       {conocimientos.length > 0 && (
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-medium text-slate-700">
-            Conocimientos requeridos (Oferta_Conocimientos)
-          </legend>
-          <div className="flex flex-wrap gap-2">
-            {conocimientos.map((k) => (
-              <button
-                key={k.id}
-                type="button"
-                onClick={() => toggleConocimiento(k.id)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold border ${
-                  conocimientoIds.includes(k.id)
-                    ? "bg-emerald-600 text-white border-emerald-600"
-                    : "bg-white text-slate-600 border-slate-200"
-                }`}
-                title={k.grupo}
-              >
-                {k.nombre}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+        <KnowledgeMultiSelect
+          knowledge={conocimientos}
+          selectedIds={conocimientoIds}
+          onToggle={toggleConocimiento}
+        />
       )}
 
       {editingOfertaId && (

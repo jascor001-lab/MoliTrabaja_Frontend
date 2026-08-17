@@ -40,7 +40,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
     headers: {
       "Content-Type": file.mime,
       "Content-Disposition": `${disposition}; filename="${encodeURIComponent(file.fileName)}"`,
-      "Cache-Control": "public, max-age=3600",
+      "Cache-Control": "private, no-store, must-revalidate",
     },
   });
 }

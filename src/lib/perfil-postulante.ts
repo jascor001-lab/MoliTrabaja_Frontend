@@ -189,8 +189,9 @@ export function validarExpLaboralInput(
 }
 
 export type ConocimientoInput = {
-  conocimientoId: number;
-  institucion?: string;
+  conocimientoId?: number;
+  conocimientoNombre?: string;
+  institucion: string;
 };
 
 export function validarConocimientoInput(
@@ -198,15 +199,22 @@ export function validarConocimientoInput(
 ): { ok: true; data: ConocimientoInput } | { ok: false; errors: Record<string, string> } {
   const errors: Record<string, string> = {};
   const conocimientoId = Number(data.conocimientoId);
-  if (!Number.isFinite(conocimientoId) || conocimientoId < 1) {
-    errors.conocimientoId = "Selecciona un conocimiento.";
+  const conocimientoNombre = data.conocimientoNombre?.trim().replace(/\s+/g, " ") ?? "";
+  const hasConocimientoId = Number.isFinite(conocimientoId) && conocimientoId > 0;
+  if (!hasConocimientoId && conocimientoNombre.length < 2) {
+    errors.conocimientoId = "Selecciona un conocimiento o escribe uno nuevo.";
+  }
+  const institucion = data.institucion?.trim() ?? "";
+  if (institucion.length < 2) {
+    errors.institucion = "Indica la institución o centro de formación.";
   }
   if (Object.keys(errors).length) return { ok: false, errors };
   return {
     ok: true,
     data: {
-      conocimientoId,
-      institucion: data.institucion?.trim() ?? "",
+      conocimientoId: hasConocimientoId ? conocimientoId : undefined,
+      conocimientoNombre: conocimientoNombre || undefined,
+      institucion,
     },
   };
 }
@@ -237,6 +245,25 @@ export async function requirePostulanteConDni() {
   };
 }
 
+export async function asegurarInstitucionCatalogo(nombre: string) {
+  const institucion = nombre.trim().replace(/\s+/g, " ");
+  const { prisma } = await import("@/lib/db");
+
+  const existente = await prisma.catalogoInstitucion.findFirst({
+    where: {
+      OR: [{ nombre: institucion }, { razonSocial: institucion }],
+    },
+  });
+  if (existente) return existente;
+
+  return prisma.catalogoInstitucion.create({
+    data: {
+      nombre: institucion,
+      razonSocial: institucion,
+    },
+  });
+}
+
 export async function parsePerfilItemForm(request: NextRequest): Promise<{
   fields: Record<string, string>;
   documento: File | null;
@@ -246,13 +273,13 @@ export async function parsePerfilItemForm(request: NextRequest): Promise<{
     const fd = await request.formData();
     const fields: Record<string, string> = {};
     let documento: File | null = null;
-    for (const [key, value] of fd.entries()) {
+    fd.forEach((value, key) => {
       if (key === "documento" && value instanceof File && value.size > 0) {
         documento = value;
       } else if (typeof value === "string") {
         fields[key] = value;
       }
-    }
+    });
     return { fields, documento };
   }
 

@@ -10,7 +10,7 @@ export const ESTADOS_CIVILES = [
 ] as const;
 export type EstadoCivil = (typeof ESTADOS_CIVILES)[number];
 
-/** Estados internos del embudo (reclutador). */
+/** Estados internos del embudo (reclutador) — persistidos en BD. */
 export const ESTADOS_PIPELINE = [
   "En Revisión",
   "Entrevista",
@@ -18,6 +18,19 @@ export const ESTADOS_PIPELINE = [
   "No Seleccionado (Fuera del Proceso)",
 ] as const;
 export type EstadoPipeline = (typeof ESTADOS_PIPELINE)[number];
+
+/**
+ * Carpetas de gestión (estilo Computrabajo).
+ * Mapeo: Inscritos→En Revisión, En proceso→Entrevista,
+ * Finalistas→Aceptado, Descartados→No Seleccionado.
+ */
+export const CARPETAS_RECLUTADOR = [
+  "Inscritos",
+  "En proceso",
+  "Finalistas",
+  "Descartados",
+] as const;
+export type CarpetaReclutador = (typeof CARPETAS_RECLUTADOR)[number];
 
 /** Estados visibles para el postulante (3 oficiales). */
 export const ESTADOS_POSTULANTE = [
@@ -27,10 +40,12 @@ export const ESTADOS_POSTULANTE = [
 ] as const;
 export type EstadoPostulante = (typeof ESTADOS_POSTULANTE)[number];
 
+/** Acciones para mover candidatos entre carpetas. */
 export const ACCIONES_RECLUTADOR = [
-  "Aceptar",
-  "Rechazar",
-  "Mover a Entrevista",
+  "Mover a Inscritos",
+  "Mover a En proceso",
+  "Mover a Finalistas",
+  "Descartar",
 ] as const;
 export type AccionReclutador = (typeof ACCIONES_RECLUTADOR)[number];
 
@@ -72,46 +87,21 @@ export type PostulanteInput = {
 };
 
 export type FunnelSummary = {
+  inscritos: number;
+  en_proceso: number;
+  finalistas: number;
+  descartados: number;
+  /** @deprecated alias de inscritos */
   en_revision: number;
+  /** @deprecated alias de en_proceso */
   entrevistas: number;
+  /** @deprecated alias de finalistas */
   aceptados: number;
+  /** @deprecated alias de descartados */
   no_seleccionados: number;
 };
 
 export type CvFormato = "pdf" | "txt" | "word" | "otro";
-
-export type CandidateEducacion = {
-  id: string;
-  carrera: string;
-  tipo_estudio: string;
-  institucion: string;
-  orden_merito: string;
-  fecha_ingreso: string;
-  fecha_egreso: string | null;
-  documento_disponible: boolean;
-  documento_view_url?: string;
-  documento_filename?: string;
-};
-
-export type CandidateConocimiento = {
-  id: string;
-  nombre: string;
-  grupo: string;
-  documento_disponible: boolean;
-  documento_view_url?: string;
-  documento_filename?: string;
-};
-
-export type CandidateExperiencia = {
-  id: string;
-  puesto: string;
-  empresa: string;
-  sector: string;
-  meses: number;
-  documento_disponible: boolean;
-  documento_view_url?: string;
-  documento_filename?: string;
-};
 
 export type CandidateRequisitosMatch = {
   carreras_requeridas: string[];
@@ -120,25 +110,24 @@ export type CandidateRequisitosMatch = {
   conocimientos_cumplidos: string[];
 };
 
-export type CandidatePerfilResumen = {
-  educaciones: CandidateEducacion[];
-  conocimientos: CandidateConocimiento[];
-  experiencias: CandidateExperiencia[];
-  requisitos: CandidateRequisitosMatch;
-};
-
 export type CandidateActionable = {
   dni: string;
   nombre: string;
   edad: number;
+  correo: string;
+  telefono: string;
   match_score_percentage: number;
+  /** Estado interno persistido */
   current_status: EstadoPipeline;
+  /** Carpeta visible para la empresa */
+  carpeta: CarpetaReclutador;
   available_actions: AccionReclutador[];
   cv_available: boolean;
   cv_filename?: string;
   cv_formato?: CvFormato;
   cv_view_url?: string;
-  perfil_resumen: CandidatePerfilResumen;
+  requisitos: CandidateRequisitosMatch;
+  tiene_discapacidad: boolean;
 };
 
 export type ActividadPostulacion = {
@@ -203,6 +192,7 @@ export type DashboardDualResponse = {
     demografia: {
       genero: string;
       direccion: string;
+      tiene_discapacidad: boolean;
     };
     contacto: {
       correo: string;

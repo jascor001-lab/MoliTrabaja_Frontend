@@ -1,7 +1,7 @@
-/** Centro aproximado del distrito de La Molina, Lima (referencia local). */
+/** Sede central — Municipalidad de La Molina, Av. Ricardo Elías Aparicio 740. */
 export const MAP_DEFAULT_CENTER = {
-  lat: -12.0761,
-  lng: -76.9412,
+  lat: -12.078498,
+  lng: -76.917167,
 } as const;
 
 export const MAP_DEFAULT_ZOOM = 14;

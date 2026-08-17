@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { CareerCombobox } from "@/components/ui/CareerCombobox";
 import { DateInput } from "@/components/ui/DateInput";
-import { Input } from "@/components/ui/Input";
-import { PdfFileInput } from "@/components/ui/PdfFileInput";
+import { InstitutionCombobox } from "@/components/ui/InstitutionCombobox";
 import { formatIsoDateDisplay } from "@/lib/date-format";
 import { SectionHint } from "@/components/ui/SectionHint";
 import { SlideView } from "@/components/ui/SlideView";
@@ -41,7 +41,6 @@ export function PerfilSectionEducacion() {
   const removeEducacion = usePerfilPostulanteStore((s) => s.removeEducacion);
 
   const [form, setForm] = useState(emptyForm);
-  const [documento, setDocumento] = useState<File | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const editing = educaciones.find((e) => e.id === editingId);
@@ -56,10 +55,8 @@ export function PerfilSectionEducacion() {
         fechaIngreso: editing.fechaIngreso,
         fechaEgreso: editing.fechaEgreso ?? "",
       });
-      setDocumento(null);
     } else if (formOpen && !editingId) {
       setForm(emptyForm());
-      setDocumento(null);
     }
   }, [editing, formOpen, editingId]);
 
@@ -84,17 +81,12 @@ export function PerfilSectionEducacion() {
       fechaIngreso: form.fechaIngreso,
       fechaEgreso: form.fechaEgreso || undefined,
     };
-    if (!documento && !editing?.documentoDisponible) {
-      setFormErrors({ documento: "Adjunta un PDF que respalde esta formación." });
-      return;
-    }
 
     const ok = editingId
-      ? await updateEducacion(editingId, payload, documento)
-      : await addEducacion(payload, documento);
+      ? await updateEducacion(editingId, payload, null)
+      : await addEducacion(payload, null);
     if (ok) {
       setForm(emptyForm());
-      setDocumento(null);
     }
   };
 
@@ -103,9 +95,9 @@ export function PerfilSectionEducacion() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <SectionHint title="Educacion">
-          Registra tus estudios vinculados al catálogo de carreras. Cada formación
-          debe incluir un PDF de respaldo (certificado o constancia).
+        <SectionHint title="Formación académica">
+          Registra tus estudios para el porcentaje de encaje con las vacantes. El
+          documento que ve la empresa al postular es tu CV.
         </SectionHint>
         {!formOpen && (
           <Button type="button" onClick={openNew}>
@@ -139,7 +131,6 @@ export function PerfilSectionEducacion() {
                     ? ` → ${formatIsoDateDisplay(item.fechaEgreso)}`
                     : " · En curso"}
                   {item.ordenMerito !== "No aplica" && ` · ${item.ordenMerito} puesto`}
-                  {item.documentoDisponible && " · PDF adjunto"}
                 </p>
               </div>
               <div className="flex gap-2 shrink-0">
@@ -177,25 +168,12 @@ export function PerfilSectionEducacion() {
               {editingId ? "Editar formación" : "Nueva formación académica"}
             </h3>
 
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-700">Carrera *</label>
-              <select
-                required
-                value={form.carreraId}
-                onChange={(e) => setForm({ ...form, carreraId: e.target.value })}
-                className="w-full rounded-xl border border-emerald-100 px-4 py-3"
-              >
-                <option value="">Selecciona…</option>
-                {catalogos.carreras.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nombre}
-                  </option>
-                ))}
-              </select>
-              {formErrors.carreraId && (
-                <p className="text-xs text-red-600">{formErrors.carreraId}</p>
-              )}
-            </div>
+            <CareerCombobox
+              careers={catalogos.carreras}
+              value={form.carreraId}
+              onChange={(carreraId) => setForm({ ...form, carreraId })}
+              error={formErrors.carreraId}
+            />
 
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-700">Tipo de estudio *</label>
@@ -212,19 +190,11 @@ export function PerfilSectionEducacion() {
               </select>
             </div>
 
-            <Input
-              label="Institución *"
-              list="instituciones-list"
+            <InstitutionCombobox
+              institutions={catalogos.instituciones}
               value={form.institucion}
-              onChange={(e) => setForm({ ...form, institucion: e.target.value })}
-              placeholder="Ej. Universidad Nacional de Ingeniería"
-              required
+              onChange={(institucion) => setForm({ ...form, institucion })}
             />
-            <datalist id="instituciones-list">
-              {catalogos.instituciones.map((i) => (
-                <option key={i.id} value={i.nombre} />
-              ))}
-            </datalist>
 
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-700">Orden de mérito</label>
@@ -240,16 +210,6 @@ export function PerfilSectionEducacion() {
                 ))}
               </select>
             </div>
-
-            <PdfFileInput
-              label="Documento de respaldo (PDF)"
-              hint="Certificado, constancia de estudios u otro documento que acredite esta formación."
-              required={!editing?.documentoDisponible}
-              existingFileName={editing?.documentoNombre}
-              value={documento}
-              onChange={setDocumento}
-              error={formErrors.documento}
-            />
 
             <div className="grid sm:grid-cols-2 gap-4">
               <DateInput

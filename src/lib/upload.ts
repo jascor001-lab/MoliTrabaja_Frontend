@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir, readdir, unlink, writeFile } from "fs/promises";
 import path from "path";
 
 import type { ArchivoAdjuntoMeta, LogoArchivoMeta } from "@/types/bolsa";
@@ -37,6 +37,19 @@ export async function guardarArchivosOferta(
   return metas;
 }
 
+async function limpiarBasesAnteriores(dir: string): Promise<void> {
+  try {
+    const entries = await readdir(dir);
+    await Promise.all(
+      entries
+        .filter((name) => name.startsWith("bases-"))
+        .map((name) => unlink(path.join(dir, name)).catch(() => undefined))
+    );
+  } catch {
+    /* directorio nuevo */
+  }
+}
+
 export async function guardarBasesOferta(
   ofertaId: string,
   file: File
@@ -51,8 +64,9 @@ export async function guardarBasesOferta(
 
   const dir = path.join(UPLOAD_ROOT, ofertaId);
   await mkdir(dir, { recursive: true });
+  // Solo se conserva el último archivo de bases.
+  await limpiarBasesAnteriores(dir);
 
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const filename = `bases-${Date.now()}${ext}`;
   const diskPath = path.join(dir, filename);
   const buffer = Buffer.from(await file.arrayBuffer());

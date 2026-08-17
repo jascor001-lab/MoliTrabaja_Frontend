@@ -58,7 +58,7 @@ export function LoginForm() {
         redirect?: string;
       };
       if (!res.ok) throw new Error(data.error ?? "Error al ingresar");
-      router.push(data.redirect ?? (loginTipo === "empresa" ? "/empresa" : "/personal"));
+      router.push(data.redirect ?? (loginTipo === "empresa" ? "/empresa" : "/"));
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al ingresar");

@@ -43,6 +43,7 @@ export type OfertaFormFields = {
   longitud: string;
   carreraIds: number[];
   conocimientoIds: number[];
+  aptoDiscapacidad: boolean;
   contactoPrincipal: ContactoInput;
   contactoGerente: ContactoInput;
   estado: EstadoOferta;
@@ -104,6 +105,7 @@ const initialFields: OfertaFormFields = {
   longitud: "",
   carreraIds: [],
   conocimientoIds: [],
+  aptoDiscapacidad: false,
   contactoPrincipal: emptyContacto(),
   contactoGerente: emptyContacto(),
   estado: "Activa",
@@ -235,6 +237,7 @@ export const useOfertaFormStore = create<OfertaFormState>((set, get) => ({
       longitud: oferta.direccionTrabajo?.longitud ?? "",
       carreraIds: oferta.carrerasRequeridas.map((c) => c.id),
       conocimientoIds: oferta.conocimientosRequeridos.map((c) => c.id),
+      aptoDiscapacidad: oferta.aptoDiscapacidad,
       contactoPrincipal: principal
         ? {
             nombres: principal.nombres,

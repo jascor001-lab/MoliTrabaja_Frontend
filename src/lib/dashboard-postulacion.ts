@@ -1,10 +1,6 @@
 import type { OfertaLaboral, Postulacion, Postulante } from "@prisma/client";
 
-import { cvViewUrl } from "@/lib/cv-access";
-import {
-  nombreArchivoDocumento,
-  perfilDocumentoViewUrl,
-} from "@/lib/perfil-doc-access";
+import { cvViewUrl } from "@/lib/cv-urls";
 import { calcularMatchScorePercentage } from "@/lib/match-score";
 import { numeroDocumentoDe } from "@/lib/postulante-doc";
 import { calcularEdad, nombreCompleto } from "@/lib/validacion-postulante";
@@ -12,8 +8,8 @@ import { construirHistorialActividad } from "@/lib/postulacion-actividad";
 import type {
   AccionReclutador,
   CandidateActionable,
-  CandidatePerfilResumen,
   CandidateRequisitosMatch,
+  CarpetaReclutador,
   CvFormato,
   CvParsed,
   DashboardDualResponse,
@@ -24,8 +20,10 @@ import type {
 } from "@/types/postulacion";
 import { ACCIONES_RECLUTADOR, ESTADOS_PIPELINE } from "@/types/postulacion";
 
+const EN_REVISION: EstadoPipeline = "En Revisión";
+
 const LEGACY_MAP: Record<string, EstadoPipeline> = {
-  Recibido: "En Revisión",
+  Recibido: EN_REVISION,
   Evaluación: "Entrevista",
   Finalizado: "No Seleccionado (Fuera del Proceso)",
 };
@@ -34,7 +32,14 @@ export function normalizarEstadoPipeline(raw: string): EstadoPipeline {
   if (ESTADOS_PIPELINE.includes(raw as EstadoPipeline)) {
     return raw as EstadoPipeline;
   }
-  return LEGACY_MAP[raw] ?? "En Revisión";
+  return LEGACY_MAP[raw] ?? EN_REVISION;
+}
+
+export function carpetaDesdePipeline(pipeline: EstadoPipeline): CarpetaReclutador {
+  if (pipeline === "Entrevista") return "En proceso";
+  if (pipeline === "Aceptado / Seleccionado") return "Finalistas";
+  if (pipeline === "No Seleccionado (Fuera del Proceso)") return "Descartados";
+  return "Inscritos";
 }
 
 export function parseCvParsed(raw: string): CvParsed {
@@ -72,7 +77,7 @@ export function estadoParaPostulante(pipeline: EstadoPipeline): EstadoPostulante
   if (pipeline === "No Seleccionado (Fuera del Proceso)") {
     return "No Seleccionado (Fuera del Proceso)";
   }
-  return "En Revisión";
+  return EN_REVISION;
 }
 
 export function statusCodeFromPipeline(pipeline: EstadoPipeline): StatusCode {
@@ -93,27 +98,37 @@ const CONTEXT_MESSAGES: Record<EstadoPipeline, string> = {
     "En esta oportunidad no continuas en el proceso. Te invitamos a postular a otras vacantes.",
 };
 
+/** Acciones disponibles según carpeta actual (no incluye la carpeta actual). */
 export function accionesDisponibles(estado: EstadoPipeline): AccionReclutador[] {
-  if (estado === "Aceptado / Seleccionado") return ["Rechazar"];
-  if (estado === "No Seleccionado (Fuera del Proceso)") {
-    return ["Aceptar", "Mover a Entrevista"];
-  }
-  return ["Aceptar", "Rechazar", "Mover a Entrevista"];
+  const carpeta = carpetaDesdePipeline(estado);
+  return ACCIONES_RECLUTADOR.filter((accion) => {
+    if (accion === "Mover a Inscritos") return carpeta !== "Inscritos";
+    if (accion === "Mover a En proceso") return carpeta !== "En proceso";
+    if (accion === "Mover a Finalistas") return carpeta !== "Finalistas";
+    if (accion === "Descartar") return carpeta !== "Descartados";
+    return true;
+  });
 }
 
 export function accionAEstado(accion: AccionReclutador): EstadoPipeline {
   switch (accion) {
-    case "Aceptar":
-      return "Aceptado / Seleccionado";
-    case "Rechazar":
-      return "No Seleccionado (Fuera del Proceso)";
-    case "Mover a Entrevista":
+    case "Mover a Inscritos":
+      return EN_REVISION;
+    case "Mover a En proceso":
       return "Entrevista";
+    case "Mover a Finalistas":
+      return "Aceptado / Seleccionado";
+    case "Descartar":
+      return "No Seleccionado (Fuera del Proceso)";
   }
 }
 
 function buildFunnel(postulaciones: { estadoSeguimiento: string }[]): FunnelSummary {
   const funnel: FunnelSummary = {
+    inscritos: 0,
+    en_proceso: 0,
+    finalistas: 0,
+    descartados: 0,
     en_revision: 0,
     entrevistas: 0,
     aceptados: 0,
@@ -122,10 +137,19 @@ function buildFunnel(postulaciones: { estadoSeguimiento: string }[]): FunnelSumm
 
   for (const p of postulaciones) {
     const e = normalizarEstadoPipeline(p.estadoSeguimiento);
-    if (e === "En Revisión") funnel.en_revision++;
-    else if (e === "Entrevista") funnel.entrevistas++;
-    else if (e === "Aceptado / Seleccionado") funnel.aceptados++;
-    else funnel.no_seleccionados++;
+    if (e === EN_REVISION) {
+      funnel.inscritos++;
+      funnel.en_revision++;
+    } else if (e === "Entrevista") {
+      funnel.en_proceso++;
+      funnel.entrevistas++;
+    } else if (e === "Aceptado / Seleccionado") {
+      funnel.finalistas++;
+      funnel.aceptados++;
+    } else {
+      funnel.descartados++;
+      funnel.no_seleccionados++;
+    }
   }
 
   return funnel;
@@ -162,12 +186,6 @@ type Row = Postulacion & {
     educaciones?: {
       id: string;
       carrera: { id: number; nombre: string };
-      tipoEstudio: string;
-      institucion: string;
-      ordenMerito: string;
-      fechaIngreso: Date;
-      fechaEgreso: Date | null;
-      documentoPath?: string | null;
     }[];
     experiencias?: {
       id: string;
@@ -175,12 +193,10 @@ type Row = Postulacion & {
       empresa: string;
       sector: string;
       tiempoMeses: number;
-      documentoPath?: string | null;
     }[];
     conocimientos?: {
       id: string;
       conocimiento: { id: number; nombre: string; grupo: string };
-      documentoPath?: string | null;
     }[];
   };
 };
@@ -203,63 +219,6 @@ function matchRequisitos(
     conocimientos_cumplidos: reqConoc
       .filter((k) => postKSet.has(k.id))
       .map((k) => k.nombre),
-  };
-}
-
-function buildPerfilResumen(
-  postulante: Row["postulante"],
-  reqCarreras: CatalogoItem[],
-  reqConoc: CatalogoItem[],
-  ofertaId: string,
-  dni: string
-): CandidatePerfilResumen {
-  const docMeta = (tipo: "educacion" | "experiencia" | "conocimiento", itemId: string, path?: string | null) => {
-    const disponible = Boolean(path?.startsWith("/uploads/perfil/"));
-    return {
-      documento_disponible: disponible,
-      ...(disponible && {
-        documento_view_url: perfilDocumentoViewUrl(ofertaId, dni, tipo, itemId),
-        documento_filename: nombreArchivoDocumento(path),
-      }),
-    };
-  };
-
-  return {
-    educaciones:
-      postulante.educaciones?.map((e) => ({
-        id: e.id,
-        carrera: e.carrera.nombre,
-        tipo_estudio: e.tipoEstudio,
-        institucion: e.institucion,
-        orden_merito: e.ordenMerito,
-        fecha_ingreso: e.fechaIngreso.toISOString().slice(0, 10),
-        fecha_egreso: e.fechaEgreso
-          ? e.fechaEgreso.toISOString().slice(0, 10)
-          : null,
-        ...docMeta("educacion", e.id, e.documentoPath),
-      })) ?? [],
-    conocimientos:
-      postulante.conocimientos?.map((k) => ({
-        id: k.id,
-        nombre: k.conocimiento.nombre,
-        grupo: k.conocimiento.grupo,
-        ...docMeta("conocimiento", k.id, k.documentoPath),
-      })) ?? [],
-    experiencias:
-      postulante.experiencias?.map((x) => ({
-        id: x.id,
-        puesto: x.puesto,
-        empresa: x.empresa,
-        sector: x.sector,
-        meses: x.tiempoMeses,
-        ...docMeta("experiencia", x.id, x.documentoPath),
-      })) ?? [],
-    requisitos: matchRequisitos(
-      reqCarreras,
-      reqConoc,
-      postulante.educaciones?.map((e) => e.carrera.id) ?? [],
-      postulante.conocimientos?.map((k) => k.conocimiento.id) ?? []
-    ),
   };
 }
 
@@ -316,23 +275,28 @@ export function buildDashboardDual(params: {
           ? p.matchScore
           : calcularMatchScorePercentage(cv, matchOferta, postConoc, postCarr);
 
-      const cvPath = p.postulante.cvPath;
+      const cvPath = p.cvPath || p.postulante.cvPath;
       const cvAvailable = Boolean(cvPath?.startsWith("/uploads/cv/"));
 
       return {
         dni: doc,
         nombre: nombreCompleto(p.postulante),
         edad: calcularEdad(fechaNac),
+        correo: p.postulante.correo,
+        telefono: p.postulante.telefono,
         match_score_percentage: matchScore,
         current_status: estado,
+        carpeta: carpetaDesdePipeline(estado),
         available_actions: accionesDisponibles(estado),
         cv_available: cvAvailable,
-        perfil_resumen: buildPerfilResumen(
-          p.postulante,
+        requisitos: matchRequisitos(
           reqCarreras,
           reqConoc,
-          oferta.id,
-          doc
+          p.postulante.educaciones?.map((e) => e.carrera.id) ?? [],
+          p.postulante.conocimientos?.map((k) => k.conocimiento.id) ?? []
+        ),
+        tiene_discapacidad: Boolean(
+          (p.postulante as { tieneDiscapacidad?: boolean }).tieneDiscapacidad
         ),
         ...(cvAvailable && {
           cv_filename: nombreArchivoCv(cvPath),
@@ -402,6 +366,9 @@ export function buildDashboardDual(params: {
           demografia: {
             genero: row.postulante.genero,
             direccion: row.postulante.direccion?.direccionLiteral ?? "",
+            tiene_discapacidad: Boolean(
+              (row.postulante as { tieneDiscapacidad?: boolean }).tieneDiscapacidad
+            ),
           },
           contacto: {
             correo: row.postulante.correo,

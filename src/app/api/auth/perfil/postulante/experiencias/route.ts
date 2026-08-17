@@ -31,13 +31,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!documento) {
-    return NextResponse.json(
-      { error: "Debes adjuntar un PDF que respalde esta experiencia." },
-      { status: 422 }
-    );
-  }
-
   const row = await prisma.expLaboral.create({
     data: {
       postulanteId: auth.postulanteId,
@@ -52,23 +45,27 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  try {
-    const saved = await guardarDocumentoPerfil(
-      auth.dni,
-      "experiencia",
-      row.id,
-      documento
-    );
-    const updated = await prisma.expLaboral.update({
-      where: { id: row.id },
-      data: { documentoPath: saved.path },
-    });
-    return NextResponse.json({ experiencia: mapExpLaboral(updated) }, { status: 201 });
-  } catch (e) {
-    await prisma.expLaboral.delete({ where: { id: row.id } });
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "No se pudo guardar el PDF" },
-      { status: 422 }
-    );
+  if (documento) {
+    try {
+      const saved = await guardarDocumentoPerfil(
+        auth.dni,
+        "experiencia",
+        row.id,
+        documento
+      );
+      const updated = await prisma.expLaboral.update({
+        where: { id: row.id },
+        data: { documentoPath: saved.path },
+      });
+      return NextResponse.json({ experiencia: mapExpLaboral(updated) }, { status: 201 });
+    } catch (e) {
+      await prisma.expLaboral.delete({ where: { id: row.id } });
+      return NextResponse.json(
+        { error: e instanceof Error ? e.message : "No se pudo guardar el archivo" },
+        { status: 422 }
+      );
+    }
   }
+
+  return NextResponse.json({ experiencia: mapExpLaboral(row) }, { status: 201 });
 }

@@ -1,14 +1,19 @@
+import { readFile } from "fs/promises";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getSession } from "@/lib/auth";
-import { buildDashboardDual, generarCodigoPostulacion } from "@/lib/dashboard-postulacion";
-import { calcularMatchScorePercentage } from "@/lib/match-score";
+import { resolveCvFile } from "@/lib/cv-access";
 import { extraerTextoCv, parsearCvTexto } from "@/lib/cv-parser";
+import { buildDashboardDual, generarCodigoPostulacion } from "@/lib/dashboard-postulacion";
 import { prisma } from "@/lib/db";
+import { calcularMatchScorePercentage } from "@/lib/match-score";
 import { actualizarDireccionPostulante } from "@/lib/postulante-persist";
-import { guardarCvPostulante } from "@/lib/upload-cv";
-import { validarPostulanteInput } from "@/lib/validacion-postulante";
-import type { PostulanteInput } from "@/types/postulacion";
+import {
+  validarPostulanteInput,
+  type PostulanteFormInput,
+} from "@/lib/validacion-postulante";
+import type { EstadoCivil } from "@/types/catalogos";
+import type { Genero } from "@/types/postulacion";
 
 function rankingFromScore(score: number): string {
   if (score >= 70) return "High";
@@ -28,22 +33,46 @@ export async function POST(request: NextRequest) {
 
     const form = await request.formData();
     const jobId = String(form.get("job_id") ?? "").trim();
-    const cvFile = form.get("cv");
 
     if (!jobId) {
       return NextResponse.json({ error: "job_id es obligatorio" }, { status: 400 });
     }
 
-    if (!(cvFile instanceof File) || cvFile.size === 0) {
-      return NextResponse.json({ error: "El CV es obligatorio" }, { status: 400 });
-    }
-
     const perfilDb = await prisma.postulante.findUnique({
       where: { id: session.postulanteId },
-      include: { direccion: true },
+      include: { direccion: true, tipoDoc: true },
     });
     if (!perfilDb) {
       return NextResponse.json({ error: "Perfil no encontrado" }, { status: 404 });
+    }
+
+    const existente = await prisma.postulacion.findUnique({
+      where: {
+        ofertaId_postulanteId: {
+          ofertaId: jobId,
+          postulanteId: session.postulanteId,
+        },
+      },
+    });
+    if (existente) {
+      return NextResponse.json(
+        {
+          error:
+            "Ya postulaste a esta vacante. El CV se envió una sola vez y no se puede cambiar aquí. Puedes actualizar tu CV en Mi perfil para futuras postulaciones.",
+        },
+        { status: 409 }
+      );
+    }
+
+    const cvFile = await resolveCvFile(perfilDb.cvPath);
+    if (!cvFile) {
+      return NextResponse.json(
+        {
+          error: "Sube y guarda tu CV en Mi perfil → Curriculum antes de postular.",
+          redirect: "/personal/perfil",
+        },
+        { status: 422 }
+      );
     }
 
     const telefonoForm = String(form.get("telefono") ?? "").trim();
@@ -51,16 +80,17 @@ export async function POST(request: NextRequest) {
       form.get("direccionLiteral") ?? form.get("direccion") ?? ""
     ).trim();
 
-    const rawInput: Partial<PostulanteInput> = {
+    const rawInput: Partial<PostulanteFormInput> = {
       tipoDocId: perfilDb.tipoDocId,
+      tipoDocAbrev: perfilDb.tipoDoc.abrev,
       numeroDocumento: perfilDb.numeroDocumento,
       nombres: perfilDb.nombres,
       apellidoPaterno: perfilDb.apellidoPaterno,
       apellidoMaterno: perfilDb.apellidoMaterno,
       fechaNacimiento: perfilDb.fechaNacimiento.toISOString().slice(0, 10),
       paisId: perfilDb.paisId,
-      genero: perfilDb.genero,
-      estadoCivil: perfilDb.estadoCivil,
+      genero: perfilDb.genero as Genero,
+      estadoCivil: perfilDb.estadoCivil as EstadoCivil,
       correo: perfilDb.correo,
       telefono: telefonoForm || perfilDb.telefono,
       direccionLiteral:
@@ -92,8 +122,8 @@ export async function POST(request: NextRequest) {
     }
 
     const conocimientosReq = oferta.conocimientos.map((k) => k.conocimiento.nombre);
-    const buffer = Buffer.from(await cvFile.arrayBuffer());
-    const textoCv = await extraerTextoCv(buffer, cvFile.name);
+    const buffer = await readFile(cvFile.absolutePath);
+    const textoCv = await extraerTextoCv(buffer, cvFile.fileName);
     const cvParsed = parsearCvTexto(textoCv, conocimientosReq);
 
     const matchOferta = {
@@ -106,10 +136,8 @@ export async function POST(request: NextRequest) {
     };
     const matchScore = calcularMatchScorePercentage(cvParsed, matchOferta);
 
-    const { path: cvPath } = await guardarCvPostulante(
-      validation.data.numeroDocumento,
-      cvFile
-    );
+    // Snapshot: path actual del perfil; si luego lo reemplazan, la empresa sigue viendo este.
+    const cvSnapshotPath = perfilDb.cvPath!;
 
     await actualizarDireccionPostulante(
       prisma,
@@ -118,33 +146,25 @@ export async function POST(request: NextRequest) {
       validation.data.direccionLiteral
     );
 
-    const postulante = await prisma.postulante.update({
+    await prisma.postulante.update({
       where: { id: session.postulanteId },
       data: {
         telefono: validation.data.telefono,
-        cvPath,
         cvParsed: JSON.stringify(cvParsed),
       },
     });
 
-    const existente = await prisma.postulacion.findUnique({
-      where: {
-        ofertaId_postulanteId: { ofertaId: jobId, postulanteId: postulante.id },
+    await prisma.postulacion.create({
+      data: {
+        codigo: generarCodigoPostulacion(),
+        ofertaId: jobId,
+        postulanteId: session.postulanteId,
+        estadoSeguimiento: "En Revisión",
+        matchScore,
+        rankingFit: rankingFromScore(matchScore),
+        cvPath: cvSnapshotPath,
       },
     });
-
-    if (!existente) {
-      await prisma.postulacion.create({
-        data: {
-          codigo: generarCodigoPostulacion(),
-          ofertaId: jobId,
-          postulanteId: postulante.id,
-          estadoSeguimiento: "En Revisión",
-          matchScore,
-          rankingFit: rankingFromScore(matchScore),
-        },
-      });
-    }
 
     const ofertaFull = await prisma.ofertaLaboral.findUnique({
       where: { id: jobId },
@@ -176,7 +196,7 @@ export async function POST(request: NextRequest) {
       includeProfile: true,
     });
 
-    return NextResponse.json(payload, { status: existente ? 200 : 201 });
+    return NextResponse.json(payload, { status: 201 });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Error al procesar postulación";
     return NextResponse.json({ error: message }, { status: 500 });

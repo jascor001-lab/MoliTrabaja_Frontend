@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { SlideView } from "@/components/ui/SlideView";
 import { MOTION_REDUCE } from "@/lib/motion";
@@ -10,18 +11,23 @@ import {
 } from "@/stores/perfilPostulanteStore";
 
 import { PerfilSectionConocimientos } from "./PerfilSectionConocimientos";
+import { PerfilSectionCurriculum } from "./PerfilSectionCurriculum";
 import { PerfilSectionEducacion } from "./PerfilSectionEducacion";
 import { PerfilSectionExperiencia } from "./PerfilSectionExperiencia";
 import { PerfilSectionPersonal } from "./PerfilSectionPersonal";
 
 const TABS: { id: PerfilSection; label: string }[] = [
   { id: "personal", label: "Datos personales" },
+  { id: "curriculum", label: "Curriculum" },
   { id: "educacion", label: "Formación académica" },
   { id: "experiencia", label: "Experiencia laboral" },
   { id: "conocimientos", label: "Conocimientos" },
 ];
 
-export function PerfilPostulantePanel() {
+const SECCIONES_VALIDAS = new Set<PerfilSection>(TABS.map((t) => t.id));
+
+function PerfilPostulantePanelInner() {
+  const searchParams = useSearchParams();
   const loading = usePerfilPostulanteStore((s) => s.loading);
   const error = usePerfilPostulanteStore((s) => s.error);
   const message = usePerfilPostulanteStore((s) => s.message);
@@ -34,6 +40,13 @@ export function PerfilPostulantePanel() {
     loadAll();
   }, [loadAll]);
 
+  useEffect(() => {
+    const seccion = searchParams.get("seccion");
+    if (seccion && SECCIONES_VALIDAS.has(seccion as PerfilSection)) {
+      setSection(seccion as PerfilSection);
+    }
+  }, [searchParams, setSection]);
+
   if (loading) {
     return <p className="text-sm text-slate-400 px-1">Cargando tu perfil…</p>;
   }
@@ -44,10 +57,7 @@ export function PerfilPostulantePanel() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <nav
-        className="flex flex-wrap gap-2"
-        aria-label="Secciones del perfil"
-      >
+      <nav className="flex flex-wrap gap-2" aria-label="Secciones del perfil">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -80,11 +90,20 @@ export function PerfilPostulantePanel() {
       <div className="rounded-2xl border border-emerald-100 bg-white p-5 md:p-6 shadow-sm overflow-hidden">
         <SlideView viewKey={section} direction={sectionDirection}>
           {section === "personal" && <PerfilSectionPersonal />}
+          {section === "curriculum" && <PerfilSectionCurriculum />}
           {section === "educacion" && <PerfilSectionEducacion />}
           {section === "experiencia" && <PerfilSectionExperiencia />}
           {section === "conocimientos" && <PerfilSectionConocimientos />}
         </SlideView>
       </div>
     </div>
+  );
+}
+
+export function PerfilPostulantePanel() {
+  return (
+    <Suspense fallback={<p className="text-sm text-slate-400 px-1">Cargando tu perfil…</p>}>
+      <PerfilPostulantePanelInner />
+    </Suspense>
   );
 }

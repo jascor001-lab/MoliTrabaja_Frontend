@@ -2,7 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 const fs = require("fs");
 const path = require("path");
 
-const BASE = "http://localhost:3010";
+const BASE = "http://localhost:3002";
 
 async function main() {
   const prisma = new PrismaClient();

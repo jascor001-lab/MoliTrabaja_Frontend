@@ -13,8 +13,9 @@ export default async function PerfilPostulantePage() {
         </p>
         <h1 className="text-2xl font-bold text-slate-900 mt-1">Mi perfil</h1>
         <p className="text-slate-500 mt-2 max-w-xl">
-          Completa tu perfil con datos personales, formación académica, experiencia
-          laboral y conocimientos. Mejora tu coincidencia con las ofertas.
+          Completa tus datos y sube tu CV en la pestaña Curriculum. Ese documento es
+          el que revisa la empresa al postular; formación y conocimientos mejoran tu
+          porcentaje de encaje.
         </p>
       </header>
       <div className="px-4 md:px-6 pb-10">

@@ -20,6 +20,8 @@ type PerfilResumen = {
   apellidoPaterno: string;
   apellidoMaterno: string;
   correo: string;
+  cvDisponible: boolean;
+  cvFilename: string | null;
 };
 
 export function PostulacionForm({ oferta, onSuccess, onCancel }: Props) {
@@ -28,7 +30,6 @@ export function PostulacionForm({ oferta, onSuccess, onCancel }: Props) {
   const [perfil, setPerfil] = useState<PerfilResumen | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [cv, setCv] = useState<File | null>(null);
 
   useEffect(() => {
     fetch("/api/auth/login")
@@ -47,6 +48,8 @@ export function PostulacionForm({ oferta, onSuccess, onCancel }: Props) {
             apellidoPaterno: data.apellidoPaterno ?? "",
             apellidoMaterno: data.apellidoMaterno ?? "",
             correo: data.correo ?? "",
+            cvDisponible: Boolean(data.cvDisponible),
+            cvFilename: data.cvFilename ?? null,
           });
           sincronizarDni(data.dni);
         }
@@ -62,8 +65,7 @@ export function PostulacionForm({ oferta, onSuccess, onCancel }: Props) {
     return (
       <div className="space-y-4 text-center py-4">
         <p className="text-sm text-slate-600">
-          Inicia sesión o crea tu perfil una sola vez; luego solo adjuntas tu CV para
-          postular.
+          Inicia sesión para postular. Tu CV debe estar guardado en Mi perfil.
         </p>
         <Link href="/ingreso?tipo=postulante">
           <Button className="w-full">Acceder</Button>
@@ -77,12 +79,12 @@ export function PostulacionForm({ oferta, onSuccess, onCancel }: Props) {
 
   const handleSubmit = async () => {
     setError(null);
-    if (!cv) {
-      setError("Adjunta tu CV en PDF, Word o TXT.");
-      return;
-    }
     if (!perfil?.dni) {
       setError("Completa tu perfil antes de postular.");
+      return;
+    }
+    if (!perfil.cvDisponible) {
+      setError("Sube tu CV en Mi perfil → Curriculum antes de enviar la postulación.");
       return;
     }
 
@@ -90,7 +92,6 @@ export function PostulacionForm({ oferta, onSuccess, onCancel }: Props) {
     try {
       const form = new FormData();
       form.append("job_id", oferta.id);
-      form.append("cv", cv);
 
       const res = await fetch("/api/postulaciones", { method: "POST", body: form });
       const data = await res.json();
@@ -131,17 +132,34 @@ export function PostulacionForm({ oferta, onSuccess, onCancel }: Props) {
       <h3 className="font-bold text-slate-900">Postular a esta vacante</h3>
 
       {perfil ? (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
-          <p className="font-semibold text-slate-800">{nombreCompleto}</p>
-          <p className="text-slate-500 mt-0.5">
-            DNI {perfil.dni} · {perfil.correo}
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm space-y-2">
+          <div>
+            <p className="font-semibold text-slate-800">{nombreCompleto}</p>
+            <p className="text-slate-500 mt-0.5">
+              Doc. {perfil.dni} · {perfil.correo}
+            </p>
+          </div>
+          {!perfil.cvDisponible && (
+            <p className="text-amber-800 text-xs">
+              No tienes CV en el perfil.{" "}
+              <Link
+                href="/personal/perfil?seccion=curriculum"
+                className="font-semibold underline"
+              >
+                Súbelo en Curriculum
+              </Link>{" "}
+              para poder postular.
+            </p>
+          )}
+          <p className="text-xs text-slate-500">
+            ¿Necesitas verificar o actualizar tu CV?{" "}
+            <Link
+              href="/personal/perfil?seccion=curriculum"
+              className="font-medium text-emerald-700 hover:underline"
+            >
+              Ir a Curriculum
+            </Link>
           </p>
-          <Link
-            href="/personal/perfil"
-            className="inline-block mt-2 text-emerald-700 font-medium hover:underline"
-          >
-            Editar datos en mi perfil
-          </Link>
         </div>
       ) : (
         <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
@@ -152,20 +170,6 @@ export function PostulacionForm({ oferta, onSuccess, onCancel }: Props) {
         </p>
       )}
 
-      <label className="block space-y-1.5">
-        <span className="text-sm font-medium text-slate-700">CV (PDF / Word / TXT) *</span>
-        <input
-          type="file"
-          accept=".pdf,.doc,.docx,.txt"
-          onChange={(e) => setCv(e.target.files?.[0] ?? null)}
-          className="w-full text-sm"
-        />
-        <p className="text-xs text-slate-500">
-          Usamos tu CV para calcular el match con la vacante. Tus datos personales ya están en
-          tu cuenta.
-        </p>
-      </label>
-
       {error && (
         <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{error}</p>
       )}
@@ -174,8 +178,12 @@ export function PostulacionForm({ oferta, onSuccess, onCancel }: Props) {
         <Button variant="secondary" onClick={onCancel} disabled={loading}>
           Cancelar
         </Button>
-        <Button onClick={handleSubmit} disabled={loading || !perfil?.dni} className="flex-1">
-          {loading ? "Enviando…" : "Enviar postulación"}
+        <Button
+          onClick={handleSubmit}
+          disabled={loading || !perfil?.dni || !perfil?.cvDisponible}
+          className="flex-1"
+        >
+          {loading ? "Enviando…" : "Enviar CV / Postular"}
         </Button>
       </div>
     </div>

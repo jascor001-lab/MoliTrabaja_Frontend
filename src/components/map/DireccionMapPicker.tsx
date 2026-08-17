@@ -17,10 +17,9 @@ import {
   useMapEvents,
 } from "react-leaflet";
 
-import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {
-  geocodeAddress,
+  reverseGeocodeAddress,
   searchAddressSuggestions,
   type AddressSuggestion,
 } from "@/lib/geocode";
@@ -29,7 +28,6 @@ import {
   MAP_DEFAULT_ZOOM,
   coordsFromStrings,
   formatCoord,
-  parseCoord,
 } from "@/lib/map-defaults";
 
 const markerIcon = L.icon({
@@ -84,8 +82,8 @@ export function DireccionMapPicker({
   onDireccionChange,
   onCoordsChange,
 }: Props) {
-  const [geocoding, setGeocoding] = useState(false);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
+  const [resolvingAddress, setResolvingAddress] = useState(false);
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [suggestLoading, setSuggestLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -109,6 +107,26 @@ export function DireccionMapPicker({
       setGeocodeError(null);
     },
     [onCoordsChange]
+  );
+
+  const selectOnMap = useCallback(
+    async (lat: number, lng: number) => {
+      setCoords(lat, lng);
+      setResolvingAddress(true);
+      try {
+        const address = await reverseGeocodeAddress(lat, lng);
+        onDireccionChange(
+          address ?? `Ubicación seleccionada (${formatCoord(lat)}, ${formatCoord(lng)})`
+        );
+      } catch {
+        onDireccionChange(
+          `Ubicación seleccionada (${formatCoord(lat)}, ${formatCoord(lng)})`
+        );
+      } finally {
+        setResolvingAddress(false);
+      }
+    },
+    [onDireccionChange, setCoords]
   );
 
   useEffect(() => {
@@ -159,35 +177,6 @@ export function DireccionMapPicker({
     [onDireccionChange, setCoords]
   );
 
-  const handleGeocode = async () => {
-    setGeocodeError(null);
-    setShowSuggestions(false);
-    setGeocoding(true);
-    try {
-      const result = await geocodeAddress(direccionLiteral);
-      if (!result) {
-        setGeocodeError("No se encontró la dirección. Ajusta el texto o marca el mapa.");
-        return;
-      }
-      onDireccionChange(result.displayName);
-      setCoords(result.lat, result.lng);
-    } catch {
-      setGeocodeError("Error al buscar la dirección. Intenta de nuevo.");
-    } finally {
-      setGeocoding(false);
-    }
-  };
-
-  const handleLatChange = (value: string) => {
-    const lng = parseCoord(longitud);
-    onCoordsChange(value, lng !== null ? formatCoord(lng) : longitud);
-  };
-
-  const handleLngChange = (value: string) => {
-    const lat = parseCoord(latitud);
-    onCoordsChange(lat !== null ? formatCoord(lat) : latitud, value);
-  };
-
   const handleDireccionKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (!showSuggestions || suggestions.length === 0) {
       if (e.key === "ArrowDown" && direccionLiteral.trim().length >= 3) {
@@ -215,11 +204,10 @@ export function DireccionMapPicker({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col sm:flex-row sm:items-end gap-2">
-        <div className="relative flex-1 min-w-0">
+      <div className="relative">
           <Input
-            label="Dirección literal *"
-            placeholder="Escribe y elige una dirección de la lista…"
+            label="Dirección *"
+            placeholder="Escribe tu dirección o selecciónala en el mapa…"
             value={direccionLiteral}
             autoComplete="off"
             role="combobox"
@@ -272,27 +260,12 @@ export function DireccionMapPicker({
               ))}
               {!suggestLoading && listVisible && suggestions.length === 0 && (
                 <li className="px-4 py-2.5 text-sm text-slate-500">
-                  Sin coincidencias. Prueba con más detalle o usa «Ubicar en mapa».
+                  Sin coincidencias. Selecciona la ubicación directamente en el mapa.
                 </li>
               )}
             </ul>
           )}
-        </div>
-        <Button
-          type="button"
-          variant="secondary"
-          className="shrink-0 sm:mb-0.5"
-          disabled={geocoding || direccionLiteral.trim().length < 5}
-          onClick={handleGeocode}
-        >
-          {geocoding ? "Buscando…" : "Ubicar en mapa"}
-        </Button>
       </div>
-
-      <p className="text-xs text-slate-500">
-        Escribe la dirección y elige una opción de la lista, haz clic en el mapa o arrastra
-        el marcador. También puedes editar latitud y longitud manualmente.
-      </p>
 
       <div className="overflow-hidden rounded-xl border border-emerald-200 shadow-sm">
         <MapContainer
@@ -305,7 +278,7 @@ export function DireccionMapPicker({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <MapClickHandler onPick={setCoords} />
+          <MapClickHandler onPick={(lat, lng) => void selectOnMap(lat, lng)} />
           {position && (
             <>
               <MapRecenter position={[position.lat, position.lng]} />
@@ -316,7 +289,7 @@ export function DireccionMapPicker({
                 eventHandlers={{
                   dragend(e) {
                     const { lat, lng } = e.target.getLatLng();
-                    setCoords(lat, lng);
+                    void selectOnMap(lat, lng);
                   },
                 }}
               />
@@ -325,20 +298,9 @@ export function DireccionMapPicker({
         </MapContainer>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Input
-          label="Latitud"
-          placeholder="-12.076100"
-          value={latitud}
-          onChange={(e) => handleLatChange(e.target.value)}
-        />
-        <Input
-          label="Longitud"
-          placeholder="-76.941200"
-          value={longitud}
-          onChange={(e) => handleLngChange(e.target.value)}
-        />
-      </div>
+      {resolvingAddress && (
+        <p className="text-xs text-emerald-700">Obteniendo la dirección seleccionada…</p>
+      )}
 
       {geocodeError && (
         <p className="text-sm text-red-600" role="alert">

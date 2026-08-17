@@ -70,6 +70,7 @@ model OfertaLaboral {
   basesArchivo       String               @default("")
   tipoPuesto         String               @default("[]")
   cantidadVacantes   Int                  @default(1)
+  aptoDiscapacidad   Boolean              @default(false)
   funciones          String
   beneficios         String
   createdAt          DateTime             @default(now())
@@ -171,6 +172,7 @@ model Postulante {
   telefono        String
   direccionId     String?
   direccion       Direccion?               @relation(fields: [direccionId], references: [id])
+  tieneDiscapacidad Boolean                @default(false)
   cvPath          String?
   cvParsed        String                   @default("{}")
   createdAt       DateTime                 @default(now())
@@ -238,6 +240,8 @@ model Postulacion {
   estadoSeguimiento String        @default("En Revisión")
   matchScore        Int           @default(0)
   rankingFit        String        @default("Medium")
+  // Snapshot del CV enviado al postular (una sola vez por vacante).
+  cvPath            String?
   lastUpdate        DateTime      @default(now())
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt

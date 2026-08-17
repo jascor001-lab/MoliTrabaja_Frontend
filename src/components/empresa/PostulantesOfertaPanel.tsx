@@ -1,32 +1,103 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { CvViewerModal } from "@/components/empresa/CvViewerModal";
-import { PostulantePerfilResumen } from "@/components/empresa/PostulantePerfilResumen";
 import { Button } from "@/components/ui/Button";
 import { MOTION_REDUCE, staggerDelay } from "@/lib/motion";
 import type {
   AccionReclutador,
   CandidateActionable,
+  CarpetaReclutador,
   DashboardDualResponse,
 } from "@/types/postulacion";
+import { CARPETAS_RECLUTADOR } from "@/types/postulacion";
 
 type Props = {
   ofertaId: string;
 };
 
+const CARPETA_META: Record<
+  CarpetaReclutador,
+  { description: string; funnelKey: "inscritos" | "en_proceso" | "finalistas" | "descartados" }
+> = {
+  Inscritos: {
+    description: "Candidatos recién postulados. Revisa su CV y porcentaje de encaje.",
+    funnelKey: "inscritos",
+  },
+  "En proceso": {
+    description: "Aspirantes en evaluación o entrevista.",
+    funnelKey: "en_proceso",
+  },
+  Finalistas: {
+    description: "Candidatos preseleccionados o aceptados.",
+    funnelKey: "finalistas",
+  },
+  Descartados: {
+    description: "Perfiles que no continúan en el proceso.",
+    funnelKey: "descartados",
+  },
+};
+
+function RequisitoChips({
+  requeridos,
+  cumplidos,
+  vacio,
+}: {
+  requeridos: string[];
+  cumplidos: string[];
+  vacio: string;
+}) {
+  if (requeridos.length === 0) {
+    return <p className="text-xs text-slate-400 italic">{vacio}</p>;
+  }
+
+  const cumplidosSet = new Set(cumplidos.map((c) => c.trim().toLowerCase()));
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {requeridos.map((item) => {
+        const ok = cumplidosSet.has(item.trim().toLowerCase());
+        return (
+          <span
+            key={item}
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+              ok
+                ? "bg-emerald-50 text-emerald-800 border border-emerald-400"
+                : "bg-slate-100 text-slate-500 border border-slate-200"
+            }`}
+          >
+            <span
+              aria-hidden
+              className={`inline-block h-1.5 w-1.5 rounded-full ${
+                ok ? "bg-emerald-600" : "bg-slate-400"
+              }`}
+            />
+            {item}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function accionClase(accion: AccionReclutador): string {
+  if (accion === "Descartar") {
+    return "border-slate-200 text-slate-600 hover:bg-slate-50";
+  }
+  if (accion === "Mover a Finalistas") {
+    return "border-emerald-300 text-emerald-800 hover:bg-emerald-50";
+  }
+  return "border-emerald-200 text-emerald-800 hover:bg-emerald-50";
+}
+
 export function PostulantesOfertaPanel({ ofertaId }: Props) {
   const [data, setData] = useState<DashboardDualResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [carpetaActiva, setCarpetaActiva] = useState<CarpetaReclutador>("Inscritos");
   const [cvAbierto, setCvAbierto] = useState<CandidateActionable | null>(null);
-  const [docAbierto, setDocAbierto] = useState<{
-    viewUrl: string;
-    title: string;
-    fileName?: string;
-  } | null>(null);
-  const [perfilAbierto, setPerfilAbierto] = useState<string | null>(null);
+  const [moviendo, setMoviendo] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,20 +119,35 @@ export function PostulantesOfertaPanel({ ofertaId }: Props) {
   }, [load]);
 
   const ejecutarAccion = async (dni: string, action: AccionReclutador) => {
-    await fetch("/api/postulaciones/accion", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dni, job_id: ofertaId, action }),
-    });
-    load();
+    setMoviendo(dni);
+    try {
+      await fetch("/api/postulaciones/accion", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dni, job_id: ofertaId, action }),
+      });
+      await load();
+    } finally {
+      setMoviendo(null);
+    }
   };
+
+  const funnel = data?.pestaña_empresa_view.analytics.funnel_summary;
+  const pool = data?.pestaña_empresa_view.candidate_pool_actionable ?? [];
+
+  const filtrados = useMemo(
+    () =>
+      pool
+        .filter((p) => p.carpeta === carpetaActiva)
+        .sort((a, b) => b.match_score_percentage - a.match_score_percentage),
+    [pool, carpetaActiva]
+  );
 
   if (loading) return <p className="text-sm text-slate-500">Cargando postulantes…</p>;
   if (error) return <p className="text-sm text-red-600">{error}</p>;
-  if (!data) return null;
+  if (!data || !funnel) return null;
 
-  const { analytics, candidate_pool_actionable } = data.pestaña_empresa_view;
-  const funnel = analytics.funnel_summary;
+  const { analytics } = data.pestaña_empresa_view;
 
   return (
     <div className="space-y-6">
@@ -75,24 +161,15 @@ export function PostulantesOfertaPanel({ ofertaId }: Props) {
         />
       )}
 
-      {docAbierto && (
-        <CvViewerModal
-          candidateName={docAbierto.title}
-          viewUrl={docAbierto.viewUrl}
-          fileName={docAbierto.fileName}
-          formato="pdf"
-          sectionLabel="Documento de respaldo"
-          onClose={() => setDocAbierto(null)}
-        />
-      )}
-
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase text-emerald-600">Pestaña Empresa</p>
+          <p className="text-xs font-semibold uppercase text-emerald-600">
+            Gestión de postulantes
+          </p>
           <h3 className="text-lg font-bold text-slate-900">{data.job_metadata.title}</h3>
           <p className="text-2xl font-extrabold text-emerald-700 mt-1">
             {analytics.total_postulantes}{" "}
-            <span className="text-sm font-medium text-slate-500">postulantes únicos</span>
+            <span className="text-sm font-medium text-slate-500">postulantes</span>
           </p>
         </div>
         <Button variant="secondary" onClick={load}>
@@ -100,98 +177,157 @@ export function PostulantesOfertaPanel({ ofertaId }: Props) {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: "En revisión", value: funnel.en_revision },
-          { label: "Entrevistas", value: funnel.entrevistas },
-          { label: "Aceptados", value: funnel.aceptados },
-          { label: "No seleccionados", value: funnel.no_seleccionados },
-        ].map((item) => (
-          <div
-            key={item.label}
-            className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3 text-center"
-          >
-            <p className="text-2xl font-bold text-emerald-800">{item.value}</p>
-            <p className="text-xs text-slate-600 mt-1">{item.label}</p>
-          </div>
-        ))}
+      {/* Carpetas estilo Computrabajo */}
+      <div
+        className="flex flex-wrap gap-1 rounded-xl border border-emerald-100 bg-emerald-50/40 p-1"
+        role="tablist"
+        aria-label="Carpetas de candidatos"
+      >
+        {CARPETAS_RECLUTADOR.map((carpeta) => {
+          const count = funnel[CARPETA_META[carpeta].funnelKey];
+          const active = carpetaActiva === carpeta;
+          return (
+            <button
+              key={carpeta}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setCarpetaActiva(carpeta)}
+              className={`flex-1 min-w-[7.5rem] rounded-lg px-3 py-2.5 text-center transition ${
+                active
+                  ? "bg-white shadow-sm text-emerald-900 font-bold"
+                  : "text-slate-600 hover:bg-white/60 font-semibold"
+              }`}
+            >
+              <span className="block text-sm">{carpeta}</span>
+              <span
+                className={`block text-lg tabular-nums ${
+                  active ? "text-emerald-700" : "text-slate-500"
+                }`}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      {candidate_pool_actionable.length === 0 ? (
-        <p className="text-sm text-slate-500 rounded-xl border border-dashed p-6 text-center">
-          Aún no hay postulantes para esta vacante.
+      <p className="text-sm text-slate-500">{CARPETA_META[carpetaActiva].description}</p>
+
+      {filtrados.length === 0 ? (
+        <p className="text-sm text-slate-500 rounded-xl border border-dashed border-slate-200 p-8 text-center">
+          No hay candidatos en <strong>{carpetaActiva}</strong>.
+          {analytics.total_postulantes === 0
+            ? " Aún no hay postulaciones para esta vacante."
+            : " Muévelos desde otra carpeta o espera nuevas postulaciones."}
         </p>
       ) : (
         <ul className="space-y-3">
-          {candidate_pool_actionable.map((p, i) => (
-            <li
-              key={p.dni}
-              className={`rounded-xl border border-emerald-100 bg-white p-4 shadow-sm hover:shadow-md transition-shadow duration-500 ease-fluid motion-stagger-in motion-gpu ${MOTION_REDUCE}`}
-              style={{ animationDelay: `${staggerDelay(i, 40)}ms` }}
-            >
-              <div className="flex flex-wrap justify-between gap-2">
-                <div>
-                  <p className="font-bold text-slate-900">{p.nombre}</p>
-                  <p className="text-sm text-slate-500">
-                    DNI {p.dni} · {p.edad} años
-                  </p>
+          {filtrados.map((p, i) => {
+            const tieneReq =
+              p.requisitos.carreras_requeridas.length > 0 ||
+              p.requisitos.conocimientos_requeridos.length > 0;
+
+            return (
+              <li
+                key={p.dni}
+                className={`rounded-xl border border-emerald-100 bg-white p-4 shadow-sm hover:shadow-md transition-shadow duration-500 ease-fluid motion-stagger-in motion-gpu ${MOTION_REDUCE}`}
+                style={{ animationDelay: `${staggerDelay(i, 40)}ms` }}
+              >
+                <div className="flex flex-wrap justify-between gap-3">
+                  <div className="min-w-0 space-y-1">
+                    <p className="font-bold text-slate-900 text-base">{p.nombre}</p>
+                    <p className="text-sm text-slate-500">
+                      Doc. {p.dni} · {p.edad} años
+                    </p>
+                    {p.tiene_discapacidad && (
+                      <span className="inline-flex items-center rounded-md bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700">
+                        Puestos inclusivos
+                      </span>
+                    )}
+                    <p className="text-sm text-slate-600">
+                      <span className="text-slate-400">Correo:</span> {p.correo}
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      <span className="text-slate-400">Celular:</span> {p.telefono}
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-2xl font-extrabold text-emerald-700 tabular-nums">
+                      {p.match_score_percentage}%
+                    </p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+                      Encaje
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Coincidencia con el puesto
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-emerald-700">
-                    {p.match_score_percentage}%
-                  </p>
-                  <p className="text-xs text-slate-500">Match CV</p>
-                </div>
-              </div>
-              <p className="text-xs font-medium text-emerald-800 mt-2">
-                {p.current_status}
-              </p>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <Button
-                  variant="secondary"
-                  className="!py-1.5 !px-3 !text-xs"
-                  onClick={() =>
-                    setPerfilAbierto((prev) => (prev === p.dni ? null : p.dni))
-                  }
-                >
-                  {perfilAbierto === p.dni ? "Ocultar perfil" : "Ver perfil académico"}
-                </Button>
-                {p.cv_available && p.cv_view_url ? (
-                  <Button
-                    variant="secondary"
-                    className="!py-1.5 !px-3 !text-xs"
-                    onClick={() => setCvAbierto(p)}
-                  >
-                    Ver CV
-                    {p.cv_formato === "pdf"
-                      ? " (PDF)"
-                      : p.cv_formato === "word"
-                        ? " (Word)"
-                        : ""}
-                  </Button>
-                ) : (
-                  <span className="text-xs text-slate-400 italic">CV no disponible</span>
+
+                {tieneReq && (
+                  <div className="mt-3 space-y-2 border-t border-emerald-50 pt-3">
+                    {p.requisitos.carreras_requeridas.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-slate-500 mb-1">
+                          Carreras requeridas
+                        </p>
+                        <RequisitoChips
+                          requeridos={p.requisitos.carreras_requeridas}
+                          cumplidos={p.requisitos.carreras_cumplidas}
+                          vacio="Sin carreras requeridas"
+                        />
+                      </div>
+                    )}
+                    {p.requisitos.conocimientos_requeridos.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-slate-500 mb-1">
+                          Conocimientos requeridos
+                        </p>
+                        <RequisitoChips
+                          requeridos={p.requisitos.conocimientos_requeridos}
+                          cumplidos={p.requisitos.conocimientos_cumplidos}
+                          vacio="Sin conocimientos requeridos"
+                        />
+                      </div>
+                    )}
+                  </div>
                 )}
-                {p.available_actions.map((action) => (
-                  <button
-                    key={action}
-                    type="button"
-                    onClick={() => ejecutarAccion(p.dni, action)}
-                    className="text-xs px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-800 font-semibold hover:bg-emerald-50 transition"
-                  >
-                    {action}
-                  </button>
-                ))}
-              </div>
-              {perfilAbierto === p.dni && (
-                <PostulantePerfilResumen
-                  perfil={p.perfil_resumen}
-                  candidateName={p.nombre}
-                  onViewDocument={setDocAbierto}
-                />
-              )}
-            </li>
-          ))}
+
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  {p.cv_available && p.cv_view_url ? (
+                    <Button
+                      className="!py-2 !px-4 !text-sm"
+                      onClick={() => setCvAbierto(p)}
+                    >
+                      Ver CV
+                      {p.cv_formato === "pdf"
+                        ? " (PDF)"
+                        : p.cv_formato === "word"
+                          ? " (Word)"
+                          : ""}
+                    </Button>
+                  ) : (
+                    <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      CV no disponible — pide al candidato que vuelva a postular
+                    </span>
+                  )}
+
+                  {p.available_actions.map((action) => (
+                    <button
+                      key={action}
+                      type="button"
+                      disabled={moviendo === p.dni}
+                      onClick={() => void ejecutarAccion(p.dni, action)}
+                      className={`text-xs px-3 py-1.5 rounded-lg border font-semibold transition disabled:opacity-50 ${accionClase(action)}`}
+                    >
+                      {action}
+                    </button>
+                  ))}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

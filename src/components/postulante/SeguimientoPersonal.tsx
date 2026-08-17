@@ -180,6 +180,10 @@ export function SeguimientoPersonal({ dniInicial, autoload = false }: Props) {
           analytics: {
             total_postulantes: 0,
             funnel_summary: {
+              inscritos: 0,
+              en_proceso: 0,
+              finalistas: 0,
+              descartados: 0,
               en_revision: 0,
               entrevistas: 0,
               aceptados: 0,
