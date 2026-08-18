@@ -20,20 +20,24 @@ export function CrearUsuarioForm() {
     e.preventDefault();
     setError(null);
     const fd = new FormData(e.currentTarget);
-    const payload: Record<string, unknown> = {
-      correo: String(fd.get("correo") ?? "").trim(),
-      password: String(fd.get("password") ?? ""),
-      nombres: String(fd.get("nombres") ?? "").trim(),
-      apellidoPaterno: String(fd.get("apellidoPaterno") ?? "").trim(),
-      rol,
-    };
+    const correo = String(fd.get("correo") ?? "").trim();
+    const password = String(fd.get("password") ?? "");
+    const payload: Record<string, unknown> = { correo, password, rol };
+
     if (rol === "empresa") {
+      const nombre = String(fd.get("empresaNombre") ?? "").trim();
+      payload.nombres = nombre;
+      payload.apellidoPaterno = "";
       payload.empresa = {
-        nombre: String(fd.get("empresaNombre") ?? "").trim(),
+        nombre,
         ruc: String(fd.get("ruc") ?? "").trim(),
         rubro: String(fd.get("rubro") ?? "").trim(),
       };
+    } else {
+      payload.nombres = String(fd.get("nombres") ?? "").trim();
+      payload.apellidoPaterno = String(fd.get("apellidoPaterno") ?? "").trim();
     }
+
     if (rol === "postulante") {
       payload.postulante = {
         numeroDocumento: String(fd.get("numeroDocumento") ?? "").trim(),
@@ -62,14 +66,7 @@ export function CrearUsuarioForm() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5 rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Input name="nombres" label="Nombres" required />
-        <Input name="apellidoPaterno" label="Apellido paterno" />
-        <Input name="correo" label="Correo" type="email" required />
-        <Input name="password" label="Contraseña" type="password" required minLength={8} />
-      </div>
-
+    <form onSubmit={onSubmit} className="space-y-6 rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium text-slate-700">Rol</legend>
         <div className="flex flex-wrap gap-2">
@@ -99,9 +96,28 @@ export function CrearUsuarioForm() {
       )}
 
       {rol === "postulante" && (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Input name="nombres" label="Nombres" required />
+          <Input name="apellidoPaterno" label="Apellido paterno" required />
+          <Input name="apellidoMaterno" label="Apellido materno" required />
+        </div>
+      )}
+
+      {rol === "admin" && (
         <div className="grid gap-4 sm:grid-cols-2">
+          <Input name="nombres" label="Nombres" required />
+          <Input name="apellidoPaterno" label="Apellido paterno" />
+        </div>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Input name="correo" label="Correo" type="email" required />
+        <Input name="password" label="Contraseña" type="password" required minLength={8} />
+      </div>
+
+      {rol === "postulante" && (
+        <div className="grid gap-4 sm:grid-cols-3">
           <Input name="numeroDocumento" label="DNI / documento" required />
-          <Input name="apellidoMaterno" label="Apellido materno" />
           <Input name="fechaNacimiento" label="Fecha de nacimiento" type="date" required />
           <Input name="telefono" label="Teléfono" />
         </div>

@@ -12,7 +12,7 @@ export default async function NuevoUsuarioPage() {
         <p className="text-sm font-medium text-emerald-600">Usuarios</p>
         <h1 className="mt-1 text-2xl font-bold text-slate-900">Crear usuario</h1>
         <p className="mt-2 text-slate-500">
-          Elige el rol. Si es empresa o postulante, también se crea su perfil.
+          Elige el rol primero. Empresa pide datos de la compañía; postulante, nombres y apellidos juntos.
         </p>
       </header>
       <CrearUsuarioForm />
