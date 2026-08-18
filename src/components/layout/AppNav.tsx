@@ -11,7 +11,7 @@ type SessionInfo = {
 };
 
 type Props = {
-  variant: "portal" | "empresa" | "admin";
+  variant: "portal" | "empresa" | "postulante" | "admin";
 };
 
 const ADMIN_MENUS = [
@@ -23,8 +23,18 @@ const ADMIN_MENUS = [
   { href: "/admin/roles", label: "Roles y permisos" },
 ];
 
+function navClass(activo: boolean, primary = false) {
+  if (primary) {
+    return "rounded-lg bg-emerald-600 px-3 py-2 text-white hover:bg-emerald-700";
+  }
+  return activo
+    ? "rounded-lg bg-emerald-50 px-3 py-2 text-emerald-800"
+    : "rounded-lg px-3 py-2 text-slate-600 hover:bg-emerald-50";
+}
+
 export function AppNav({ variant }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const [session, setSession] = useState<SessionInfo | null>(null);
 
   useEffect(() => {
@@ -48,18 +58,17 @@ export function AppNav({ variant }: Props) {
   if (session.authenticated) {
     const isEmpresa = session.tipo === "empresa";
     const isAdmin = session.tipo === "admin";
+    const isPostulante = session.tipo === "postulante";
+
     return (
-      <nav className="flex items-center gap-2 text-sm font-semibold">
-        <span className="hidden md:inline text-slate-500 truncate max-w-[140px]">
+      <nav className="flex flex-wrap items-center justify-end gap-1 text-sm font-semibold sm:gap-2">
+        <span className="hidden max-w-[140px] truncate text-slate-500 md:inline">
           {session.nombre}
         </span>
         {variant === "admin" || isAdmin ? (
           <>
             {variant !== "admin" && (
-              <Link
-                href="/admin"
-                className="rounded-lg px-3 py-2 text-emerald-700 hover:bg-emerald-50"
-              >
+              <Link href="/admin" className={navClass(false)}>
                 Panel admin
               </Link>
             )}
@@ -71,28 +80,30 @@ export function AppNav({ variant }: Props) {
               Salir
             </button>
           </>
-        ) : variant === "portal" ? (
+        ) : isEmpresa ? (
           <>
-            {isEmpresa ? (
-              <Link
-                href="/empresa"
-                className="rounded-lg px-3 py-2 text-emerald-700 hover:bg-emerald-50"
-              >
-                Panel empresa
-              </Link>
-            ) : (
+            <Link href="/empresa" className={navClass(pathname === "/empresa")}>
+              Inicio
+            </Link>
+            {variant !== "portal" && (
               <>
                 <Link
-                  href="/personal"
-                  className="rounded-lg px-3 py-2 text-slate-600 hover:bg-emerald-50"
+                  href="/empresa/ofertas"
+                  className={navClass(pathname.startsWith("/empresa/ofertas"))}
                 >
-                  Mis postulaciones
+                  Ofertas
                 </Link>
                 <Link
-                  href="/personal/perfil"
-                  className="rounded-lg px-3 py-2 text-slate-600 hover:bg-emerald-50"
+                  href="/empresa/perfil"
+                  className={navClass(pathname.startsWith("/empresa/perfil"))}
                 >
-                  Mi perfil
+                  Perfil
+                </Link>
+                <Link
+                  href="/empresa/publicar"
+                  className={navClass(pathname.startsWith("/empresa/publicar"), true)}
+                >
+                  Publicar
                 </Link>
               </>
             )}
@@ -104,22 +115,28 @@ export function AppNav({ variant }: Props) {
               Salir
             </button>
           </>
-        ) : (
+        ) : isPostulante ? (
           <>
-            <Link href="/" className="rounded-lg px-3 py-2 text-slate-600 hover:bg-emerald-50">
-              Portal
+            <Link href="/personal" className={navClass(pathname === "/personal")}>
+              Inicio
+            </Link>
+            {variant !== "portal" && (
+              <Link href="/" className={navClass(false)}>
+                Ofertas
+              </Link>
+            )}
+            <Link
+              href="/personal/postulaciones"
+              className={navClass(pathname.startsWith("/personal/postulaciones"))}
+            >
+              <span className="hidden sm:inline">Mis postulaciones</span>
+              <span className="sm:hidden">Postulaciones</span>
             </Link>
             <Link
-              href="/empresa/perfil"
-              className="rounded-lg px-3 py-2 text-slate-600 hover:bg-emerald-50"
+              href="/personal/perfil"
+              className={navClass(pathname.startsWith("/personal/perfil"))}
             >
-              Perfil
-            </Link>
-            <Link
-              href="/empresa/publicar"
-              className="rounded-lg bg-emerald-600 px-3 py-2 text-white hover:bg-emerald-700"
-            >
-              Publicar
+              Mi perfil
             </Link>
             <button
               type="button"
@@ -129,6 +146,14 @@ export function AppNav({ variant }: Props) {
               Salir
             </button>
           </>
+        ) : (
+          <button
+            type="button"
+            onClick={logout}
+            className="rounded-lg px-3 py-2 text-slate-500 hover:bg-slate-100"
+          >
+            Salir
+          </button>
         )}
       </nav>
     );
@@ -136,21 +161,12 @@ export function AppNav({ variant }: Props) {
 
   return (
     <nav className="flex items-center gap-2 text-sm font-semibold">
-      {variant === "portal" ? (
-        <Link
-          href="/ingreso"
-          className="rounded-lg px-3 py-2 text-emerald-700 hover:bg-emerald-50"
-        >
-          Acceder
-        </Link>
-      ) : (
-        <Link
-          href="/ingreso"
-          className="rounded-lg px-3 py-2 text-emerald-700 hover:bg-emerald-50"
-        >
-          Ingresar
-        </Link>
-      )}
+      <Link
+        href="/ingreso"
+        className="rounded-lg px-3 py-2 text-emerald-700 hover:bg-emerald-50"
+      >
+        {variant === "portal" ? "Acceder" : "Ingresar"}
+      </Link>
     </nav>
   );
 }

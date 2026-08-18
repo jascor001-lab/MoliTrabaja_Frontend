@@ -123,7 +123,7 @@ export function OfertaDetail({
         {modo === "detalle" && (
           <div className="mt-5 flex flex-col sm:flex-row gap-2 sm:gap-3">
             {yaPostulado ? (
-              <Link href="/personal" className="flex-1 sm:flex-none min-w-[160px]">
+              <Link href="/personal/postulaciones" className="flex-1 sm:flex-none min-w-[160px]">
                 <Button
                   variant="secondary"
                   className="w-full border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-semibold"
@@ -353,7 +353,7 @@ export function OfertaDetail({
                 Estado: <strong>{tracking.status}</strong>
               </p>
               <p className="text-sm text-slate-500">{tracking.context_message}</p>
-              <Link href="/personal">
+              <Link href="/personal/postulaciones">
                 <Button className="w-full">Ir a Mis postulaciones</Button>
               </Link>
               {onClose && (

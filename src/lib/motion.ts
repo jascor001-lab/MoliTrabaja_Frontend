@@ -14,8 +14,11 @@ export { SLIDE_DURATION_MS };
 
 function routeRank(path: string): number {
   if (path.startsWith("/empresa/ofertas/")) return 40;
+  if (path.startsWith("/empresa/ofertas")) return 35;
   if (path.startsWith("/empresa/publicar")) return 30;
   if (path.startsWith("/empresa")) return 20;
+  if (path.startsWith("/personal/postulaciones")) return 16;
+  if (path.startsWith("/personal/perfil")) return 14;
   if (path.startsWith("/personal")) return 10;
   if (path.startsWith("/ingresar") || path.startsWith("/registro")) return 5;
   return 0;

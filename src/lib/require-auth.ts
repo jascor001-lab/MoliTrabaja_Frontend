@@ -9,6 +9,8 @@ type PerfilPostulante = {
   nombres: string;
   apellidoPaterno: string;
   correo: string;
+  numeroDocumento?: string;
+  cvDisponible?: boolean;
 };
 
 export async function requireEmpresa() {

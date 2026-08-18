@@ -39,7 +39,9 @@ export default async function HomePage() {
           <p className="mt-2 text-sm text-slate-500">{error}</p>
           <p className="mt-4 text-sm text-slate-500">
             El backend Nest debe estar en{" "}
-            <span className="font-medium">http://localhost:3001/api</span>
+            <span className="font-medium">
+              {process.env.API_URL || "http://localhost:3001/api"}
+            </span>
           </p>
         </div>
       ) : (

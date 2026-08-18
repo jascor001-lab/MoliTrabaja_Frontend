@@ -86,7 +86,7 @@ export function RegistroPostulanteForm() {
         if (data.errors) setFieldErrors(mapApiErrors(data.errors));
         throw new Error(data.error ?? "No se pudo registrar");
       }
-      router.push(data.redirect ?? "/");
+      router.push("/personal");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al registrar");

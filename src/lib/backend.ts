@@ -47,7 +47,7 @@ export async function backendFetch<T = unknown>(
     res = await fetch(url, { ...rest, headers, cache: "no-store" });
   } catch {
     throw new BackendError(
-      "No se pudo conectar con el API (http://localhost:3001). Arranca el backend Nest.",
+      `No se pudo conectar con el API (${backendUrl()}). Arranca el backend Nest.`,
       503
     );
   }

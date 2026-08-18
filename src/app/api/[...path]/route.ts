@@ -54,7 +54,7 @@ async function proxy(req: NextRequest) {
     res = await fetch(url, { method, headers, body, cache: "no-store" });
   } catch {
     return NextResponse.json(
-      { error: "No se pudo conectar con el API en http://localhost:3001" },
+      { error: `No se pudo conectar con el API en ${backendUrl()}` },
       { status: 503 }
     );
   }

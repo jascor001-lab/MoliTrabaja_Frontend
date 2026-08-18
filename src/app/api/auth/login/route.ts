@@ -7,7 +7,7 @@ import { BackendError, backendFetch } from "@/lib/backend";
 function redirectPorTipo(tipo: "admin" | "empresa" | "postulante") {
   if (tipo === "admin") return "/admin";
   if (tipo === "empresa") return "/empresa";
-  return "/";
+  return "/personal";
 }
 
 export async function POST(request: NextRequest) {
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       ok: true,
       tipo: data.tipo,
       nombre: data.nombre,
-      redirect: data.redirect ?? redirectPorTipo(data.tipo),
+      redirect: redirectPorTipo(data.tipo),
     });
   } catch (e) {
     const status = e instanceof BackendError ? e.status : 500;

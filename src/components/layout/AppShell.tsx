@@ -6,7 +6,7 @@ import { APP_INITIALS, APP_NAME_PARTS } from "@/lib/brand";
 
 type Props = {
   children: ReactNode;
-  variant?: "portal" | "empresa" | "admin";
+  variant?: "portal" | "empresa" | "postulante" | "admin";
 };
 
 export function AppShell({ children, variant = "portal" }: Props) {
@@ -49,7 +49,16 @@ export function AppShell({ children, variant = "portal" }: Props) {
     <div className="min-h-screen bg-mesh">
       <header className="sticky top-0 z-40 border-b border-emerald-100/80 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 md:px-6">
-          <Link href="/" className="flex items-center gap-2">
+          <Link
+            href={
+              variant === "empresa"
+                ? "/empresa"
+                : variant === "postulante"
+                  ? "/personal"
+                  : "/"
+            }
+            className="flex items-center gap-2"
+          >
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold text-sm">
               {APP_INITIALS}
             </span>

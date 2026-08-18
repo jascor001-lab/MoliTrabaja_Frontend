@@ -197,7 +197,7 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
       }
 
       reset();
-      router.push("/empresa");
+      router.push("/empresa/ofertas");
       router.refresh();
     } catch (e) {
       setSubmitError(
