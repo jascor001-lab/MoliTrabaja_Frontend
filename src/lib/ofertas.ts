@@ -37,33 +37,42 @@ export type OfertaWithRelations = OfertaLaboral & {
   conocimientos?: { conocimiento: CatalogoConocimiento }[];
 };
 
-export function parseJsonArray(raw: string): string[] {
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (Array.isArray(parsed)) {
-      return parsed.filter((item): item is string => typeof item === "string");
+export function parseJsonArray(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw.filter((item): item is string => typeof item === "string");
+  }
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (Array.isArray(parsed)) {
+        return parsed.filter((item): item is string => typeof item === "string");
+      }
+    } catch {
+      /* fallback */
     }
-  } catch {
-    /* fallback */
   }
   return [];
 }
 
-export function parseLogoArchivos(raw: string): LogoArchivoMeta[] {
+export function parseLogoArchivos(raw: unknown): LogoArchivoMeta[] {
+  const parsed = typeof raw === "string" ? safeJson(raw) : raw;
+  if (!Array.isArray(parsed)) return [];
+  return parsed.filter(
+    (item): item is LogoArchivoMeta =>
+      typeof item === "object" &&
+      item !== null &&
+      "name" in item &&
+      "path" in item &&
+      typeof (item as LogoArchivoMeta).path === "string" &&
+      (item as LogoArchivoMeta).path.length > 1
+  );
+}
+
+function safeJson(raw: string): unknown {
   try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (item): item is LogoArchivoMeta =>
-        typeof item === "object" &&
-        item !== null &&
-        "name" in item &&
-        "path" in item &&
-        typeof (item as LogoArchivoMeta).path === "string" &&
-        (item as LogoArchivoMeta).path.length > 1
-    );
+    return JSON.parse(raw) as unknown;
   } catch {
-    return [];
+    return null;
   }
 }
 
@@ -145,12 +154,7 @@ export function toEmpresaDTO(
 
 export function toOfertaDTO(oferta: OfertaWithRelations): OfertaLaboralDTO {
   const logoArchivos = parseLogoArchivos(oferta.logoArchivos);
-  const rawBases =
-    typeof (oferta as OfertaLaboral & { basesArchivo?: string }).basesArchivo ===
-    "string"
-      ? (oferta as OfertaLaboral & { basesArchivo: string }).basesArchivo
-      : "";
-  const basesArchivo = parseBasesArchivo(rawBases);
+  const basesArchivo = parseBasesArchivo(oferta.basesArchivo);
   const empresaDto = oferta.empresa ? toEmpresaDTO(oferta.empresa) : undefined;
 
   const carrerasRequeridas =

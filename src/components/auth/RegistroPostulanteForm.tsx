@@ -256,7 +256,7 @@ export function RegistroPostulanteForm() {
       <p className="text-sm text-center text-slate-500">
         ¿Ya tienes cuenta?{" "}
         <Link
-          href="/ingreso?tipo=postulante"
+          href="/ingreso"
           className="text-emerald-700 font-semibold hover:underline"
         >
           Inicia sesión

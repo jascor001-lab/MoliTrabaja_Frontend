@@ -3,13 +3,9 @@ import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { OfertaEditClient } from "@/components/empresa/OfertaEditClient";
+import { backendFetch } from "@/lib/backend";
 import { requireEmpresa } from "@/lib/require-auth";
-import { prisma } from "@/lib/db";
-import {
-  OFERTA_INCLUDE,
-  enrichOfertaDTOWithBases,
-  toOfertaDTO,
-} from "@/lib/ofertas";
+import type { OfertaLaboralDTO } from "@/types/bolsa";
 
 export const dynamic = "force-dynamic";
 
@@ -17,17 +13,16 @@ type Props = { params: { id: string } };
 
 export default async function EditarOfertaPage({ params }: Props) {
   const empresa = await requireEmpresa();
-
-  const oferta = await prisma.ofertaLaboral.findUnique({
-    where: { id: params.id },
-    include: OFERTA_INCLUDE,
-  });
+  let oferta: OfertaLaboralDTO | null = null;
+  try {
+    oferta = await backendFetch<OfertaLaboralDTO>(`/ofertas/${params.id}`);
+  } catch {
+    notFound();
+  }
 
   if (!oferta || oferta.empresaId !== empresa.id) {
     notFound();
   }
-
-  const dto = await enrichOfertaDTOWithBases(toOfertaDTO(oferta), prisma, oferta.id);
 
   return (
     <AppShell variant="empresa">
@@ -38,16 +33,12 @@ export default async function EditarOfertaPage({ params }: Props) {
         >
           ← Volver al panel
         </Link>
-        <h1 className="text-2xl font-bold text-slate-900 mt-3">Editar oferta</h1>
-        <p className="text-slate-500 mt-1">
-          Actualiza los datos de <strong className="text-slate-700">{dto.titulo}</strong>.
-          Los cambios se reflejan de inmediato en el portal.
-        </p>
+        <h1 className="mt-3 text-2xl font-bold text-slate-900 md:text-3xl">
+          Editar oferta
+        </h1>
+        <p className="mt-1 text-slate-500">{oferta.titulo}</p>
       </div>
-      <OfertaEditClient
-        oferta={dto}
-        empresaId={empresa.id}
-      />
+      <OfertaEditClient oferta={oferta} />
     </AppShell>
   );
 }

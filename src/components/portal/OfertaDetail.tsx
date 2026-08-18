@@ -20,7 +20,9 @@ import { MODALIDAD_LABEL, type OfertaLaboralDTO } from "@/types/bolsa";
 type Props = {
   oferta: OfertaLaboralDTO;
   variant?: "panel" | "drawer";
+  yaPostulado?: boolean;
   onClose?: () => void;
+  onPostulado?: (jobId: string) => void;
 };
 
 function MetaBadge({
@@ -43,7 +45,13 @@ function MetaBadge({
   );
 }
 
-export function OfertaDetail({ oferta, variant = "panel", onClose }: Props) {
+export function OfertaDetail({
+  oferta,
+  variant = "panel",
+  yaPostulado = false,
+  onClose,
+  onPostulado,
+}: Props) {
   const modo = useOfertaDetailUiStore((s) => s.modo);
   const modoDirection = useOfertaDetailUiStore((s) => s.modoDirection);
   const resultado = useOfertaDetailUiStore((s) => s.resultado);
@@ -114,12 +122,23 @@ export function OfertaDetail({ oferta, variant = "panel", onClose }: Props) {
 
         {modo === "detalle" && (
           <div className="mt-5 flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <Button
-              className="flex-1 sm:flex-none min-w-[160px] bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm"
-              onClick={() => changeModo("postular")}
-            >
-              Postularme ahora
-            </Button>
+            {yaPostulado ? (
+              <Link href="/personal" className="flex-1 sm:flex-none min-w-[160px]">
+                <Button
+                  variant="secondary"
+                  className="w-full border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-semibold"
+                >
+                  Ya postulaste · Ver seguimiento
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                className="flex-1 sm:flex-none min-w-[160px] bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm"
+                onClick={() => changeModo("postular")}
+              >
+                Postularme ahora
+              </Button>
+            )}
             {oferta.basesViewUrl && (
               <Button
                 variant="secondary"
@@ -309,6 +328,7 @@ export function OfertaDetail({ oferta, variant = "panel", onClose }: Props) {
               oferta={oferta}
               onCancel={() => changeModo("detalle")}
               onSuccess={(res) => {
+                onPostulado?.(oferta.id);
                 setResultado(res);
                 changeModo("exito");
               }}

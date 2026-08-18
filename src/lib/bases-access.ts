@@ -27,21 +27,25 @@ export function basesViewUrl(ofertaId: string, version?: string | null): string 
   return `${base}?v=${encodeURIComponent(version)}`;
 }
 
-export function parseBasesArchivo(raw: string): ArchivoAdjuntoMeta | null {
-  if (!raw?.trim()) return null;
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      "path" in parsed &&
-      typeof (parsed as ArchivoAdjuntoMeta).path === "string" &&
-      (parsed as ArchivoAdjuntoMeta).path.length > 1
-    ) {
-      return parsed as ArchivoAdjuntoMeta;
+export function parseBasesArchivo(raw: unknown): ArchivoAdjuntoMeta | null {
+  if (!raw) return null;
+  let parsed: unknown = raw;
+  if (typeof raw === "string") {
+    if (!raw.trim()) return null;
+    try {
+      parsed = JSON.parse(raw) as unknown;
+    } catch {
+      return null;
     }
-  } catch {
-    /* vacío */
+  }
+  if (
+    typeof parsed === "object" &&
+    parsed !== null &&
+    "path" in parsed &&
+    typeof (parsed as ArchivoAdjuntoMeta).path === "string" &&
+    (parsed as ArchivoAdjuntoMeta).path.length > 1
+  ) {
+    return parsed as ArchivoAdjuntoMeta;
   }
   return null;
 }

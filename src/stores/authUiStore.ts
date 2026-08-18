@@ -18,7 +18,8 @@ export const useAuthUiStore = create<AuthUiState>((set) => ({
   setLoginTipo: (tipo) =>
     set((s) => ({
       loginTipo: tipo,
-      loginTipoDirection: tipo === "empresa" ? "forward" : "back",
+      loginTipoDirection:
+        tipo === "admin" ? "fade" : tipo === "empresa" ? "forward" : "back",
     })),
 
   resetLoginUi: () =>

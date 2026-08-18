@@ -5,20 +5,13 @@
   "scripts": {
     "dev": "next dev -p 3002",
     "dev:clean": "node -e \"try{require('fs').rmSync('.next',{recursive:true,force:true})}catch(e){}\" && next dev -p 3002",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start -p 3002",
-    "lint": "next lint",
-    "db:migrate": "prisma migrate dev",
-    "db:setup": "prisma migrate deploy && prisma db seed",
-    "db:seed": "prisma db seed",
-    "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
-  },
-  "prisma": {
-    "seed": "npx tsx prisma/seed.ts"
+    "lint": "next lint"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
     "dotenv": "^17.4.2",
     "leaflet": "^1.9.4",
     "next": "14.2.35",
@@ -29,6 +22,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
     "@types/react": "^18",

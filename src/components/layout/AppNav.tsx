@@ -1,18 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type SessionInfo = {
   authenticated: boolean;
-  tipo?: "empresa" | "postulante";
+  tipo?: "admin" | "empresa" | "postulante";
   nombre?: string;
 };
 
 type Props = {
-  variant: "portal" | "empresa";
+  variant: "portal" | "empresa" | "admin";
 };
+
+const ADMIN_MENUS = [
+  { href: "/admin", label: "Inicio" },
+  { href: "/admin/usuarios", label: "Usuarios" },
+  { href: "/admin/empresas", label: "Empresas" },
+  { href: "/admin/ofertas", label: "Ofertas" },
+  { href: "/admin/postulantes", label: "Postulantes" },
+  { href: "/admin/roles", label: "Roles y permisos" },
+];
 
 export function AppNav({ variant }: Props) {
   const router = useRouter();
@@ -38,12 +47,31 @@ export function AppNav({ variant }: Props) {
 
   if (session.authenticated) {
     const isEmpresa = session.tipo === "empresa";
+    const isAdmin = session.tipo === "admin";
     return (
       <nav className="flex items-center gap-2 text-sm font-semibold">
         <span className="hidden md:inline text-slate-500 truncate max-w-[140px]">
           {session.nombre}
         </span>
-        {variant === "portal" ? (
+        {variant === "admin" || isAdmin ? (
+          <>
+            {variant !== "admin" && (
+              <Link
+                href="/admin"
+                className="rounded-lg px-3 py-2 text-emerald-700 hover:bg-emerald-50"
+              >
+                Panel admin
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={logout}
+              className="rounded-lg px-3 py-2 text-slate-500 hover:bg-slate-100"
+            >
+              Salir
+            </button>
+          </>
+        ) : variant === "portal" ? (
           <>
             {isEmpresa ? (
               <Link
@@ -68,6 +96,13 @@ export function AppNav({ variant }: Props) {
                 </Link>
               </>
             )}
+            <button
+              type="button"
+              onClick={logout}
+              className="rounded-lg px-3 py-2 text-slate-500 hover:bg-slate-100"
+            >
+              Salir
+            </button>
           </>
         ) : (
           <>
@@ -86,15 +121,15 @@ export function AppNav({ variant }: Props) {
             >
               Publicar
             </Link>
+            <button
+              type="button"
+              onClick={logout}
+              className="rounded-lg px-3 py-2 text-slate-500 hover:bg-slate-100"
+            >
+              Salir
+            </button>
           </>
         )}
-        <button
-          type="button"
-          onClick={logout}
-          className="rounded-lg px-3 py-2 text-slate-500 hover:bg-slate-100"
-        >
-          Salir
-        </button>
       </nav>
     );
   }
@@ -110,12 +145,37 @@ export function AppNav({ variant }: Props) {
         </Link>
       ) : (
         <Link
-          href="/ingreso?tipo=empresa"
+          href="/ingreso"
           className="rounded-lg px-3 py-2 text-emerald-700 hover:bg-emerald-50"
         >
           Ingresar
         </Link>
       )}
+    </nav>
+  );
+}
+
+export function AdminSideNav() {
+  const pathname = usePathname();
+  return (
+    <nav className="space-y-1">
+      {ADMIN_MENUS.map((item) => {
+        const activo =
+          item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`block rounded-xl px-3 py-2.5 text-sm font-semibold ${
+              activo
+                ? "bg-emerald-600 text-white"
+                : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-800"
+            }`}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

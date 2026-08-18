@@ -4,10 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 
 import { SlideView } from "@/components/ui/SlideView";
 import { esOfertaNueva } from "@/lib/format-fecha";
+import { listarPostulacionesLocales } from "@/lib/mis-postulaciones-storage";
 import { MOTION_REDUCE, drawerEnterClass, drawerExitClass, staggerStyleObj } from "@/lib/motion";
 import { ofertaCumpleFiltroSalario, salarioSortKey } from "@/lib/salario";
 import { usePortalUiStore } from "@/stores/portalUiStore";
 import type { OfertaLaboralDTO, TipoPuesto } from "@/types/bolsa";
+import type { MisPostulacionItem } from "@/types/postulacion";
 
 import { OfertaCard } from "./OfertaCard";
 import { OfertaDetail } from "./OfertaDetail";
@@ -19,11 +21,21 @@ import {
 } from "./OfertaFilters";
 import { SearchBar } from "./SearchBar";
 
+type FilterOption = { value: string; label: string };
+
 type Props = {
   ofertas: OfertaLaboralDTO[];
+  empresasCatalogo?: FilterOption[];
+  carrerasCatalogo?: FilterOption[];
+  conocimientosCatalogo?: FilterOption[];
 };
 
-export function PortalHome({ ofertas: initial }: Props) {
+export function PortalHome({
+  ofertas: initial,
+  empresasCatalogo,
+  carrerasCatalogo,
+  conocimientosCatalogo,
+}: Props) {
   const query = usePortalUiStore((s) => s.query);
   const selected = usePortalUiStore((s) => s.selected);
   const detailDirection = usePortalUiStore((s) => s.detailDirection);
@@ -35,45 +47,99 @@ export function PortalHome({ ofertas: initial }: Props) {
   const syncFiltered = usePortalUiStore((s) => s.syncFiltered);
   const closeMobileDrawer = usePortalUiStore((s) => s.closeMobileDrawer);
   const [filters, setFilters] = useState<OfertaFilterValue>(EMPTY_FILTERS);
+  const [idsPostulados, setIdsPostulados] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let cancelled = false;
+    const locales = listarPostulacionesLocales().map((p) => p.job_id);
+
+    fetch("/api/auth/login")
+      .then((r) => r.json())
+      .then(async (session) => {
+        if (cancelled) return;
+        if (!session.authenticated || session.tipo !== "postulante") {
+          setIdsPostulados(new Set(locales));
+          return;
+        }
+        const res = await fetch("/api/postulaciones/mis");
+        const json = await res.json().catch(() => ({}));
+        const items: MisPostulacionItem[] = Array.isArray(json.postulaciones)
+          ? json.postulaciones
+          : [];
+        const ids = [
+          ...locales,
+          ...items.map((p) => p.job_id).filter(Boolean),
+        ];
+        if (!cancelled) setIdsPostulados(new Set(ids));
+      })
+      .catch(() => {
+        if (!cancelled) setIdsPostulados(new Set(locales));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const marcarPostulado = (jobId: string) => {
+    setIdsPostulados((prev) => {
+      if (prev.has(jobId)) return prev;
+      const next = new Set(prev);
+      next.add(jobId);
+      return next;
+    });
+  };
 
   const filterOptions = useMemo(() => {
-    const empresas = Array.from(
-      new Map(
-        initial
-          .map((oferta) => oferta.empresa)
-          .filter((empresa): empresa is NonNullable<typeof empresa> => Boolean(empresa))
-          .map((empresa) => [
-            empresa.id,
-            {
-              value: empresa.id,
-              label: empresa.razonSocial || empresa.nombre,
-            },
-          ])
-      ).values()
-    ).sort((a, b) => a.label.localeCompare(b.label, "es"));
+    const empresas =
+      empresasCatalogo && empresasCatalogo.length > 0
+        ? empresasCatalogo
+        : Array.from(
+            new Map(
+              initial
+                .map((oferta) => oferta.empresa)
+                .filter((empresa): empresa is NonNullable<typeof empresa> => Boolean(empresa))
+                .map((empresa) => [
+                  empresa.id,
+                  {
+                    value: empresa.id,
+                    label: empresa.razonSocial || empresa.nombre,
+                  },
+                ])
+            ).values()
+          ).sort((a, b) => a.label.localeCompare(b.label, "es"));
 
     const contratos = Array.from(
       new Set(initial.map((oferta) => oferta.tipoContrato).filter(Boolean))
     ).sort((a, b) => a.localeCompare(b, "es"));
 
-    const carreras = Array.from(
-      new Map(
-        initial
-          .flatMap((oferta) => oferta.carrerasRequeridas)
-          .map((item) => [String(item.id), { value: String(item.id), label: item.nombre }])
-      ).values()
-    ).sort((a, b) => a.label.localeCompare(b.label, "es"));
+    const carreras =
+      carrerasCatalogo && carrerasCatalogo.length > 0
+        ? carrerasCatalogo
+        : Array.from(
+            new Map(
+              initial
+                .flatMap((oferta) => oferta.carrerasRequeridas)
+                .map((item) => [String(item.id), { value: String(item.id), label: item.nombre }])
+            ).values()
+          ).sort((a, b) => a.label.localeCompare(b.label, "es"));
 
-    const conocimientos = Array.from(
-      new Map(
-        initial
-          .flatMap((oferta) => oferta.conocimientosRequeridos)
-          .map((item) => [String(item.id), { value: String(item.id), label: item.nombre }])
-      ).values()
-    ).sort((a, b) => a.label.localeCompare(b.label, "es"));
+    const conocimientos =
+      conocimientosCatalogo && conocimientosCatalogo.length > 0
+        ? conocimientosCatalogo
+        : Array.from(
+            new Map(
+              initial
+                .flatMap((oferta) => oferta.conocimientosRequeridos)
+                .map((item) => [
+                  String(item.id),
+                  { value: String(item.id), label: item.nombre },
+                ])
+            ).values()
+          ).sort((a, b) => a.label.localeCompare(b.label, "es"));
 
     return { empresas, contratos, carreras, conocimientos };
-  }, [initial]);
+  }, [initial, empresasCatalogo, carrerasCatalogo, conocimientosCatalogo]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -249,6 +315,7 @@ export function PortalHome({ ofertas: initial }: Props) {
                       <OfertaCard
                         oferta={oferta}
                         selected={selected?.id === oferta.id}
+                        yaPostulado={idsPostulados.has(oferta.id)}
                         onSelect={() => selectOferta(oferta, orderedIds)}
                       />
                     </li>
@@ -265,7 +332,12 @@ export function PortalHome({ ofertas: initial }: Props) {
                     direction={detailDirection}
                     className="h-full min-h-0 flex-1"
                   >
-                    <OfertaDetail oferta={selected} variant="panel" />
+                    <OfertaDetail
+                      oferta={selected}
+                      variant="panel"
+                      yaPostulado={idsPostulados.has(selected.id)}
+                      onPostulado={marcarPostulado}
+                    />
                   </SlideView>
                 ) : (
                   <div
@@ -296,6 +368,8 @@ export function PortalHome({ ofertas: initial }: Props) {
             <OfertaDetail
               oferta={selected!}
               variant="drawer"
+              yaPostulado={idsPostulados.has(selected!.id)}
+              onPostulado={marcarPostulado}
               onClose={closeMobileDrawer}
             />
           </div>

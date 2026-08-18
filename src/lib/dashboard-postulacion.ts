@@ -42,12 +42,22 @@ export function carpetaDesdePipeline(pipeline: EstadoPipeline): CarpetaReclutado
   return "Inscritos";
 }
 
-export function parseCvParsed(raw: string): CvParsed {
+export function parseCvParsed(raw: unknown): CvParsed {
+  const empty: CvParsed = {
+    stack: [],
+    skills: [],
+    experience: { years: 0 },
+    experience_years: 0,
+    education: [],
+  };
   try {
-    const p = JSON.parse(raw) as Partial<CvParsed> & {
+    const p = (
+      typeof raw === "string" ? JSON.parse(raw) : raw
+    ) as Partial<CvParsed> & {
       skills?: string[];
       experience_years?: number;
     };
+    if (!p || typeof p !== "object") return empty;
     const stack = Array.isArray(p.stack)
       ? p.stack
       : Array.isArray(p.skills)
@@ -62,13 +72,7 @@ export function parseCvParsed(raw: string): CvParsed {
       education: Array.isArray(p.education) ? p.education : [],
     };
   } catch {
-    return {
-      stack: [],
-      skills: [],
-      experience: { years: 0 },
-      experience_years: 0,
-      education: [],
-    };
+    return empty;
   }
 }
 

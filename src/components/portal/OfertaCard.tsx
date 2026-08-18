@@ -6,10 +6,16 @@ import { MODALIDAD_LABEL, type OfertaLaboralDTO } from "@/types/bolsa";
 type Props = {
   oferta: OfertaLaboralDTO;
   selected?: boolean;
+  yaPostulado?: boolean;
   onSelect: (oferta: OfertaLaboralDTO) => void;
 };
 
-export function OfertaCard({ oferta, selected = false, onSelect }: Props) {
+export function OfertaCard({
+  oferta,
+  selected = false,
+  yaPostulado = false,
+  onSelect,
+}: Props) {
   const empresa = oferta.empresa?.razonSocial || oferta.empresa?.nombre || "Empresa";
 
   return (
@@ -34,9 +40,16 @@ export function OfertaCard({ oferta, selected = false, onSelect }: Props) {
         }
       `}
     >
-      <h3 className="text-[15px] font-bold text-slate-900 leading-snug line-clamp-2">
-        {oferta.titulo}
-      </h3>
+      <div className="flex items-start justify-between gap-2">
+        <h3 className="text-[15px] font-bold text-slate-900 leading-snug line-clamp-2">
+          {oferta.titulo}
+        </h3>
+        {yaPostulado && (
+          <span className="shrink-0 inline-flex items-center rounded-md bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+            Postulado
+          </span>
+        )}
+      </div>
 
       <p className="text-sm text-slate-600 mt-1 truncate">{empresa}</p>
 

@@ -67,7 +67,7 @@ export function PostulacionForm({ oferta, onSuccess, onCancel }: Props) {
         <p className="text-sm text-slate-600">
           Inicia sesión para postular. Tu CV debe estar guardado en Mi perfil.
         </p>
-        <Link href="/ingreso?tipo=postulante">
+        <Link href="/ingreso">
           <Button className="w-full">Acceder</Button>
         </Link>
         <Button variant="ghost" className="w-full" onClick={onCancel}>
@@ -84,25 +84,41 @@ export function PostulacionForm({ oferta, onSuccess, onCancel }: Props) {
       return;
     }
     if (!perfil.cvDisponible) {
-      setError("Sube tu CV en Mi perfil → Curriculum antes de enviar la postulación.");
+      setError("Sube tu CV en Mi perfil → Curriculum antes de postular.");
       return;
     }
 
     setLoading(true);
     try {
-      const form = new FormData();
-      form.append("job_id", oferta.id);
-
-      const res = await fetch("/api/postulaciones", { method: "POST", body: form });
-      const data = await res.json();
+      const res = await fetch("/api/postulaciones", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ job_id: oferta.id }),
+      });
+      const data = (await res.json()) as {
+        error?: string;
+        message?: string | string[];
+        redirect?: string;
+      };
 
       if (!res.ok) {
+        const msg =
+          (typeof data.message === "string" && data.message) ||
+          (Array.isArray(data.message) && data.message.join(" ")) ||
+          (data.error &&
+          data.error !== "Unprocessable Entity" &&
+          data.error !== "Internal server error"
+            ? data.error
+            : null) ||
+          (res.status === 409
+            ? "Ya postulaste a esta vacante."
+            : res.status === 500
+              ? "Error del servidor al registrar la postulación. Revisa que el backend esté actualizado."
+              : "No se pudo registrar la postulación");
         if (data.redirect) {
-          throw new Error(
-            `${data.error ?? "Perfil incompleto"}. Actualízalo en Mi perfil.`
-          );
+          throw new Error(`${msg}. Actualízalo en Mi perfil.`);
         }
-        throw new Error(data.error ?? "No se pudo enviar la postulación");
+        throw new Error(msg);
       }
 
       const resData = data as DashboardDualResponse;
@@ -183,7 +199,7 @@ export function PostulacionForm({ oferta, onSuccess, onCancel }: Props) {
           disabled={loading || !perfil?.dni || !perfil?.cvDisponible}
           className="flex-1"
         >
-          {loading ? "Enviando…" : "Enviar CV / Postular"}
+          {loading ? "Postulando…" : "Postular a esta vacante"}
         </Button>
       </div>
     </div>

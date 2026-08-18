@@ -1,81 +1,49 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
-import {
-  createSession,
-  getSession,
-  sessionCookieOptions,
-  type TipoUsuario,
-} from "@/lib/auth";
-import { prisma } from "@/lib/db";
-import { verifyPassword } from "@/lib/password";
+import { getSession, sessionCookieOptions } from "@/lib/auth";
+import { BackendError, backendFetch } from "@/lib/backend";
+
+function redirectPorTipo(tipo: "admin" | "empresa" | "postulante") {
+  if (tipo === "admin") return "/admin";
+  if (tipo === "empresa") return "/empresa";
+  return "/";
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as {
-      tipo?: TipoUsuario;
       email?: string;
       password?: string;
     };
 
-    const tipo = body.tipo;
-    const email = body.email?.trim().toLowerCase();
-    const password = body.password ?? "";
-
-    if (tipo !== "empresa" && tipo !== "postulante") {
-      return NextResponse.json({ error: "Tipo de usuario inválido" }, { status: 400 });
-    }
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Correo y contraseña son obligatorios" },
-        { status: 400 }
-      );
-    }
-
-    if (tipo === "empresa") {
-      const empresa = await prisma.empresa.findUnique({ where: { email } });
-      if (!empresa || !verifyPassword(password, empresa.passwordHash)) {
-        return NextResponse.json(
-          { error: "Correo o contraseña incorrectos" },
-          { status: 401 }
-        );
-      }
-
-      const session = await createSession({
-        tipo: "empresa",
-        empresaId: empresa.id,
-      });
-      cookies().set(sessionCookieOptions(session.token));
-      return NextResponse.json({
-        ok: true,
-        tipo: "empresa",
-        nombre: session.nombre,
-        redirect: "/empresa",
-      });
-    }
-
-    const postulante = await prisma.postulante.findUnique({ where: { correo: email } });
-    if (!postulante || !verifyPassword(password, postulante.passwordHash)) {
-      return NextResponse.json(
-        { error: "Correo o contraseña incorrectos" },
-        { status: 401 }
-      );
-    }
-
-    const session = await createSession({
-      tipo: "postulante",
-      postulanteId: postulante.id,
+    const data = await backendFetch<{
+      ok?: boolean;
+      tipo: "admin" | "empresa" | "postulante";
+      nombre?: string;
+      token: string;
+      redirect?: string;
+    }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({
+        email: body.email?.trim().toLowerCase(),
+        password: body.password ?? "",
+      }),
     });
-    cookies().set(sessionCookieOptions(session.token));
+
+    cookies().set(sessionCookieOptions(data.token));
     return NextResponse.json({
       ok: true,
-      tipo: "postulante",
-      nombre: session.nombre,
-      redirect: "/",
+      tipo: data.tipo,
+      nombre: data.nombre,
+      redirect: data.redirect ?? redirectPorTipo(data.tipo),
     });
   } catch (e) {
-    console.error("[POST /api/auth/login]", e);
-    return NextResponse.json({ error: "Error al iniciar sesión" }, { status: 500 });
+    const status = e instanceof BackendError ? e.status : 500;
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Error al iniciar sesión" },
+      { status: status === 401 ? 401 : status }
+    );
   }
 }
 
@@ -89,6 +57,7 @@ export async function GET() {
     tipo: session.tipo,
     nombre: session.nombre,
     email: session.email,
+    usuarioId: session.usuarioId,
     empresaId: session.empresaId,
     postulanteId: session.postulanteId,
   });

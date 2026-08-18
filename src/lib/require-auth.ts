@@ -1,47 +1,55 @@
 import { redirect } from "next/navigation";
 
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { backendFetch } from "@/lib/backend";
+import type { EmpresaDTO, OfertaLaboralDTO } from "@/types/bolsa";
+
+type PerfilPostulante = {
+  id: string;
+  nombres: string;
+  apellidoPaterno: string;
+  correo: string;
+};
 
 export async function requireEmpresa() {
   const session = await getSession();
   if (!session || session.tipo !== "empresa" || !session.empresaId) {
-    redirect("/ingreso?tipo=empresa");
+    redirect("/ingreso");
   }
-
-  const empresa = await prisma.empresa.findUnique({
-    where: { id: session.empresaId },
-  });
-
-  if (!empresa) {
-    redirect("/ingreso?tipo=empresa");
+  try {
+    return await backendFetch<EmpresaDTO & { email?: string }>(
+      `/empresas/${session.empresaId}`,
+      { token: session.token }
+    );
+  } catch {
+    redirect("/ingreso");
   }
-
-  return empresa;
 }
 
 export async function requirePostulante() {
   const session = await getSession();
   if (!session || session.tipo !== "postulante" || !session.postulanteId) {
-    redirect("/ingreso?tipo=postulante");
+    redirect("/ingreso");
   }
-
-  const postulante = await prisma.postulante.findUnique({
-    where: { id: session.postulanteId },
-  });
-
-  if (!postulante) {
-    redirect("/ingreso?tipo=postulante");
+  try {
+    return await backendFetch<PerfilPostulante>("/auth/perfil/postulante", {
+      token: session.token,
+    });
+  } catch {
+    redirect("/ingreso");
   }
+}
 
-  return postulante;
+export async function requireAdmin() {
+  const session = await getSession();
+  if (!session || session.tipo !== "admin" || !session.usuarioId) {
+    redirect("/ingreso");
+  }
+  return session;
 }
 
 export async function assertEmpresaOwnsOferta(empresaId: string, ofertaId: string) {
-  const oferta = await prisma.ofertaLaboral.findUnique({
-    where: { id: ofertaId },
-    select: { empresaId: true },
-  });
+  const oferta = await backendFetch<OfertaLaboralDTO>(`/ofertas/${ofertaId}`);
   if (!oferta || oferta.empresaId !== empresaId) {
     throw new Error("No autorizado");
   }
