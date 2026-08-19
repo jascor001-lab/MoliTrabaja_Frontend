@@ -234,8 +234,13 @@ export const useOfertaFormStore = create<OfertaFormState>((set, get) => ({
     const pendienteCorreo = oferta.logoArchivos.some(
       (l) => l.name.toLowerCase().includes("pendiente") || !l.path
     );
-    const principal = oferta.empresa?.contactos?.find((c) => c.esPrincipal);
-    const gerente = oferta.empresa?.contactos?.find((c) => c.esGerente);
+    const contactos = oferta.empresa?.contactos ?? [];
+    const principal =
+      contactos.find((c) => c.esPrincipal) ?? contactos[0];
+    const gerente =
+      contactos.find((c) => c.esGerente && c.id !== principal?.id) ??
+      contactos.find((c) => c.esGerente) ??
+      contactos.find((c) => c.id !== principal?.id);
     const cronogramas =
       oferta.cronogramas.length > 0
         ? oferta.cronogramas.map((c) => ({

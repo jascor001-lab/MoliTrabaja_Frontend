@@ -7,8 +7,8 @@ function isImageFile(meta: LogoArchivoMeta): boolean {
 }
 
 export function pickLogoFromArchivos(archivos: LogoArchivoMeta[]): string | null {
-  const image = archivos.find(isImageFile);
-  return image?.path ?? null;
+  const images = archivos.filter(isImageFile);
+  return images.at(-1)?.path ?? null;
 }
 
 /** URL pública del logo a mostrar en cards y detalle de convocatoria. */

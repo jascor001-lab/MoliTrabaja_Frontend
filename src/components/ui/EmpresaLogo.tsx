@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { useEffect, useState } from "react";
 
 type Size = "sm" | "md" | "lg";
 
@@ -25,25 +25,40 @@ function initialsFrom(name: string): string {
   return name.slice(0, 2).toUpperCase() || "EM";
 }
 
+function logoSrc(src: string): string {
+  if (src.startsWith("blob:") || src.startsWith("data:") || src.startsWith("http")) {
+    return src;
+  }
+  const normalized = src.replace(/\\/g, "/");
+  const idx = normalized.toLowerCase().lastIndexOf("/uploads/");
+  if (idx >= 0) return normalized.slice(idx);
+  if (normalized.startsWith("uploads/")) return `/${normalized}`;
+  return src.startsWith("/") ? src : `/${src}`;
+}
+
 export function EmpresaLogo({ src, alt, size = "md", className = "" }: Props) {
   const px = SIZE_PX[size];
   const initials = initialsFrom(alt);
+  const [broken, setBroken] = useState(false);
+  const resolved = src ? logoSrc(src) : null;
+
+  useEffect(() => {
+    setBroken(false);
+  }, [resolved]);
 
   const boxClass = `
     relative shrink-0 overflow-hidden rounded-xl border border-emerald-100
     bg-white shadow-sm ${className}
   `;
 
-  if (src) {
+  if (resolved && !broken) {
     return (
       <div className={boxClass} style={{ width: px, height: px }}>
-        <Image
-          src={src}
+        <img
+          src={resolved}
           alt={`Logo de ${alt}`}
-          fill
-          className="object-contain p-1.5"
-          sizes={`${px}px`}
-          unoptimized={src.startsWith("/uploads/")}
+          className="h-full w-full object-contain p-1.5"
+          onError={() => setBroken(true)}
         />
       </div>
     );

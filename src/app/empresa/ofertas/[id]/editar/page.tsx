@@ -38,7 +38,7 @@ export default async function EditarOfertaPage({ params }: Props) {
         </h1>
         <p className="mt-1 text-slate-500">{oferta.titulo}</p>
       </div>
-      <OfertaEditClient oferta={oferta} />
+      <OfertaEditClient oferta={oferta} empresaId={empresa.id} />
     </AppShell>
   );
 }
