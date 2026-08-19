@@ -56,9 +56,11 @@ export type OfertaFormState = OfertaFormFields & {
   step: number;
   slideDirection: SlideDirection;
   submitError: string | null;
+  fieldErrors: Record<string, string>;
   isSubmitting: boolean;
   setStep: (step: number) => void;
   setSubmitError: (error: string | null) => void;
+  setFieldErrors: (errors: Record<string, string>) => void;
   nextStep: () => void;
   prevStep: () => void;
   setField: <K extends keyof OfertaFormFields>(
@@ -118,6 +120,7 @@ const initialMeta = {
   step: 1,
   slideDirection: "forward" as SlideDirection,
   submitError: null as string | null,
+  fieldErrors: {} as Record<string, string>,
   isSubmitting: false,
 };
 
@@ -128,34 +131,64 @@ export const useOfertaFormStore = create<OfertaFormState>((set, get) => ({
   setStep: (step) => set({ step }),
 
   setSubmitError: (submitError) => set({ submitError }),
+  setFieldErrors: (fieldErrors) => set({ fieldErrors }),
 
   nextStep: () => {
     const { step } = get();
     if (step < WIZARD_STEPS) {
-      set({ step: step + 1, slideDirection: "forward", submitError: null });
+      set({
+        step: step + 1,
+        slideDirection: "forward",
+        submitError: null,
+        fieldErrors: {},
+      });
     }
   },
 
   prevStep: () => {
     const { step } = get();
     if (step > 1) {
-      set({ step: step - 1, slideDirection: "back", submitError: null });
+      set({
+        step: step - 1,
+        slideDirection: "back",
+        submitError: null,
+        fieldErrors: {},
+      });
     }
   },
 
-  setField: (key, value) => set({ [key]: value }),
+  setField: (key, value) =>
+    set((s) => {
+      const fieldErrors = { ...s.fieldErrors };
+      delete fieldErrors[String(key)];
+      if (key === "cronogramas") {
+        delete fieldErrors.inicio;
+        delete fieldErrors.fin;
+      }
+      if (key === "logoFiles") delete fieldErrors.logo;
+      if (key === "basesFile") delete fieldErrors.bases;
+      if (key === "tipoPuesto") delete fieldErrors.tipoPuesto;
+      return { [key]: value, fieldErrors };
+    }),
 
   setContactoField: (rol, key, value) =>
-    set((s) => ({
-      [rol]: { ...s[rol], [key]: value },
-    })),
+    set((s) => {
+      const fieldErrors = { ...s.fieldErrors };
+      delete fieldErrors[`${rol}_${key}`];
+      return {
+        [rol]: { ...s[rol], [key]: value },
+        fieldErrors,
+      };
+    }),
 
   toggleTipoPuesto: (tipo) => {
     const current = get().tipoPuesto;
+    const fieldErrors = { ...get().fieldErrors };
+    delete fieldErrors.tipoPuesto;
     if (current.includes(tipo)) {
-      set({ tipoPuesto: current.filter((t) => t !== tipo) });
+      set({ tipoPuesto: current.filter((t) => t !== tipo), fieldErrors });
     } else {
-      set({ tipoPuesto: [...current, tipo] });
+      set({ tipoPuesto: [...current, tipo], fieldErrors });
     }
   },
 
@@ -188,7 +221,12 @@ export const useOfertaFormStore = create<OfertaFormState>((set, get) => ({
   removeLogoFile: (index) =>
     set({ logoFiles: get().logoFiles.filter((_, i) => i !== index) }),
 
-  setBasesFile: (file) => set({ basesFile: file }),
+  setBasesFile: (file) =>
+    set((s) => {
+      const fieldErrors = { ...s.fieldErrors };
+      delete fieldErrors.bases;
+      return { basesFile: file, fieldErrors };
+    }),
 
   reset: () => set({ ...initialFields, ...initialMeta }),
 
@@ -217,6 +255,7 @@ export const useOfertaFormStore = create<OfertaFormState>((set, get) => ({
       step: 1,
       slideDirection: "forward",
       submitError: null,
+      fieldErrors: {},
       isSubmitting: false,
       logoFiles: [],
       basesFile: null,

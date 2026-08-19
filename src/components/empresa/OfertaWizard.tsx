@@ -9,9 +9,10 @@ import { StepIndicator } from "@/components/ui/StepIndicator";
 import { readApiError } from "@/lib/api-error";
 import { formatSalarioForSave } from "@/lib/salario";
 import {
-  validarPaso1,
-  validarPaso2,
-  validarPaso3,
+  erroresPaso1,
+  erroresPaso2,
+  erroresPaso3,
+  hasFieldErrors,
 } from "@/lib/validacion-oferta";
 import { useOfertaFormStore, WIZARD_STEPS } from "@/stores/ofertaFormStore";
 
@@ -28,16 +29,6 @@ type Props = {
 
 const STEP_LABELS = ["Convocatoria", "Vacante", "Contactos", "Publicar"];
 
-function logoStepError(s: ReturnType<typeof useOfertaFormStore.getState>): string | null {
-  if (s.logoFiles.length > 0 || s.existingLogos.length > 0) return null;
-  return "Adjunta el logo de la empresa (imagen PNG o JPG).";
-}
-
-function basesStepError(s: ReturnType<typeof useOfertaFormStore.getState>): string | null {
-  if (s.basesFile || s.existingBases) return null;
-  return "Adjunta el documento de bases del trabajo (PDF o Word).";
-}
-
 export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
   const isEdit = mode === "edit";
   const router = useRouter();
@@ -52,6 +43,7 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
     isSubmitting,
     setSubmitting,
     setSubmitError,
+    setFieldErrors,
     reset,
   } = useOfertaFormStore();
 
@@ -76,17 +68,19 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
     return () => window.clearTimeout(timer);
   }, [step]);
 
-  const validateCurrentStep = (): string | null => {
+  const validateCurrentStep = (): boolean => {
     const s = useOfertaFormStore.getState();
     if (step === 1) {
-      return (
-        validarPaso1({ cronogramas: s.cronogramas }) ??
-        logoStepError(s) ??
-        basesStepError(s)
-      );
+      const errors = erroresPaso1({
+        cronogramas: s.cronogramas,
+        tieneLogo: s.logoFiles.length > 0 || s.existingLogos.length > 0,
+        tieneBases: Boolean(s.basesFile || s.existingBases),
+      });
+      setFieldErrors(errors);
+      return !hasFieldErrors(errors);
     }
     if (step === 2) {
-      return validarPaso2({
+      const errors = erroresPaso2({
         nombrePuesto: s.nombrePuesto,
         perfil: s.perfil,
         tipoContrato: s.tipoContrato,
@@ -96,33 +90,35 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
         beneficios: s.beneficios,
         direccionLiteral: s.direccionLiteral,
       });
+      setFieldErrors(errors);
+      return !hasFieldErrors(errors);
     }
     if (step === 3) {
-      return validarPaso3({
+      const errors = erroresPaso3({
         contactoPrincipal: s.contactoPrincipal,
         contactoGerente: s.contactoGerente,
       });
+      setFieldErrors(errors);
+      return !hasFieldErrors(errors);
     }
-    return null;
+    return true;
   };
 
   const handleNext = () => {
     setSubmitError(null);
-    const msg = validateCurrentStep();
-    if (msg) {
-      setSubmitError(msg);
-      return;
-    }
+    if (!validateCurrentStep()) return;
     nextStep();
   };
 
-  const validateAll = (): string | null => {
+  const validateAll = (): boolean => {
     const s = useOfertaFormStore.getState();
-    return (
-      validarPaso1({ cronogramas: s.cronogramas }) ??
-      logoStepError(s) ??
-      basesStepError(s) ??
-      validarPaso2({
+    const errors = {
+      ...erroresPaso1({
+        cronogramas: s.cronogramas,
+        tieneLogo: s.logoFiles.length > 0 || s.existingLogos.length > 0,
+        tieneBases: Boolean(s.basesFile || s.existingBases),
+      }),
+      ...erroresPaso2({
         nombrePuesto: s.nombrePuesto,
         perfil: s.perfil,
         tipoContrato: s.tipoContrato,
@@ -131,12 +127,14 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
         funciones: s.funciones,
         beneficios: s.beneficios,
         direccionLiteral: s.direccionLiteral,
-      }) ??
-      validarPaso3({
+      }),
+      ...erroresPaso3({
         contactoPrincipal: s.contactoPrincipal,
         contactoGerente: s.contactoGerente,
-      })
-    );
+      }),
+    };
+    setFieldErrors(errors);
+    return !hasFieldErrors(errors);
   };
 
   const buildPayload = (state: ReturnType<typeof useOfertaFormStore.getState>) => ({
@@ -165,9 +163,7 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
 
   const handleSubmit = async () => {
     setSubmitError(null);
-    const msg = validateAll();
-    if (msg) {
-      setSubmitError(msg);
+    if (!validateAll()) {
       return;
     }
 
@@ -197,7 +193,7 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
       }
 
       reset();
-      router.push("/empresa/ofertas");
+      router.push("/empresa");
       router.refresh();
     } catch (e) {
       setSubmitError(
@@ -237,11 +233,9 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
           {step === 4 && <WizardStepResumen isEdit={isEdit} />}
         </SlideView>
 
-        {submitError && (
-          <p className="mt-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700 border border-red-100 motion-enter-fade motion-gpu motion-reduce:animate-none">
-            {submitError}
-          </p>
-        )}
+        {submitError ? (
+          <p className="mt-4 text-xs text-red-600">{submitError}</p>
+        ) : null}
 
         <div className="mt-8 flex flex-wrap gap-3 justify-between">
           {step > 1 ? (

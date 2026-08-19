@@ -51,6 +51,7 @@ export function SeguimientoPersonal({ dniInicial, autoload = false }: Props) {
   const [seleccionado, setSeleccionado] = useState<string | null>(null);
   const [data, setData] = useState<DashboardDualResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [loadingLista, setLoadingLista] = useState(false);
   const [busquedaAbierta, setBusquedaAbierta] = useState(!autoload);
@@ -150,17 +151,19 @@ export function SeguimientoPersonal({ dniInicial, autoload = false }: Props) {
     if (modo === "codigo") {
       const codigo = applicationId.trim().toUpperCase();
       if (!codigo) {
-        setError("Ingresa tu código de postulación (ej. APP-2026-1234).");
+        setFieldErrors({ applicationId: "Ingresa tu código de postulación." });
         return;
       }
+      setFieldErrors({});
       cargarDetalle({ application_id: codigo });
       return;
     }
 
     if (!/^\d{8}$/.test(dni)) {
-      setError("El DNI debe tener 8 dígitos.");
+      setFieldErrors({ dni: "El DNI debe tener 8 dígitos." });
       return;
     }
+    setFieldErrors({});
     cargarPorDni(dni);
   };
 
@@ -360,6 +363,7 @@ export function SeguimientoPersonal({ dniInicial, autoload = false }: Props) {
                   inputMode="numeric"
                   placeholder="12345678"
                   onChange={(e) => setDni(e.target.value.replace(/\D/g, ""))}
+                  error={fieldErrors.dni}
                 />
               ) : (
                 <Input
@@ -367,6 +371,7 @@ export function SeguimientoPersonal({ dniInicial, autoload = false }: Props) {
                   value={applicationId}
                   placeholder="APP-2026-1234"
                   onChange={(e) => setApplicationId(e.target.value.toUpperCase())}
+                  error={fieldErrors.applicationId}
                 />
               )}
             </SlideView>
@@ -376,7 +381,7 @@ export function SeguimientoPersonal({ dniInicial, autoload = false }: Props) {
             </Button>
           </>
         )}
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error ? <p className="text-xs text-red-600">{error}</p> : null}
       </div>
 
       {!autoload && modo === "dni" && lista.length > 0 && (

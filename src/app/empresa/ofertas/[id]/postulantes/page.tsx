@@ -24,8 +24,8 @@ export default async function PostulantesOfertaPage({ params }: Props) {
     return (
       <AppShell variant="empresa">
         <p className="text-slate-600">Oferta no encontrada.</p>
-        <Link href="/empresa/ofertas" className="text-emerald-700 font-semibold mt-4 inline-block">
-          ← Volver a mis ofertas
+        <Link href="/empresa" className="text-emerald-700 font-semibold mt-4 inline-block">
+          ← Volver al inicio
         </Link>
       </AppShell>
     );
@@ -34,10 +34,10 @@ export default async function PostulantesOfertaPage({ params }: Props) {
   return (
     <AppShell variant="empresa">
       <Link
-        href="/empresa/ofertas"
+        href="/empresa"
         className="text-sm font-semibold text-emerald-700 hover:underline mb-6 inline-block"
       >
-        ← Mis ofertas
+        ← Inicio
       </Link>
       <PostulantesOfertaPanel ofertaId={params.id} />
     </AppShell>

@@ -6,6 +6,7 @@ type Props = {
   sectors: readonly string[];
   value: string;
   onChange: (sector: string) => void;
+  error?: string;
 };
 
 function normalize(value: string): string {
@@ -16,7 +17,7 @@ function normalize(value: string): string {
     .trim();
 }
 
-export function SectorCombobox({ sectors, value, onChange }: Props) {
+export function SectorCombobox({ sectors, value, onChange, error }: Props) {
   const [query, setQuery] = useState(value);
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(0);
@@ -40,7 +41,7 @@ export function SectorCombobox({ sectors, value, onChange }: Props) {
   return (
     <div className="relative space-y-1.5">
       <label htmlFor="sector-buscador" className="text-sm font-medium text-slate-700">
-        Sector *
+        Sector
       </label>
       <input
         id="sector-buscador"
@@ -49,7 +50,6 @@ export function SectorCombobox({ sectors, value, onChange }: Props) {
         aria-expanded={open}
         aria-controls="sector-resultados"
         autoComplete="off"
-        required
         value={query}
         placeholder="Escribe para buscar el sector…"
         onFocus={() => {
@@ -119,6 +119,7 @@ export function SectorCombobox({ sectors, value, onChange }: Props) {
       <p className="text-xs text-slate-500">
         Escribe una palabra y selecciona una opción de la lista.
       </p>
+      {error ? <p className="text-xs text-red-600">{error}</p> : null}
     </div>
   );
 }

@@ -28,7 +28,7 @@ export function EmpresaDashboard({ empresaNombre, ofertas }: Props) {
         className={`flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 motion-enter-fade motion-gpu ${MOTION_REDUCE}`}
       >
         <div>
-          <p className="text-sm font-medium text-emerald-600">{APP_NAME} · Mis ofertas</p>
+          <p className="text-sm font-medium text-emerald-600">{APP_NAME} · Inicio</p>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mt-1">
             {empresaNombre}
           </h1>

@@ -12,6 +12,7 @@ export function RegistroEmpresaForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     nombre: "",
     ruc: "",
@@ -27,6 +28,17 @@ export function RegistroEmpresaForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    const next: Record<string, string> = {};
+    if (form.nombre.trim().length < 2) next.nombre = "Ingresa la razón social.";
+    if (!/^\d{11}$/.test(form.ruc.trim())) next.ruc = "El RUC debe tener 11 dígitos.";
+    if (form.rubro.trim().length < 2) next.rubro = "Ingresa el rubro o sector.";
+    if (!form.email.trim()) next.email = "Ingresa el correo de acceso.";
+    if (form.password.length < 8) next.password = "La contraseña debe tener al menos 8 caracteres.";
+    if (Object.keys(next).length > 0) {
+      setFieldErrors(next);
+      return;
+    }
+    setFieldErrors({});
     setLoading(true);
     try {
       const res = await fetch("/api/auth/registro/empresa", {
@@ -46,42 +58,42 @@ export function RegistroEmpresaForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} noValidate className="space-y-4">
       <Input
-        label="Razón social *"
+        label="Razón social"
         value={form.nombre}
         onChange={(e) => set("nombre", e.target.value)}
-        required
+        error={fieldErrors.nombre}
       />
       <Input
-        label="RUC *"
+        label="RUC"
         value={form.ruc}
         maxLength={11}
         inputMode="numeric"
         onChange={(e) => set("ruc", e.target.value.replace(/\D/g, ""))}
-        required
+        error={fieldErrors.ruc}
       />
       <Input
-        label="Rubro / sector *"
+        label="Rubro / sector"
         value={form.rubro}
         onChange={(e) => set("rubro", e.target.value)}
         placeholder="Ej. Tecnología, Retail, Construcción"
-        required
+        error={fieldErrors.rubro}
       />
       <Input
-        label="Correo de acceso *"
+        label="Correo de acceso"
         type="email"
         value={form.email}
         onChange={(e) => set("email", e.target.value)}
-        required
+        error={fieldErrors.email}
       />
       <Input
-        label="Contraseña *"
+        label="Contraseña"
         type="password"
         value={form.password}
         onChange={(e) => set("password", e.target.value)}
         hint="Mínimo 8 caracteres"
-        required
+        error={fieldErrors.password}
       />
       <Textarea
         label="Descripción (opcional)"
@@ -89,9 +101,7 @@ export function RegistroEmpresaForm() {
         onChange={(e) => set("descripcion", e.target.value)}
         placeholder="Breve descripción de la empresa…"
       />
-      {error && (
-        <p className="text-sm text-red-600 rounded-lg bg-red-50 px-3 py-2">{error}</p>
-      )}
+      {error ? <p className="text-xs text-red-600">{error}</p> : null}
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Creando cuenta…" : "Registrar empresa"}
       </Button>

@@ -18,6 +18,7 @@ export function PerfilEmpresaForm() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetch("/api/auth/perfil/empresa")
@@ -38,6 +39,14 @@ export function PerfilEmpresaForm() {
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
+    const next: Record<string, string> = {};
+    if (form.nombre.trim().length < 2) next.nombre = "Ingresa la razón social.";
+    if (form.rubro.trim().length < 2) next.rubro = "Ingresa el rubro.";
+    if (Object.keys(next).length > 0) {
+      setFieldErrors(next);
+      return;
+    }
+    setFieldErrors({});
     setSaving(true);
     setMsg(null);
     setError(null);
@@ -64,14 +73,24 @@ export function PerfilEmpresaForm() {
   if (loading) return <p className="text-sm text-slate-400">Cargando perfil…</p>;
 
   return (
-    <form onSubmit={save} className="space-y-4 max-w-lg">
-      <Input label="Razón social" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
+    <form onSubmit={save} noValidate className="space-y-4 max-w-lg">
+      <Input
+        label="Razón social"
+        value={form.nombre}
+        onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+        error={fieldErrors.nombre}
+      />
       <Input label="RUC" value={form.ruc} disabled />
       <Input label="Correo de acceso" value={form.email} disabled />
-      <Input label="Rubro" value={form.rubro} onChange={(e) => setForm({ ...form, rubro: e.target.value })} required />
+      <Input
+        label="Rubro"
+        value={form.rubro}
+        onChange={(e) => setForm({ ...form, rubro: e.target.value })}
+        error={fieldErrors.rubro}
+      />
       <Textarea label="Descripción" value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} />
       {msg && <p className="text-sm text-emerald-700">{msg}</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error ? <p className="text-xs text-red-600">{error}</p> : null}
       <Button type="submit" disabled={saving}>{saving ? "Guardando…" : "Guardar cambios"}</Button>
     </form>
   );

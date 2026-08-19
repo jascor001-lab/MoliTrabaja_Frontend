@@ -62,9 +62,6 @@ export function AppNav({ variant }: Props) {
 
     return (
       <nav className="flex flex-wrap items-center justify-end gap-1 text-sm font-semibold sm:gap-2">
-        <span className="hidden max-w-[140px] truncate text-slate-500 md:inline">
-          {session.nombre}
-        </span>
         {variant === "admin" || isAdmin ? (
           <>
             {variant !== "admin" && (
@@ -82,17 +79,16 @@ export function AppNav({ variant }: Props) {
           </>
         ) : isEmpresa ? (
           <>
-            <Link href="/empresa" className={navClass(pathname === "/empresa")}>
+            <Link
+              href="/empresa"
+              className={navClass(
+                pathname === "/empresa" || pathname === "/empresa/ofertas"
+              )}
+            >
               Inicio
             </Link>
             {variant !== "portal" && (
               <>
-                <Link
-                  href="/empresa/ofertas"
-                  className={navClass(pathname.startsWith("/empresa/ofertas"))}
-                >
-                  Ofertas
-                </Link>
                 <Link
                   href="/empresa/perfil"
                   className={navClass(pathname.startsWith("/empresa/perfil"))}
@@ -117,14 +113,9 @@ export function AppNav({ variant }: Props) {
           </>
         ) : isPostulante ? (
           <>
-            <Link href="/personal" className={navClass(pathname === "/personal")}>
+            <Link href="/" className={navClass(pathname === "/")}>
               Inicio
             </Link>
-            {variant !== "portal" && (
-              <Link href="/" className={navClass(false)}>
-                Ofertas
-              </Link>
-            )}
             <Link
               href="/personal/postulaciones"
               className={navClass(pathname.startsWith("/personal/postulaciones"))}

@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/layout/AppShell";
-import { EmpresaInicio } from "@/components/empresa/EmpresaInicio";
+import { EmpresaDashboard } from "@/components/empresa/EmpresaDashboard";
 import { backendFetch } from "@/lib/backend";
 import { requireEmpresa } from "@/lib/require-auth";
 import type { OfertaLaboralDTO } from "@/types/bolsa";
@@ -14,7 +14,7 @@ export default async function EmpresaInicioPage() {
 
   return (
     <AppShell variant="empresa">
-      <EmpresaInicio empresaNombre={empresa.nombre} ofertas={ofertas} />
+      <EmpresaDashboard empresaNombre={empresa.nombre} ofertas={ofertas} />
     </AppShell>
   );
 }

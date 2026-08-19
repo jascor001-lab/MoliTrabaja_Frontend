@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/Input";
 import { PuestoInclusivoCheckbox } from "@/components/ui/PuestoInclusivoCheckbox";
 import { SectionHint } from "@/components/ui/SectionHint";
 import { validarCuentaRegistro } from "@/lib/password";
+import { validarPostulanteInput } from "@/lib/validacion-postulante";
 import { GENEROS } from "@/types/postulacion";
 
 const TIPOS_DOCUMENTO = [
@@ -63,9 +64,28 @@ export function RegistroPostulanteForm() {
     setError(null);
 
     const cuentaErrors = validarCuentaRegistro(form.correo, form.password);
-    if (Object.keys(cuentaErrors).length > 0) {
-      setFieldErrors(cuentaErrors);
-      setError("Revisa tu correo y contraseña de acceso.");
+    const personal = validarPostulanteInput({
+      tipoDocId: 1,
+      tipoDocAbrev: form.tipoDocAbrev,
+      numeroDocumento: form.numeroDocumento,
+      nombres: form.nombres,
+      apellidoPaterno: form.apellidoPaterno,
+      apellidoMaterno: form.apellidoMaterno,
+      fechaNacimiento: form.fechaNacimiento,
+      paisId: 1,
+      genero: form.genero,
+      estadoCivil: "Soltero",
+      correo: form.correo,
+      telefono: form.telefono,
+      direccionLiteral: form.direccion,
+      tieneDiscapacidad: form.tieneDiscapacidad,
+    });
+    const errors = {
+      ...cuentaErrors,
+      ...(personal.ok ? {} : personal.errors),
+    };
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
 
@@ -83,10 +103,13 @@ export function RegistroPostulanteForm() {
         redirect?: string;
       };
       if (!res.ok) {
-        if (data.errors) setFieldErrors(mapApiErrors(data.errors));
+        if (data.errors) {
+          setFieldErrors(mapApiErrors(data.errors));
+          return;
+        }
         throw new Error(data.error ?? "No se pudo registrar");
       }
-      router.push("/personal");
+      router.push("/");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al registrar");
@@ -96,7 +119,7 @@ export function RegistroPostulanteForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} noValidate className="space-y-6">
       <div className="space-y-4 rounded-xl border border-emerald-100 bg-emerald-50/40 p-4">
         <SectionHint title="Cuenta de acceso">
           Este correo y contraseña son los que usarás en &quot;Acceder&quot;. No los volverás a
@@ -105,7 +128,7 @@ export function RegistroPostulanteForm() {
 
         <div className="grid sm:grid-cols-2 gap-4">
           <Input
-            label="Correo electrónico *"
+            label="Correo electrónico"
             type="email"
             autoComplete="email"
             placeholder="tu@correo.com"
@@ -115,7 +138,7 @@ export function RegistroPostulanteForm() {
             required
           />
           <Input
-            label="Contraseña *"
+            label="Contraseña"
             type="password"
             autoComplete="new-password"
             value={form.password}
@@ -135,7 +158,7 @@ export function RegistroPostulanteForm() {
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-slate-700">
-              Tipo de documento *
+              Tipo de documento
             </label>
             <select
               value={form.tipoDocAbrev}
@@ -159,7 +182,7 @@ export function RegistroPostulanteForm() {
             )}
           </div>
           <Input
-            label={`${tipoDocumento.abrev} *`}
+            label={`${tipoDocumento.abrev}`}
             value={form.numeroDocumento}
             maxLength={tipoDocumento.maxLength}
             inputMode={tipoDocumento.numeric ? "numeric" : "text"}
@@ -178,7 +201,7 @@ export function RegistroPostulanteForm() {
           />
         </div>
         <Input
-          label="Nombres *"
+          label="Nombres"
           value={form.nombres}
           onChange={(e) => set("nombres", e.target.value)}
           error={fieldErrors.nombres}
@@ -186,14 +209,14 @@ export function RegistroPostulanteForm() {
         />
         <div className="grid sm:grid-cols-2 gap-4">
           <Input
-            label="Apellido paterno *"
+            label="Apellido paterno"
             value={form.apellidoPaterno}
             onChange={(e) => set("apellidoPaterno", e.target.value)}
             error={fieldErrors.apellidoPaterno}
             required
           />
           <Input
-            label="Apellido materno *"
+            label="Apellido materno"
             value={form.apellidoMaterno}
             onChange={(e) => set("apellidoMaterno", e.target.value)}
             error={fieldErrors.apellidoMaterno}
@@ -202,14 +225,15 @@ export function RegistroPostulanteForm() {
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <DateInput
-            label="Fecha de nacimiento *"
+            label="Fecha de nacimiento"
             value={form.fechaNacimiento}
             onChange={(fechaNacimiento) => set("fechaNacimiento", fechaNacimiento)}
             error={fieldErrors.fechaNacimiento}
+            max={new Date().toISOString().slice(0, 10)}
             required
           />
           <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-700">Género *</label>
+            <label className="text-sm font-medium text-slate-700">Género</label>
             <select
               value={form.genero}
               onChange={(e) => set("genero", e.target.value)}
@@ -224,7 +248,7 @@ export function RegistroPostulanteForm() {
           </div>
         </div>
         <Input
-          label="Teléfono *"
+          label="Teléfono"
           type="tel"
           value={form.telefono}
           onChange={(e) => set("telefono", e.target.value)}
@@ -232,7 +256,7 @@ export function RegistroPostulanteForm() {
           required
         />
         <Input
-          label="Dirección *"
+          label="Dirección"
           value={form.direccion}
           onChange={(e) => set("direccion", e.target.value)}
           error={fieldErrors.direccion}
@@ -245,11 +269,7 @@ export function RegistroPostulanteForm() {
         />
       </div>
 
-      {error && (
-        <p className="text-sm text-red-600 rounded-lg bg-red-50 border border-red-100 px-3 py-2">
-          {error}
-        </p>
-      )}
+      {error ? <p className="text-xs text-red-600">{error}</p> : null}
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Creando perfil…" : "Crear mi perfil"}
       </Button>

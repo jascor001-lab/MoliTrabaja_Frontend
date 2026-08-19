@@ -25,9 +25,23 @@ export function PerfilSectionExperiencia() {
     fechaFin: "",
   });
   const [showForm, setShowForm] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errors: Record<string, string> = {};
+    if (!form.sector.trim()) errors.sector = "Selecciona o escribe un sector.";
+    if (!form.empresa.trim()) errors.empresa = "Ingresa el nombre de la empresa.";
+    if (!form.puesto.trim()) errors.puesto = "Ingresa el puesto.";
+    if (!form.fechaInicio) errors.fechaInicio = "Ingresa la fecha de inicio.";
+    if (form.fechaFin && form.fechaInicio && form.fechaFin < form.fechaInicio) {
+      errors.fechaFin = "La fecha de fin no puede ser anterior al inicio.";
+    }
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
     const ok = await addExperiencia(
       {
         ...form,
@@ -98,6 +112,7 @@ export function PerfilSectionExperiencia() {
       {showForm && (
         <form
           onSubmit={submit}
+          noValidate
           className="space-y-4 rounded-xl border border-emerald-200 p-4"
         >
           <h3 className="font-bold text-slate-900">Nueva experiencia</h3>
@@ -105,31 +120,33 @@ export function PerfilSectionExperiencia() {
             sectors={SECTORES_LABORALES}
             value={form.sector}
             onChange={(sector) => setForm({ ...form, sector })}
+            error={formErrors.sector}
           />
           <Input
-            label="Empresa *"
+            label="Empresa"
             value={form.empresa}
             onChange={(e) => setForm({ ...form, empresa: e.target.value })}
-            required
+            error={formErrors.empresa}
           />
           <Input
-            label="Puesto *"
+            label="Puesto"
             value={form.puesto}
             onChange={(e) => setForm({ ...form, puesto: e.target.value })}
-            required
+            error={formErrors.puesto}
           />
 
           <div className="grid sm:grid-cols-2 gap-4">
             <DateInput
-              label="Inicio *"
+              label="Inicio"
               value={form.fechaInicio}
               onChange={(fechaInicio) => setForm({ ...form, fechaInicio })}
-              required
+              error={formErrors.fechaInicio}
             />
             <DateInput
               label="Fin (opcional)"
               value={form.fechaFin}
               onChange={(fechaFin) => setForm({ ...form, fechaFin })}
+              error={formErrors.fechaFin}
             />
           </div>
           <div className="flex gap-2">

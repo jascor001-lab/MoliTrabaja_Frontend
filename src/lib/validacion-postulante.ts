@@ -84,8 +84,10 @@ export function validarPostulanteInput(
   if (apellidoMaterno.length < 2) errors.apellidoMaterno = "Ingresa tu apellido materno.";
 
   const fechaNacimiento = data.fechaNacimiento?.trim() ?? "";
-  if (!DATE_RE.test(fechaNacimiento)) {
-    errors.fechaNacimiento = "Usa el formato YYYY-MM-DD.";
+  if (!fechaNacimiento) {
+    errors.fechaNacimiento = "Ingresa tu fecha de nacimiento.";
+  } else if (!DATE_RE.test(fechaNacimiento)) {
+    errors.fechaNacimiento = "Selecciona una fecha válida.";
   } else {
     const edad = calcularEdad(fechaNacimiento);
     if (edad < 16 || edad > 80) {

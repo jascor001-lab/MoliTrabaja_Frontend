@@ -19,6 +19,7 @@ export type OfertaFilterValue = {
   contrato: string;
   conocimiento: string;
   discapacidad: string;
+  vistos: string;
 };
 
 type Option = {
@@ -46,6 +47,7 @@ export const EMPTY_FILTERS: OfertaFilterValue = {
   contrato: "",
   conocimiento: "",
   discapacidad: "",
+  vistos: "",
 };
 
 const EXTRA_KEYS: (keyof OfertaFilterValue)[] = [
@@ -55,6 +57,7 @@ const EXTRA_KEYS: (keyof OfertaFilterValue)[] = [
   "contrato",
   "conocimiento",
   "discapacidad",
+  "vistos",
 ];
 
 export function filtersAreActive(value: OfertaFilterValue): boolean {
@@ -65,11 +68,13 @@ export function filtersAreActive(value: OfertaFilterValue): boolean {
 
 function FilterSelect({
   label,
+  emptyLabel,
   value,
   options,
   onChange,
 }: {
   label: string;
+  emptyLabel?: string;
   value: string;
   options: Option[];
   onChange: (value: string) => void;
@@ -87,7 +92,7 @@ function FilterSelect({
           : "border-slate-200 bg-white text-slate-600 hover:border-emerald-200"
       }`}
     >
-      <option value="">{label}</option>
+      <option value="">{emptyLabel ?? label}</option>
       {options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
@@ -356,6 +361,19 @@ export function OfertaFilters({
                 value={value.discapacidad}
                 onChange={(next) => set("discapacidad", next)}
                 options={[{ value: "si", label: "Puestos inclusivos" }]}
+              />
+            </span>
+            <span className="motion-filter-chip motion-gpu">
+              <FilterSelect
+                label="Vistos"
+                emptyLabel="Todos"
+                value={value.vistos}
+                onChange={(next) => set("vistos", next)}
+                options={[
+                  { value: "vistos", label: "Vistos" },
+                  { value: "no-vistos", label: "No vistos" },
+                  { value: "postulados", label: "Postulados" },
+                ]}
               />
             </span>
           </div>

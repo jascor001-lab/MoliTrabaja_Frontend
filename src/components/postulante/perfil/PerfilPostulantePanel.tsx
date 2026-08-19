@@ -81,11 +81,7 @@ function PerfilPostulantePanelInner() {
           {message}
         </p>
       )}
-      {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2">
-          {error}
-        </p>
-      )}
+      {error ? <p className="text-xs text-red-600">{error}</p> : null}
 
       <div className="rounded-2xl border border-emerald-100 bg-white p-5 md:p-6 shadow-sm overflow-hidden">
         <SlideView viewKey={section} direction={sectionDirection}>

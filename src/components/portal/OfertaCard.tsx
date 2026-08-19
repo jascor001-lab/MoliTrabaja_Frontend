@@ -7,6 +7,7 @@ type Props = {
   oferta: OfertaLaboralDTO;
   selected?: boolean;
   yaPostulado?: boolean;
+  vista?: boolean;
   onSelect: (oferta: OfertaLaboralDTO) => void;
 };
 
@@ -14,6 +15,7 @@ export function OfertaCard({
   oferta,
   selected = false,
   yaPostulado = false,
+  vista = false,
   onSelect,
 }: Props) {
   const empresa = oferta.empresa?.razonSocial || oferta.empresa?.nombre || "Empresa";
@@ -44,11 +46,6 @@ export function OfertaCard({
         <h3 className="text-[15px] font-bold text-slate-900 leading-snug line-clamp-2">
           {oferta.titulo}
         </h3>
-        {yaPostulado && (
-          <span className="shrink-0 inline-flex items-center rounded-md bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-            Postulado
-          </span>
-        )}
       </div>
 
       <p className="text-sm text-slate-600 mt-1 truncate">{empresa}</p>
@@ -74,9 +71,20 @@ export function OfertaCard({
 
       <div className="mt-3 flex items-end justify-between gap-2">
         <p className="text-sm font-semibold text-emerald-700 truncate">{oferta.salario}</p>
-        <p className="text-[11px] text-slate-400 shrink-0 whitespace-nowrap">
-          {tiempoRelativo(oferta.fechaPublicacion)}
-        </p>
+        <div className="shrink-0 text-right">
+          {yaPostulado ? (
+            <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+              Postulado
+            </p>
+          ) : vista ? (
+            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+              Vistos
+            </p>
+          ) : null}
+          <p className="text-[11px] text-slate-400 whitespace-nowrap">
+            {tiempoRelativo(oferta.fechaPublicacion)}
+          </p>
+        </div>
       </div>
     </article>
   );

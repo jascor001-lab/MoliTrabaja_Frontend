@@ -1,12 +1,8 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useId } from "react";
 
-import {
-  displayToIso,
-  formatDateMask,
-  isoToDisplay,
-} from "@/lib/date-format";
+import { displayToIso } from "@/lib/date-format";
 
 type Props = {
   label: string;
@@ -16,8 +12,17 @@ type Props = {
   error?: string;
   required?: boolean;
   disabled?: boolean;
+  min?: string;
+  max?: string;
   className?: string;
 };
+
+function toIsoDate(value: string): string {
+  const raw = value.trim();
+  if (!raw) return "";
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+  return displayToIso(raw) ?? "";
+}
 
 export function DateInput({
   label,
@@ -27,69 +32,42 @@ export function DateInput({
   error,
   required,
   disabled,
+  min,
+  max,
   className = "",
 }: Props) {
   const inputId = useId();
-  const [display, setDisplay] = useState(() => isoToDisplay(value));
-  const [focused, setFocused] = useState(false);
-
-  useEffect(() => {
-    if (!focused) setDisplay(isoToDisplay(value));
-  }, [value, focused]);
-
-  const handleChange = (raw: string) => {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-      const formatted = isoToDisplay(raw);
-      setDisplay(formatted);
-      onChange(raw);
-      return;
-    }
-
-    const masked = formatDateMask(raw);
-    setDisplay(masked);
-
-    if (masked.length === 10) {
-      onChange(displayToIso(masked) ?? "");
-    } else {
-      onChange("");
-    }
-  };
+  const iso = toIsoDate(value);
 
   return (
     <label htmlFor={inputId} className="block space-y-1.5">
       <span className="text-sm font-medium text-slate-700">{label}</span>
       <input
         id={inputId}
-        type="text"
-        inputMode="numeric"
+        type="date"
         autoComplete="off"
-        placeholder="DD/MM/AAAA"
-        maxLength={10}
-        pattern="\d{2}/\d{2}/\d{4}"
-        title="Escribe 2 dígitos para el día, 2 para el mes y 4 para el año."
-        required={required}
         disabled={disabled}
         aria-required={required}
-        value={display}
-        onFocus={() => setFocused(true)}
-        onChange={(e) => handleChange(e.target.value)}
-        onBlur={() => {
-          setFocused(false);
-          if (display.length > 0 && display.length < 10) {
-            setDisplay("");
-            onChange("");
-          }
-        }}
+        aria-invalid={Boolean(error)}
+        min={min}
+        max={max}
+        value={iso}
+        onChange={(e) => onChange(e.target.value)}
         className={`
-          w-full rounded-xl border border-emerald-100 bg-white px-4 py-3
-          text-slate-900 placeholder:text-slate-400
-          focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200
+          w-full rounded-xl border bg-white px-4 py-3
+          text-slate-900
+          focus:outline-none focus:ring-2
           disabled:bg-slate-50 disabled:text-slate-500
+          ${
+            error
+              ? "border-red-300 focus:border-red-400 focus:ring-red-200"
+              : "border-emerald-100 focus:border-emerald-400 focus:ring-emerald-200"
+          }
           ${className}
         `}
       />
       {hint && !error && <span className="text-xs text-slate-500">{hint}</span>}
-      {error && <span className="text-xs text-red-600">{error}</span>}
+      {error ? <span className="text-xs text-red-600">{error}</span> : null}
     </label>
   );
 }

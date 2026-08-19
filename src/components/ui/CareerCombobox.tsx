@@ -51,7 +51,7 @@ export function CareerCombobox({ careers, value, onChange, error }: Props) {
   return (
     <div className="relative space-y-1.5">
       <label htmlFor="carrera-buscador" className="text-sm font-medium text-slate-700">
-        Carrera *
+        Carrera
       </label>
       <input
         id="carrera-buscador"
@@ -61,7 +61,6 @@ export function CareerCombobox({ careers, value, onChange, error }: Props) {
         aria-expanded={open}
         aria-controls="carrera-resultados"
         autoComplete="off"
-        required
         value={query}
         placeholder="Escribe para buscar tu carrera…"
         onFocus={() => {

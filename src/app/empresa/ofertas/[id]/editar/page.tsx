@@ -28,10 +28,10 @@ export default async function EditarOfertaPage({ params }: Props) {
     <AppShell variant="empresa">
       <div className="mb-8 motion-enter-fade motion-gpu motion-reduce:animate-none">
         <Link
-          href="/empresa/ofertas"
+          href="/empresa"
           className="text-sm text-emerald-700 hover:underline font-medium"
         >
-          ← Volver a mis ofertas
+          ← Volver al inicio
         </Link>
         <h1 className="mt-3 text-2xl font-bold text-slate-900 md:text-3xl">
           Editar oferta

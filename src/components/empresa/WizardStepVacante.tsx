@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
 import { CareerMultiSelect } from "@/components/ui/CareerMultiSelect";
+import { FieldError } from "@/components/ui/FieldError";
 import { Input } from "@/components/ui/Input";
 import { KnowledgeMultiSelect } from "@/components/ui/KnowledgeMultiSelect";
 import { PuestoInclusivoCheckbox } from "@/components/ui/PuestoInclusivoCheckbox";
@@ -59,6 +60,7 @@ export function WizardStepVacante() {
     toggleTipoPuesto,
     toggleCarrera,
     toggleConocimiento,
+    fieldErrors,
   } = useOfertaFormStore();
 
   const [carreras, setCarreras] = useState<CatalogoCarreraDTO[]>([]);
@@ -84,21 +86,23 @@ export function WizardStepVacante() {
       </header>
 
       <Input
-        label="Nombre de la convocatoria *"
+        label="Nombre de la convocatoria"
         placeholder="Ej. Asistente administrativo"
         value={nombrePuesto}
         onChange={(e) => setField("nombrePuesto", e.target.value)}
+        error={fieldErrors.nombrePuesto}
       />
 
       <Textarea
-        label="Perfil requerido *"
+        label="Perfil requerido"
         placeholder="Describe el perfil ideal del candidato…"
         value={perfil}
         onChange={(e) => setField("perfil", e.target.value)}
+        error={fieldErrors.perfil}
       />
 
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium text-slate-700">Tipo de contrato *</legend>
+        <legend className="text-sm font-medium text-slate-700">Tipo de contrato</legend>
         <div className="flex flex-wrap gap-2">
           {TIPOS_CONTRATO.map((tipo) => (
             <button
@@ -115,10 +119,11 @@ export function WizardStepVacante() {
             </button>
           ))}
         </div>
+        <FieldError error={fieldErrors.tipoContrato} />
       </fieldset>
 
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium text-slate-700">Jornada * (tipo de puesto)</legend>
+        <legend className="text-sm font-medium text-slate-700">Jornada (tipo de puesto)</legend>
         <div className="flex flex-wrap gap-2">
           {TIPOS_PUESTO.map((tipo) => {
             const selected = tipoPuesto.includes(tipo);
@@ -138,26 +143,30 @@ export function WizardStepVacante() {
             );
           })}
         </div>
+        <FieldError error={fieldErrors.tipoPuesto} />
       </fieldset>
 
       <Input
-        label="N° vacantes *"
+        label="N° vacantes"
         type="number"
         min={1}
         value={cantidadVacantes}
         onChange={(e) => setField("cantidadVacantes", e.target.value)}
+        error={fieldErrors.cantidadVacantes}
       />
 
       <Textarea
-        label="Funciones *"
+        label="Funciones"
         value={funciones}
         onChange={(e) => setField("funciones", e.target.value)}
+        error={fieldErrors.funciones}
       />
 
       <Textarea
-        label="Beneficios *"
+        label="Beneficios"
         value={beneficios}
         onChange={(e) => setField("beneficios", e.target.value)}
+        error={fieldErrors.beneficios}
       />
 
       <PuestoInclusivoCheckbox
@@ -252,6 +261,7 @@ export function WizardStepVacante() {
           setField("latitud", lat);
           setField("longitud", lng);
         }}
+        error={fieldErrors.direccionLiteral}
       />
 
       {carreras.length > 0 && (

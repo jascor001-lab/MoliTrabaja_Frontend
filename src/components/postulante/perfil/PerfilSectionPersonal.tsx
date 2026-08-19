@@ -1,14 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import dynamic from "next/dynamic";
 
 import { Button } from "@/components/ui/Button";
 import { DateInput } from "@/components/ui/DateInput";
+import { FieldError } from "@/components/ui/FieldError";
 import { Input } from "@/components/ui/Input";
 import { PuestoInclusivoCheckbox } from "@/components/ui/PuestoInclusivoCheckbox";
 import { SectionHint } from "@/components/ui/SectionHint";
 import { ESTADOS_CIVILES } from "@/types/catalogos";
 import { GENEROS } from "@/types/postulacion";
+import { validarPostulanteInput } from "@/lib/validacion-postulante";
 import { usePerfilPostulanteStore } from "@/stores/perfilPostulanteStore";
 
 const DireccionMapPicker = dynamic(
@@ -23,6 +26,7 @@ export function PerfilSectionPersonal() {
   const saving = usePerfilPostulanteStore((s) => s.saving);
   const setPersonalField = usePerfilPostulanteStore((s) => s.setPersonalField);
   const savePersonal = usePerfilPostulanteStore((s) => s.savePersonal);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   if (!personal || !catalogos) return null;
 
@@ -42,6 +46,19 @@ export function PerfilSectionPersonal() {
   const paisSeleccionado = catalogos.paises.find((p) => p.id === personal.paisId);
   const prefijoCelular = paisSeleccionado?.prefijoCelular ?? "";
 
+  const onSave = async () => {
+    const result = validarPostulanteInput({
+      ...personal,
+      tipoDocAbrev: docAbrev,
+    });
+    if (!result.ok) {
+      setFieldErrors(result.errors);
+      return;
+    }
+    setFieldErrors({});
+    await savePersonal();
+  };
+
   return (
     <div className="space-y-5">
       <SectionHint title="Datos personales">
@@ -51,7 +68,7 @@ export function PerfilSectionPersonal() {
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-1">
           <label className="text-sm font-medium text-slate-700">
-            Tipo de documento *
+            Tipo de documento
           </label>
           <select
             value={personal.tipoDocId}
@@ -67,9 +84,10 @@ export function PerfilSectionPersonal() {
               </option>
             ))}
           </select>
+          <FieldError error={fieldErrors.tipoDocId} />
         </div>
         <Input
-          label={`${docAbrev} *`}
+          label={`${docAbrev}`}
           value={personal.numeroDocumento}
           maxLength={currentDocConfig.maxLength}
           inputMode={currentDocConfig.numeric ? "numeric" : "text"}
@@ -82,37 +100,41 @@ export function PerfilSectionPersonal() {
                 : raw.replace(/[^A-Z0-9]/g, "")
             );
           }}
-          required
+          error={fieldErrors.numeroDocumento}
         />
       </div>
 
       <Input
-        label="Nombres *"
+        label="Nombres"
         value={personal.nombres}
         onChange={(e) => setPersonalField("nombres", e.target.value)}
+        error={fieldErrors.nombres}
       />
       <div className="grid sm:grid-cols-2 gap-4">
         <Input
-          label="Apellido paterno *"
+          label="Apellido paterno"
           value={personal.apellidoPaterno}
           onChange={(e) => setPersonalField("apellidoPaterno", e.target.value)}
+          error={fieldErrors.apellidoPaterno}
         />
         <Input
-          label="Apellido materno *"
+          label="Apellido materno"
           value={personal.apellidoMaterno}
           onChange={(e) => setPersonalField("apellidoMaterno", e.target.value)}
+          error={fieldErrors.apellidoMaterno}
         />
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
         <DateInput
-          label="Fecha de nacimiento *"
+          label="Fecha de nacimiento"
           value={personal.fechaNacimiento}
           onChange={(fechaNacimiento) => setPersonalField("fechaNacimiento", fechaNacimiento)}
-          required
+          error={fieldErrors.fechaNacimiento}
+          max={new Date().toISOString().slice(0, 10)}
         />
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">País *</label>
+          <label className="text-sm font-medium text-slate-700">País</label>
           <select
             value={personal.paisId}
             onChange={(e) => setPersonalField("paisId", Number(e.target.value))}
@@ -124,9 +146,10 @@ export function PerfilSectionPersonal() {
               </option>
             ))}
           </select>
+          <FieldError error={fieldErrors.paisId} />
         </div>
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">Género *</label>
+          <label className="text-sm font-medium text-slate-700">Género</label>
           <select
             value={personal.genero}
             onChange={(e) =>
@@ -140,9 +163,10 @@ export function PerfilSectionPersonal() {
               </option>
             ))}
           </select>
+          <FieldError error={fieldErrors.genero} />
         </div>
         <label className="block space-y-1">
-          <span className="text-sm font-medium text-slate-700">Celular *</span>
+          <span className="text-sm font-medium text-slate-700">Celular</span>
           <span className="flex overflow-hidden rounded-xl border border-emerald-100 bg-white focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-200">
             <span className="flex items-center border-r border-emerald-100 bg-emerald-50 px-3 text-sm font-semibold text-emerald-800">
               {prefijoCelular}
@@ -159,9 +183,10 @@ export function PerfilSectionPersonal() {
               className="min-w-0 flex-1 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none"
             />
           </span>
+          <FieldError error={fieldErrors.telefono} />
         </label>
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">Estado civil *</label>
+          <label className="text-sm font-medium text-slate-700">Estado civil</label>
           <select
             value={personal.estadoCivil}
             onChange={(e) => setPersonalField("estadoCivil", e.target.value)}
@@ -173,6 +198,7 @@ export function PerfilSectionPersonal() {
               </option>
             ))}
           </select>
+          <FieldError error={fieldErrors.estadoCivil} />
         </div>
         <Input label="Correo" value={personal.correo} disabled />
       </div>
@@ -190,6 +216,7 @@ export function PerfilSectionPersonal() {
           setPersonalField("latitud", lat);
           setPersonalField("longitud", lng);
         }}
+        error={fieldErrors.direccionLiteral}
       />
 
       <PuestoInclusivoCheckbox
@@ -198,7 +225,7 @@ export function PerfilSectionPersonal() {
         onChange={(checked) => setPersonalField("tieneDiscapacidad", checked)}
       />
 
-      <Button onClick={savePersonal} disabled={saving}>
+      <Button onClick={onSave} disabled={saving}>
         {saving ? "Guardando…" : "Guardar datos personales"}
       </Button>
     </div>

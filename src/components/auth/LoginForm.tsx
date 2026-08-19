@@ -10,6 +10,7 @@ export function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -20,15 +21,14 @@ export function LoginForm() {
     const fd = new FormData(e.currentTarget);
     const emailVal = (email || String(fd.get("email") ?? "")).trim();
     const passwordVal = password || String(fd.get("password") ?? "");
-
-    if (!emailVal) {
-      setError("Ingresa tu correo electrónico");
+    const nextErrors: Record<string, string> = {};
+    if (!emailVal) nextErrors.email = "Ingresa tu correo electrónico.";
+    if (!passwordVal) nextErrors.password = "Ingresa tu contraseña.";
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
       return;
     }
-    if (!passwordVal) {
-      setError("Ingresa tu contraseña");
-      return;
-    }
+    setFieldErrors({});
 
     setLoading(true);
     try {
@@ -60,8 +60,12 @@ export function LoginForm() {
         type="email"
         autoComplete="email"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={(e) => {
+          setEmail(e.target.value);
+          setFieldErrors((prev) => ({ ...prev, email: "" }));
+        }}
         placeholder="tu@correo.com"
+        error={fieldErrors.email}
       />
       <Input
         id="login-password"
@@ -70,13 +74,15 @@ export function LoginForm() {
         type="password"
         autoComplete="current-password"
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        onChange={(e) => {
+          setPassword(e.target.value);
+          setFieldErrors((prev) => ({ ...prev, password: "" }));
+        }}
+        error={fieldErrors.password}
       />
 
       {error && (
-        <p className="text-sm text-red-600 rounded-lg bg-red-50 px-3 py-2 border border-red-100">
-          {error}
-        </p>
+        <p className="text-xs text-red-600">{error}</p>
       )}
 
       <Button type="submit" className="w-full" disabled={loading}>

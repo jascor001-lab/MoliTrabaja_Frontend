@@ -72,6 +72,17 @@ export function PerfilSectionEducacion() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errors: Record<string, string> = {};
+    if (!form.carreraId) errors.carreraId = "Selecciona una carrera.";
+    if (!form.institucion.trim()) errors.institucion = "Ingresa la institución.";
+    if (!form.fechaIngreso) errors.fechaIngreso = "Ingresa la fecha de ingreso.";
+    if (form.fechaEgreso && form.fechaIngreso && form.fechaEgreso < form.fechaIngreso) {
+      errors.fechaEgreso = "La fecha de egreso no puede ser anterior al ingreso.";
+    }
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
     setFormErrors({});
     const payload = {
       carreraId: Number(form.carreraId),
@@ -162,6 +173,7 @@ export function PerfilSectionEducacion() {
         {formOpen && (
           <form
             onSubmit={submit}
+            noValidate
             className="space-y-4 rounded-xl border border-emerald-200 bg-white p-4"
           >
             <h3 className="font-bold text-slate-900">
@@ -176,7 +188,7 @@ export function PerfilSectionEducacion() {
             />
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-700">Tipo de estudio *</label>
+              <label className="text-sm font-medium text-slate-700">Tipo de estudio</label>
               <select
                 value={form.tipoEstudio}
                 onChange={(e) => setForm({ ...form, tipoEstudio: e.target.value })}
@@ -194,6 +206,7 @@ export function PerfilSectionEducacion() {
               institutions={catalogos.instituciones}
               value={form.institucion}
               onChange={(institucion) => setForm({ ...form, institucion })}
+              error={formErrors.institucion}
             />
 
             <div className="space-y-1">
@@ -213,11 +226,10 @@ export function PerfilSectionEducacion() {
 
             <div className="grid sm:grid-cols-2 gap-4">
               <DateInput
-                label="Fecha de ingreso *"
+                label="Fecha de ingreso"
                 value={form.fechaIngreso}
                 onChange={(fechaIngreso) => setForm({ ...form, fechaIngreso })}
                 error={formErrors.fechaIngreso}
-                required
               />
               <DateInput
                 label="Fecha de egreso (opcional)"

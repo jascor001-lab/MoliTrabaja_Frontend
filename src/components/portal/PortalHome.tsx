@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { SlideView } from "@/components/ui/SlideView";
 import { esOfertaNueva } from "@/lib/format-fecha";
+import { listarOfertasVistas, marcarOfertaVista } from "@/lib/ofertas-vistas-storage";
 import { listarPostulacionesLocales } from "@/lib/mis-postulaciones-storage";
 import { MOTION_REDUCE, drawerEnterClass, drawerExitClass, staggerStyleObj } from "@/lib/motion";
 import { ofertaCumpleFiltroSalario, salarioSortKey } from "@/lib/salario";
@@ -48,6 +49,11 @@ export function PortalHome({
   const closeMobileDrawer = usePortalUiStore((s) => s.closeMobileDrawer);
   const [filters, setFilters] = useState<OfertaFilterValue>(EMPTY_FILTERS);
   const [idsPostulados, setIdsPostulados] = useState<Set<string>>(new Set());
+  const [idsVistos, setIdsVistos] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setIdsVistos(new Set(listarOfertasVistas()));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,6 +89,16 @@ export function PortalHome({
 
   const marcarPostulado = (jobId: string) => {
     setIdsPostulados((prev) => {
+      if (prev.has(jobId)) return prev;
+      const next = new Set(prev);
+      next.add(jobId);
+      return next;
+    });
+  };
+
+  const marcarVista = (jobId: string) => {
+    marcarOfertaVista(jobId);
+    setIdsVistos((prev) => {
       if (prev.has(jobId)) return prev;
       const next = new Set(prev);
       next.add(jobId);
@@ -173,6 +189,11 @@ export function PortalHome({
         return false;
       }
       if (filters.discapacidad === "si" && !oferta.aptoDiscapacidad) return false;
+      if (filters.vistos === "vistos" && !idsVistos.has(oferta.id)) return false;
+      if (filters.vistos === "no-vistos" && (idsVistos.has(oferta.id) || idsPostulados.has(oferta.id))) {
+        return false;
+      }
+      if (filters.vistos === "postulados" && !idsPostulados.has(oferta.id)) return false;
       if (filters.fecha) {
         const days = Number(filters.fecha);
         const publishedAt = new Date(oferta.fechaPublicacion).getTime();
@@ -216,7 +237,7 @@ export function PortalHome({
       }
       return 0;
     });
-  }, [initial, query, filters]);
+  }, [initial, query, filters, idsVistos, idsPostulados]);
 
   const hasActiveFilters = filtersAreActive(filters);
 
@@ -316,7 +337,11 @@ export function PortalHome({
                         oferta={oferta}
                         selected={selected?.id === oferta.id}
                         yaPostulado={idsPostulados.has(oferta.id)}
-                        onSelect={() => selectOferta(oferta, orderedIds)}
+                        vista={idsVistos.has(oferta.id)}
+                        onSelect={() => {
+                          marcarVista(oferta.id);
+                          selectOferta(oferta, orderedIds);
+                        }}
                       />
                     </li>
                   ))}

@@ -5,7 +5,8 @@ import { SectionHint } from "@/components/ui/SectionHint";
 import { useOfertaFormStore } from "@/stores/ofertaFormStore";
 
 export function WizardStepContacto() {
-  const { contactoPrincipal, contactoGerente, setContactoField } = useOfertaFormStore();
+  const { contactoPrincipal, contactoGerente, setContactoField, fieldErrors } =
+    useOfertaFormStore();
 
   return (
     <div className="space-y-8">
@@ -23,29 +24,33 @@ export function WizardStepContacto() {
 
         <div className="grid sm:grid-cols-2 gap-4">
           <Input
-            label="Nombres *"
+            label="Nombres"
             value={contactoPrincipal.nombres}
             onChange={(e) => setContactoField("contactoPrincipal", "nombres", e.target.value)}
+            error={fieldErrors.contactoPrincipal_nombres}
           />
           <Input
-            label="Apellido paterno *"
+            label="Apellido paterno"
             value={contactoPrincipal.apellidoPaterno}
             onChange={(e) =>
               setContactoField("contactoPrincipal", "apellidoPaterno", e.target.value)
             }
+            error={fieldErrors.contactoPrincipal_apellidoPaterno}
           />
         </div>
         <Input
-          label="Correo *"
+          label="Correo"
           type="email"
           value={contactoPrincipal.correo}
           onChange={(e) => setContactoField("contactoPrincipal", "correo", e.target.value)}
+          error={fieldErrors.contactoPrincipal_correo}
         />
         <Input
-          label="Celular *"
+          label="Celular"
           type="tel"
           value={contactoPrincipal.celular}
           onChange={(e) => setContactoField("contactoPrincipal", "celular", e.target.value)}
+          error={fieldErrors.contactoPrincipal_celular}
         />
       </section>
 
@@ -56,29 +61,33 @@ export function WizardStepContacto() {
 
         <div className="grid sm:grid-cols-2 gap-4">
           <Input
-            label="Nombres *"
+            label="Nombres"
             value={contactoGerente.nombres}
             onChange={(e) => setContactoField("contactoGerente", "nombres", e.target.value)}
+            error={fieldErrors.contactoGerente_nombres}
           />
           <Input
-            label="Apellido paterno *"
+            label="Apellido paterno"
             value={contactoGerente.apellidoPaterno}
             onChange={(e) =>
               setContactoField("contactoGerente", "apellidoPaterno", e.target.value)
             }
+            error={fieldErrors.contactoGerente_apellidoPaterno}
           />
         </div>
         <Input
-          label="Correo *"
+          label="Correo"
           type="email"
           value={contactoGerente.correo}
           onChange={(e) => setContactoField("contactoGerente", "correo", e.target.value)}
+          error={fieldErrors.contactoGerente_correo}
         />
         <Input
-          label="Celular *"
+          label="Celular"
           type="tel"
           value={contactoGerente.celular}
           onChange={(e) => setContactoField("contactoGerente", "celular", e.target.value)}
+          error={fieldErrors.contactoGerente_celular}
         />
       </section>
     </div>

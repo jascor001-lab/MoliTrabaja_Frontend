@@ -18,6 +18,7 @@ type Props = {
   maxFiles?: number;
   accept?: string;
   multiple?: boolean;
+  error?: string;
 };
 
 export function FileUpload({
@@ -30,6 +31,7 @@ export function FileUpload({
   maxFiles = DEFAULT_MAX_FILES,
   accept = DEFAULT_ACCEPT,
   multiple = maxFiles > 1,
+  error,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -82,7 +84,8 @@ export function FileUpload({
           : `Seleccionar archivos (${files.length}/${maxFiles})`}
       </button>
 
-      {hint && <p className="text-xs text-slate-500">{hint}</p>}
+      {hint && !error && <p className="text-xs text-slate-500">{hint}</p>}
+      {error ? <p className="text-xs text-red-600">{error}</p> : null}
 
       {files.length > 0 && (
         <ul className="space-y-2">

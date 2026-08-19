@@ -8,6 +8,7 @@ type Props = {
   institutions: CatalogoInstitucionDTO[];
   value: string;
   onChange: (institution: string) => void;
+  error?: string;
 };
 
 function normalize(value: string): string {
@@ -22,6 +23,7 @@ export function InstitutionCombobox({
   institutions,
   value,
   onChange,
+  error,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(0);
@@ -57,7 +59,7 @@ export function InstitutionCombobox({
         htmlFor="institucion-buscador"
         className="text-sm font-medium text-slate-700"
       >
-        Institución *
+        Institución
       </label>
       <input
         id="institucion-buscador"
@@ -66,7 +68,6 @@ export function InstitutionCombobox({
         aria-expanded={open}
         aria-controls="institucion-resultados"
         autoComplete="off"
-        required
         value={value}
         placeholder="Escribe para buscar una institución…"
         onFocus={() => {
@@ -147,6 +148,7 @@ export function InstitutionCombobox({
       <p className="text-xs text-slate-500">
         Selecciona una sugerencia o escribe el nombre completo de una institución nueva.
       </p>
+      {error ? <p className="text-xs text-red-600">{error}</p> : null}
     </div>
   );
 }

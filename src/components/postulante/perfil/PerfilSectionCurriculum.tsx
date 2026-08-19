@@ -68,7 +68,7 @@ export function PerfilSectionCurriculum() {
         </h3>
         <label className="block space-y-1.5">
           <span className="text-sm font-medium text-slate-700">
-            Archivo (PDF / Word / TXT) *
+            Archivo (PDF / Word / TXT)
           </span>
           <input
             type="file"
@@ -87,7 +87,7 @@ export function PerfilSectionCurriculum() {
           </p>
           {localError && <p className="text-xs text-red-600">{localError}</p>}
         </label>
-        <Button type="submit" disabled={saving || !file}>
+        <Button type="submit" disabled={saving}>
           {saving ? "Guardando…" : cvDisponible ? "Actualizar CV" : "Guardar CV"}
         </Button>
       </form>

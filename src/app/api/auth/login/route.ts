@@ -7,7 +7,7 @@ import { BackendError, backendFetch } from "@/lib/backend";
 function redirectPorTipo(tipo: "admin" | "empresa" | "postulante") {
   if (tipo === "admin") return "/admin";
   if (tipo === "empresa") return "/empresa";
-  return "/personal";
+  return "/";
 }
 
 export async function POST(request: NextRequest) {

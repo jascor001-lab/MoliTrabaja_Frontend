@@ -58,7 +58,7 @@ export function KnowledgeCombobox({
         htmlFor="conocimiento-buscador"
         className="text-sm font-medium text-slate-700"
       >
-        Conocimiento *
+        Conocimiento
       </label>
       <input
         id="conocimiento-buscador"
@@ -67,7 +67,6 @@ export function KnowledgeCombobox({
         aria-expanded={open}
         aria-controls="conocimiento-resultados"
         autoComplete="off"
-        required
         value={query}
         placeholder="Escribe para buscar un conocimiento…"
         onFocus={() => {

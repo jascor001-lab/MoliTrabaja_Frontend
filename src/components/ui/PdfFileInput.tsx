@@ -27,7 +27,6 @@ export function PdfFileInput({
     <div className="space-y-1.5">
       <label htmlFor={inputId} className="text-sm font-medium text-slate-700">
         {label}
-        {required && !existingFileName ? " *" : ""}
       </label>
       <input
         id={inputId}

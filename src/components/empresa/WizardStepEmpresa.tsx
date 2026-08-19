@@ -16,6 +16,7 @@ export function WizardStepEmpresa() {
     logoFiles,
     setField,
     setBasesFile,
+    fieldErrors,
   } = useOfertaFormStore();
 
   const logoFile = logoFiles[0] ?? null;
@@ -42,7 +43,7 @@ export function WizardStepEmpresa() {
         </p>
       </header>
 
-      <SectionHint title="Logo de la empresa *">
+      <SectionHint title="Logo de la empresa">
         Imagen que verán los postulantes en el portal. Preferible PNG o JPG.
       </SectionHint>
 
@@ -62,6 +63,7 @@ export function WizardStepEmpresa() {
         multiple={false}
         accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
         files={logoFile ? [logoFile] : []}
+        error={fieldErrors.logo}
         onAdd={(files) => setField("logoFiles", files[0] ? [files[0]] : [])}
         onRemove={() => setField("logoFiles", [])}
       />
@@ -70,15 +72,20 @@ export function WizardStepEmpresa() {
 
       <div className="grid sm:grid-cols-2 gap-4">
         <DateInput
-          label="Inicio convocatoria *"
+          label="Inicio convocatoria"
           value={conv.inicio}
           onChange={(inicio) => updateCronograma({ inicio })}
-          required
+          error={fieldErrors.inicio}
+          min="2000-01-01"
+          max="2100-12-31"
         />
         <DateInput
           label="Fin convocatoria (opcional)"
           value={conv.fin ?? ""}
           onChange={(fin) => updateCronograma({ fin })}
+          error={fieldErrors.fin}
+          min="2000-01-01"
+          max="2100-12-31"
         />
       </div>
 
@@ -96,9 +103,7 @@ export function WizardStepEmpresa() {
         onChange={(e) => updateCronograma({ urlConsulta: e.target.value })}
       />
 
-      <SectionHint title="Bases del trabajo *">
-        Documento oficial. Los postulantes podrán consultarlo antes de postular.
-      </SectionHint>
+     
 
       {existingBases && !basesFile && (
         <div className="rounded-xl border border-emerald-100 bg-emerald-50/30 p-4">
@@ -114,6 +119,7 @@ export function WizardStepEmpresa() {
         multiple={false}
         accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
         files={basesFile ? [basesFile] : []}
+        error={fieldErrors.bases}
         onAdd={(files) => setBasesFile(files[0] ?? null)}
         onRemove={() => setBasesFile(null)}
       />

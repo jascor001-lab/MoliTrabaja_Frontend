@@ -1,4 +1,4 @@
-import { validarPaso1, validarPaso2, validarPaso3 } from "@/lib/validacion-oferta";
+import { erroresPaso1, erroresPaso2, erroresPaso3, hasFieldErrors } from "@/lib/validacion-oferta";
 import { ESTADOS_OFERTA, MODALIDADES, TIPOS_PUESTO } from "@/types/bolsa";
 import type { PayloadConFlags } from "@/lib/oferta-api-body";
 
@@ -41,17 +41,18 @@ export function validarPayloadOferta(
     empresaId,
   } = payload;
 
-  const err1 =
-    validarPaso1({ cronogramas: cronogramas ?? [] }) ??
-    validarLogo(logoFiles.length, existingLogosCount) ??
-    validarBases(basesFile, hasExistingBases);
-  if (err1) return err1;
+  const err1 = erroresPaso1({
+    cronogramas: cronogramas ?? [],
+    tieneLogo: logoFiles.length > 0 || existingLogosCount > 0,
+    tieneBases: Boolean(basesFile) || hasExistingBases,
+  });
+  if (hasFieldErrors(err1)) return Object.values(err1)[0];
 
   const tiposValidos = (tipoPuesto ?? []).filter((t) =>
     TIPOS_PUESTO.includes(t as (typeof TIPOS_PUESTO)[number])
   );
 
-  const err2 = validarPaso2({
+  const err2 = erroresPaso2({
     nombrePuesto: nombrePuesto ?? "",
     perfil: perfil ?? "",
     tipoContrato: tipoContrato ?? "",
@@ -61,9 +62,9 @@ export function validarPayloadOferta(
     beneficios: beneficios ?? "",
     direccionLiteral: direccionLiteral ?? "",
   });
-  if (err2) return err2;
+  if (hasFieldErrors(err2)) return Object.values(err2)[0];
 
-  const err3 = validarPaso3({
+  const err3 = erroresPaso3({
     contactoPrincipal: contactoPrincipal ?? {
       nombres: "",
       apellidoPaterno: "",
@@ -77,7 +78,7 @@ export function validarPayloadOferta(
       celular: "",
     },
   });
-  if (err3) return err3;
+  if (hasFieldErrors(err3)) return Object.values(err3)[0];
 
   if (!empresaId || !modalidad || !MODALIDADES.includes(modalidad)) {
     return "Datos incompletos";

@@ -48,6 +48,7 @@ type Props = {
   longitud: string;
   onDireccionChange: (value: string) => void;
   onCoordsChange: (lat: string, lng: string) => void;
+  error?: string;
 };
 
 function MapClickHandler({
@@ -81,6 +82,7 @@ export function DireccionMapPicker({
   longitud,
   onDireccionChange,
   onCoordsChange,
+  error,
 }: Props) {
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
   const [resolvingAddress, setResolvingAddress] = useState(false);
@@ -206,9 +208,10 @@ export function DireccionMapPicker({
     <div className="space-y-3">
       <div className="relative">
           <Input
-            label="Dirección *"
+            label="Dirección"
             placeholder="Escribe tu dirección o selecciónala en el mapa…"
             value={direccionLiteral}
+            error={error}
             autoComplete="off"
             role="combobox"
             aria-expanded={listVisible && suggestions.length > 0}
