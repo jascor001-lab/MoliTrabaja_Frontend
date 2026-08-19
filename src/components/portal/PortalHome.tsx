@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { SlideView } from "@/components/ui/SlideView";
 import { esOfertaNueva } from "@/lib/format-fecha";
 import { listarOfertasVistas, marcarOfertaVista } from "@/lib/ofertas-vistas-storage";
-import { listarPostulacionesLocales } from "@/lib/mis-postulaciones-storage";
 import { MOTION_REDUCE, drawerEnterClass, drawerExitClass, staggerStyleObj } from "@/lib/motion";
 import { ofertaCumpleFiltroSalario, salarioSortKey } from "@/lib/salario";
 import { usePortalUiStore } from "@/stores/portalUiStore";
@@ -48,44 +47,85 @@ export function PortalHome({
   const syncFiltered = usePortalUiStore((s) => s.syncFiltered);
   const closeMobileDrawer = usePortalUiStore((s) => s.closeMobileDrawer);
   const [filters, setFilters] = useState<OfertaFilterValue>(EMPTY_FILTERS);
+  const [ofertas, setOfertas] = useState<OfertaLaboralDTO[]>(initial);
   const [idsPostulados, setIdsPostulados] = useState<Set<string>>(new Set());
   const [idsVistos, setIdsVistos] = useState<Set<string>>(new Set());
+  const [esPostulante, setEsPostulante] = useState(false);
 
   useEffect(() => {
-    setIdsVistos(new Set(listarOfertasVistas()));
-  }, []);
+    setOfertas(initial);
+  }, [initial]);
 
   useEffect(() => {
     let cancelled = false;
-    const locales = listarPostulacionesLocales().map((p) => p.job_id);
 
     fetch("/api/auth/login")
       .then((r) => r.json())
       .then(async (session) => {
         if (cancelled) return;
-        if (!session.authenticated || session.tipo !== "postulante") {
-          setIdsPostulados(new Set(locales));
+        const postulante = session.authenticated && session.tipo === "postulante";
+        setEsPostulante(Boolean(postulante));
+        if (!postulante) {
+          setIdsPostulados(new Set());
+          setIdsVistos(new Set(listarOfertasVistas()));
           return;
         }
-        const res = await fetch("/api/postulaciones/mis");
-        const json = await res.json().catch(() => ({}));
+        const [resMis, resVistas] = await Promise.all([
+          fetch("/api/postulaciones/mis"),
+          fetch("/api/ofertas/vistas"),
+        ]);
+        const json = await resMis.json().catch(() => ({}));
         const items: MisPostulacionItem[] = Array.isArray(json.postulaciones)
           ? json.postulaciones
           : [];
-        const ids = [
-          ...locales,
-          ...items.map((p) => p.job_id).filter(Boolean),
-        ];
-        if (!cancelled) setIdsPostulados(new Set(ids));
+        const ids = items.map((p) => p.job_id).filter(Boolean);
+        const vistasJson = await resVistas.json().catch(() => []);
+        const vistasApi = Array.isArray(vistasJson)
+          ? vistasJson.filter((id) => typeof id === "string")
+          : [];
+        if (!cancelled) {
+          setIdsPostulados(new Set(ids));
+          setIdsVistos(new Set([...listarOfertasVistas(), ...vistasApi]));
+        }
       })
       .catch(() => {
-        if (!cancelled) setIdsPostulados(new Set(locales));
+        if (!cancelled) {
+          setEsPostulante(false);
+          setIdsPostulados(new Set());
+          setIdsVistos(new Set(listarOfertasVistas()));
+        }
       });
 
     return () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams({ estado: "Activa" });
+      if (query.trim()) params.set("q", query.trim());
+      if (filters.empresa) params.set("empresaId", filters.empresa);
+      if (filters.modalidad) params.set("modalidad", filters.modalidad);
+      if (filters.carrera) params.set("carreraId", filters.carrera);
+      if (filters.salario) params.set("salario", filters.salario);
+      if (filters.ordenar) params.set("ordenar", filters.ordenar);
+      if (filters.fecha) params.set("fecha", filters.fecha);
+      if (filters.jornada) params.set("jornada", filters.jornada);
+      if (filters.contrato) params.set("contrato", filters.contrato);
+      if (filters.conocimiento) params.set("conocimientoId", filters.conocimiento);
+      if (filters.discapacidad) params.set("discapacidad", filters.discapacidad);
+      if (esPostulante && filters.vistos) params.set("vistos", filters.vistos);
+
+      fetch(`/api/ofertas?${params.toString()}`)
+        .then((r) => (r.ok ? r.json() : Promise.reject()))
+        .then((data) => {
+          if (Array.isArray(data)) setOfertas(data);
+        })
+        .catch(() => undefined);
+    }, 220);
+    return () => window.clearTimeout(timer);
+  }, [query, filters, esPostulante]);
 
   const marcarPostulado = (jobId: string) => {
     setIdsPostulados((prev) => {
@@ -94,10 +134,22 @@ export function PortalHome({
       next.add(jobId);
       return next;
     });
+    fetch("/api/postulaciones/mis")
+      .then((r) => r.json())
+      .then((json) => {
+        const items: MisPostulacionItem[] = Array.isArray(json.postulaciones)
+          ? json.postulaciones
+          : [];
+        setIdsPostulados(new Set(items.map((p) => p.job_id).filter(Boolean)));
+      })
+      .catch(() => undefined);
   };
 
   const marcarVista = (jobId: string) => {
     marcarOfertaVista(jobId);
+    if (esPostulante) {
+      fetch(`/api/ofertas/${jobId}/visto`, { method: "POST" }).catch(() => undefined);
+    }
     setIdsVistos((prev) => {
       if (prev.has(jobId)) return prev;
       const next = new Set(prev);
@@ -161,7 +213,7 @@ export function PortalHome({
     const q = query.trim().toLowerCase();
     const now = Date.now();
 
-    const result = initial.filter((oferta) => {
+    const result = ofertas.filter((oferta) => {
       if (filters.empresa && oferta.empresaId !== filters.empresa) return false;
       if (filters.modalidad && oferta.modalidad !== filters.modalidad) return false;
       if (
@@ -189,11 +241,13 @@ export function PortalHome({
         return false;
       }
       if (filters.discapacidad === "si" && !oferta.aptoDiscapacidad) return false;
-      if (filters.vistos === "vistos" && !idsVistos.has(oferta.id)) return false;
-      if (filters.vistos === "no-vistos" && (idsVistos.has(oferta.id) || idsPostulados.has(oferta.id))) {
-        return false;
+      if (!esPostulante) {
+        if (filters.vistos === "vistos" && !idsVistos.has(oferta.id)) return false;
+        if (filters.vistos === "no-vistos" && (idsVistos.has(oferta.id) || idsPostulados.has(oferta.id))) {
+          return false;
+        }
+        if (filters.vistos === "postulados" && !idsPostulados.has(oferta.id)) return false;
       }
-      if (filters.vistos === "postulados" && !idsPostulados.has(oferta.id)) return false;
       if (filters.fecha) {
         const days = Number(filters.fecha);
         const publishedAt = new Date(oferta.fechaPublicacion).getTime();
@@ -237,7 +291,7 @@ export function PortalHome({
       }
       return 0;
     });
-  }, [initial, query, filters, idsVistos, idsPostulados]);
+  }, [ofertas, query, filters, idsVistos, idsPostulados, esPostulante]);
 
   const hasActiveFilters = filtersAreActive(filters);
 
@@ -300,6 +354,7 @@ export function PortalHome({
             contratos={filterOptions.contratos}
             carreras={filterOptions.carreras}
             conocimientos={filterOptions.conocimientos}
+            mostrarFiltroVistos={esPostulante}
             onChange={setFilters}
           />
         </div>

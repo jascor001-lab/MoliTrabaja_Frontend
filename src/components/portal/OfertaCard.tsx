@@ -78,11 +78,11 @@ export function OfertaCard({
             </p>
           ) : vista ? (
             <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-              Vistos
+              Visto
             </p>
           ) : null}
           <p className="text-[11px] text-slate-400 whitespace-nowrap">
-            {tiempoRelativo(oferta.fechaPublicacion)}
+            Publicado {tiempoRelativo(oferta.fechaPublicacion)}
           </p>
         </div>
       </div>

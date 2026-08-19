@@ -20,6 +20,7 @@ export function WizardStepEmpresa() {
   } = useOfertaFormStore();
 
   const logoFile = logoFiles[0] ?? null;
+  const logoActual = existingLogos.filter((l) => l.path).at(-1);
 
   const conv = cronogramas[0] ?? {
     etapa: "Convocatoria",
@@ -47,9 +48,9 @@ export function WizardStepEmpresa() {
         Imagen que verán los postulantes en el portal. Preferible PNG o JPG.
       </SectionHint>
 
-      {existingLogos[0]?.path && !logoFile && (
+      {logoActual?.path && !logoFile && (
         <div className="flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50/30 p-4">
-          <EmpresaLogo src={existingLogos[0].path} alt="Logo actual" size="lg" />
+          <EmpresaLogo src={logoActual.path} alt="Logo actual" size="lg" />
           <p className="text-sm text-slate-600">
             Logo actual de la convocatoria. Sube uno nuevo para reemplazarlo.
           </p>

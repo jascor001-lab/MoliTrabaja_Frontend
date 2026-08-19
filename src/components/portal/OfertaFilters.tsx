@@ -33,6 +33,7 @@ type Props = {
   contratos: string[];
   carreras: Option[];
   conocimientos: Option[];
+  mostrarFiltroVistos?: boolean;
   onChange: (next: OfertaFilterValue) => void;
 };
 
@@ -233,6 +234,7 @@ export function OfertaFilters({
   contratos,
   carreras,
   conocimientos,
+  mostrarFiltroVistos = false,
   onChange,
 }: Props) {
   const extraActiveCount = EXTRA_KEYS.filter((key) => Boolean(value[key])).length;
@@ -363,6 +365,7 @@ export function OfertaFilters({
                 options={[{ value: "si", label: "Puestos inclusivos" }]}
               />
             </span>
+            {mostrarFiltroVistos && (
             <span className="motion-filter-chip motion-gpu">
               <FilterSelect
                 label="Vistos"
@@ -376,6 +379,7 @@ export function OfertaFilters({
                 ]}
               />
             </span>
+            )}
           </div>
         </div>
       </div>

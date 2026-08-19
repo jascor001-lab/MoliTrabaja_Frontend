@@ -7,6 +7,11 @@ export function backendUrl(): string {
   return raw.replace(/\/$/, "");
 }
 
+/** Origen Nest sin `/api` (archivos estáticos en `/uploads`). */
+export function backendOrigin(): string {
+  return backendUrl().replace(/\/api$/i, "");
+}
+
 export class BackendError extends Error {
   status: number;
   constructor(message: string, status: number) {
