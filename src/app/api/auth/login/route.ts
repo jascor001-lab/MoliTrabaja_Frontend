@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
       redirect?: string;
     }>("/auth/login", {
       method: "POST",
+      token: null,
       body: JSON.stringify({
         email: body.email?.trim().toLowerCase(),
         password: body.password ?? "",

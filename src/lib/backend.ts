@@ -39,7 +39,9 @@ export async function backendFetch<T = unknown>(
 ): Promise<T> {
   const { token: tokenArg, ...rest } = init;
   const token =
-    tokenArg ?? cookies().get(SESSION_COOKIE)?.value ?? undefined;
+    tokenArg !== undefined
+      ? tokenArg ?? undefined
+      : cookies().get(SESSION_COOKIE)?.value ?? undefined;
   const headers = new Headers(rest.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
   if (rest.body && !(rest.body instanceof FormData) && !headers.has("Content-Type")) {
