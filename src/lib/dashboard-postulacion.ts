@@ -81,7 +81,7 @@ export function estadoParaPostulante(pipeline: EstadoPipeline): EstadoPostulante
   if (pipeline === "No Seleccionado (Fuera del Proceso)") {
     return "No Seleccionado (Fuera del Proceso)";
   }
-  return EN_REVISION;
+  return "En Revisión";
 }
 
 export function statusCodeFromPipeline(pipeline: EstadoPipeline): StatusCode {

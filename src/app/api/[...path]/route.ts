@@ -25,16 +25,16 @@ async function proxy(req: NextRequest) {
   if (cookie) headers.set("cookie", cookie);
 
   const method = req.method.toUpperCase();
-  let body: ArrayBuffer | string | undefined;
+  let body: BodyInit | undefined;
   if (method !== "GET" && method !== "HEAD") {
-    const raw = Buffer.from(await req.arrayBuffer());
+    const raw = await req.arrayBuffer();
     if (
       path === "/usuarios" &&
       method === "POST" &&
       contentType?.includes("application/json")
     ) {
       try {
-        const json = JSON.parse(raw.toString("utf8")) as {
+        const json = JSON.parse(new TextDecoder().decode(raw)) as {
           rol?: string;
           roles?: string[];
         };

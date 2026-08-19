@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 import { parseBasesArchivo } from "@/lib/bases-access";
 import type { ArchivoAdjuntoMeta } from "@/types/bolsa";
