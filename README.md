@@ -1,4 +1,4 @@
-# MoliTrabaja
+# Bolsa de Trabajo
 
 Plataforma de bolsa de trabajo (Next.js + API Nest + PostgreSQL).
 

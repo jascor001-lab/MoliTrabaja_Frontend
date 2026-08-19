@@ -13,7 +13,7 @@ export type AddressSuggestion = {
 
 const NOMINATIM_HEADERS: HeadersInit = {
   Accept: "application/json",
-  "User-Agent": "MoliTrabaja/1.0 (portal de empleo)",
+  "User-Agent": "BolsaDeTrabajo/1.0 (portal de empleo)",
 };
 
 type NominatimHit = {

@@ -2,13 +2,14 @@ import { Suspense } from "react";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { APP_NAME } from "@/lib/brand";
 
 export default function IngresoPage() {
   return (
     <AppShell variant="portal">
       <div className="mx-auto max-w-md py-10 px-4">
         <header className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-900">Ingresar a MoliTrabaja</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Ingresar a {APP_NAME}</h1>
           <p className="text-sm text-slate-500 mt-2">
             Ingresa con tu correo y contraseña.
           </p>
