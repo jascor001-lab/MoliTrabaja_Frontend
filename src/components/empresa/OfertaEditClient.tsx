@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { OfertaWizard } from "@/components/empresa/OfertaWizard";
+import { OfertaEditBlocks } from "@/components/empresa/OfertaEditBlocks";
 import { useOfertaFormStore } from "@/stores/ofertaFormStore";
 import type { OfertaLaboralDTO } from "@/types/bolsa";
 
@@ -29,6 +29,6 @@ export function OfertaEditClient({ oferta, empresaId }: Props) {
   }
 
   return (
-    <OfertaWizard mode="edit" ofertaId={oferta.id} empresaId={empresaId} />
+    <OfertaEditBlocks ofertaId={oferta.id} empresaId={empresaId} />
   );
 }

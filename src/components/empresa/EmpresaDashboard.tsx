@@ -25,7 +25,7 @@ export function EmpresaDashboard({ empresaNombre, ofertas }: Props) {
   return (
     <div className="space-y-8">
       <header
-        className={`flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 motion-enter-fade motion-gpu ${MOTION_REDUCE}`}
+        className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4"
       >
         <div>
           <p className="text-sm font-medium text-emerald-600">{APP_NAME} · Inicio</p>
@@ -80,7 +80,9 @@ export function EmpresaDashboard({ empresaNombre, ofertas }: Props) {
                   className={`rounded-full px-3 py-1 text-xs font-semibold ${
                     oferta.estado === "Activa"
                       ? "bg-emerald-100 text-emerald-800"
-                      : "bg-slate-100 text-slate-600"
+                      : oferta.estado === "Pausada"
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-slate-100 text-slate-600"
                   }`}
                 >
                   {oferta.estado}

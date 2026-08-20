@@ -27,6 +27,7 @@ export function Textarea({
         className={`
           w-full rounded-xl border bg-white px-4 py-3
           text-slate-900 placeholder:text-slate-400 resize-y min-h-[120px]
+          max-h-48 overflow-y-auto
           focus:outline-none focus:ring-2
           ${
             error

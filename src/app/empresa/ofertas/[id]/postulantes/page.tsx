@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { PostulantesOfertaPanel } from "@/components/empresa/PostulantesOfertaPanel";
-import { AppShell } from "@/components/layout/AppShell";
 import { backendFetch } from "@/lib/backend";
 import { requireEmpresa } from "@/lib/require-auth";
 import type { OfertaLaboralDTO } from "@/types/bolsa";
@@ -22,17 +21,17 @@ export default async function PostulantesOfertaPage({ params }: Props) {
 
   if (!oferta || oferta.empresaId !== empresa.id) {
     return (
-      <AppShell variant="empresa">
+      <>
         <p className="text-slate-600">Oferta no encontrada.</p>
         <Link href="/empresa" className="text-emerald-700 font-semibold mt-4 inline-block">
           ← Volver al inicio
         </Link>
-      </AppShell>
+      </>
     );
   }
 
   return (
-    <AppShell variant="empresa">
+    <>
       <Link
         href="/empresa"
         className="text-sm font-semibold text-emerald-700 hover:underline mb-6 inline-block"
@@ -40,6 +39,6 @@ export default async function PostulantesOfertaPage({ params }: Props) {
         ← Inicio
       </Link>
       <PostulantesOfertaPanel ofertaId={params.id} />
-    </AppShell>
+    </>
   );
 }

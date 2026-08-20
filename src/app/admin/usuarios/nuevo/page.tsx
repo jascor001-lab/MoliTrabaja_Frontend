@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/layout/AppShell";
 import { CrearUsuarioForm } from "@/components/admin/CrearUsuarioForm";
 import { requireAdmin } from "@/lib/require-auth";
 
@@ -7,7 +6,7 @@ export const dynamic = "force-dynamic";
 export default async function NuevoUsuarioPage() {
   await requireAdmin();
   return (
-    <AppShell variant="admin">
+    <>
       <header className="mb-6">
         <p className="text-sm font-medium text-emerald-600">Usuarios</p>
         <h1 className="mt-1 text-2xl font-bold text-slate-900">Crear usuario</h1>
@@ -16,6 +15,6 @@ export default async function NuevoUsuarioPage() {
         </p>
       </header>
       <CrearUsuarioForm />
-    </AppShell>
+    </>
   );
 }

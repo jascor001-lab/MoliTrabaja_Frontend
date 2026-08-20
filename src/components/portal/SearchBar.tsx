@@ -11,7 +11,7 @@ export function SearchBar({
 }: Props) {
   return (
     <form
-      className="w-full max-w-4xl mx-auto"
+      className="w-full"
       onSubmit={(e) => e.preventDefault()}
     >
       <div className="flex flex-col sm:flex-row rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-emerald-200 focus-within:border-emerald-300 transition-all duration-300 ease-fluid focus-within:shadow-md motion-reduce:transition-none">

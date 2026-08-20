@@ -18,7 +18,7 @@ import type {
   FunnelSummary,
   StatusCode,
 } from "@/types/postulacion";
-import { ACCIONES_RECLUTADOR, ESTADOS_PIPELINE } from "@/types/postulacion";
+import { ESTADOS_PIPELINE } from "@/types/postulacion";
 
 const EN_REVISION: EstadoPipeline = "En Revisión";
 
@@ -102,16 +102,17 @@ const CONTEXT_MESSAGES: Record<EstadoPipeline, string> = {
     "En esta oportunidad no continuas en el proceso. Te invitamos a postular a otras vacantes.",
 };
 
-/** Acciones disponibles según carpeta actual (no incluye la carpeta actual). */
+/**
+ * Embudo solo hacia adelante: Inscritos → En Proceso → Finalistas.
+ * No se puede retroceder; Descartar sí está permitido en cualquier etapa activa.
+ */
 export function accionesDisponibles(estado: EstadoPipeline): AccionReclutador[] {
   const carpeta = carpetaDesdePipeline(estado);
-  return ACCIONES_RECLUTADOR.filter((accion) => {
-    if (accion === "Mover a Inscritos") return carpeta !== "Inscritos";
-    if (accion === "Mover a En proceso") return carpeta !== "En proceso";
-    if (accion === "Mover a Finalistas") return carpeta !== "Finalistas";
-    if (accion === "Descartar") return carpeta !== "Descartados";
-    return true;
-  });
+  if (carpeta === "Descartados") return [];
+  if (carpeta === "Inscritos") return ["Mover a En proceso", "Descartar"];
+  if (carpeta === "En proceso") return ["Mover a Finalistas", "Descartar"];
+  // Finalistas: solo descartar (ya no se puede volver atrás)
+  return ["Descartar"];
 }
 
 export function accionAEstado(accion: AccionReclutador): EstadoPipeline {

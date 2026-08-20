@@ -14,6 +14,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 html,
@@ -23,6 +24,7 @@ body {
 
 body {
   margin: 0;
+  overflow-x: hidden;
   color: var(--foreground);
   background: var(--background);
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -50,17 +52,16 @@ button {
   }
 
   .scroll-panel {
-    scrollbar-gutter: stable;
     scrollbar-width: thin;
-    scrollbar-color: #a7f3d0 transparent;
+    scrollbar-color: #cbd5e1 transparent;
   }
 
   .scroll-panel::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
 
   .scroll-panel::-webkit-scrollbar-thumb {
-    background-color: #6ee7b7;
+    background-color: #cbd5e1;
     border-radius: 9999px;
   }
 

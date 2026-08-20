@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/layout/AppShell";
 import { PERMISOS_POR_ROL, ROL_ETIQUETA, ROLES } from "@/lib/rbac";
 import { requireAdmin } from "@/lib/require-auth";
 
@@ -8,7 +7,7 @@ export default async function AdminRolesPage() {
   await requireAdmin();
 
   return (
-    <AppShell variant="admin">
+    <>
       <header className="mb-6">
         <p className="text-sm font-medium text-emerald-600">Administración</p>
         <h1 className="mt-1 text-2xl font-bold text-slate-900">Roles y permisos</h1>
@@ -37,6 +36,6 @@ export default async function AdminRolesPage() {
           </section>
         ))}
       </div>
-    </AppShell>
+    </>
   );
 }

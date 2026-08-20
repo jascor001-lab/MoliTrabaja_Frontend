@@ -33,12 +33,13 @@ export function OfertaCard({
         }
       }}
       className={`
-        cursor-pointer rounded-lg border p-4 text-left transition-[transform,box-shadow,border-color,background-color] duration-500 ease-fluid
+        box-border w-full cursor-pointer rounded-xl border p-4 text-left
+        transition-[box-shadow,border-color,background-color] duration-300 ease-fluid
         motion-reduce:transition-none
         ${
           selected
-            ? "border-emerald-500 bg-emerald-50/60 shadow-md ring-1 ring-emerald-500/30 scale-[1.01]"
-            : "border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30 hover:shadow-sm hover:scale-[1.005] active:scale-[0.99]"
+            ? "border-emerald-500 bg-emerald-50/60 shadow-sm ring-1 ring-inset ring-emerald-500/20"
+            : "border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30 hover:shadow-sm"
         }
       `}
     >

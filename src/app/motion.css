@@ -51,15 +51,11 @@
     animation: motion-exit-fade var(--motion-duration-fast) var(--motion-ease-out) both;
   }
 
-  /* Página completa */
-  .motion-page-forward {
-    animation: motion-page-forward calc(var(--motion-duration) + 40ms) var(--motion-ease) both;
-  }
-  .motion-page-back {
-    animation: motion-page-back calc(var(--motion-duration) + 40ms) var(--motion-ease) both;
-  }
+  /* Página completa — solo opacidad, el encuadre no se desplaza */
+  .motion-page-forward,
+  .motion-page-back,
   .motion-page-neutral {
-    animation: motion-enter-fade calc(var(--motion-duration) + 20ms) var(--motion-ease) both;
+    animation: motion-page-fade 280ms var(--motion-ease-out) both;
   }
 
   /* Drawer móvil */
@@ -84,12 +80,28 @@
   .motion-filters-panel.is-open {
     grid-template-rows: 1fr;
   }
+
+  /* Acordeón de bloques al editar oferta */
+  .motion-accordion {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 480ms var(--motion-ease);
+  }
+  .motion-accordion.is-open {
+    grid-template-rows: 1fr;
+  }
+  .motion-accordion-inner {
+    overflow: hidden;
+    min-height: 0;
+  }
   .motion-filters-panel-inner {
     overflow: hidden;
     min-height: 0;
   }
   .motion-filter-chip {
-    display: inline-flex;
+    display: block;
+    min-width: 0;
+    width: 100%;
     opacity: 0;
     transform: translate3d(-18px, -8px, 0) scale(0.94);
     transition:
@@ -115,7 +127,8 @@
 
   @media (prefers-reduced-motion: reduce) {
     .motion-filters-panel,
-    .motion-filter-chip {
+    .motion-filter-chip,
+    .motion-accordion {
       transition: none !important;
     }
     .motion-filters-panel.is-open .motion-filter-chip,
@@ -265,25 +278,12 @@
   }
 }
 
-@keyframes motion-page-forward {
+@keyframes motion-page-fade {
   from {
     opacity: 0;
-    transform: translate3d(40px, 0, 0);
   }
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes motion-page-back {
-  from {
-    opacity: 0;
-    transform: translate3d(-40px, 0, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { SlideView } from "@/components/ui/SlideView";
 import { StepIndicator } from "@/components/ui/StepIndicator";
 import { readApiError } from "@/lib/api-error";
-import { formatSalarioForSave } from "@/lib/salario";
+import { buildOfertaFormData } from "@/lib/oferta-form-payload";
 import {
   erroresPaso1,
   erroresPaso2,
@@ -137,30 +137,6 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
     return !hasFieldErrors(errors);
   };
 
-  const buildPayload = (state: ReturnType<typeof useOfertaFormStore.getState>) => ({
-    empresaId,
-    enviarLogoPorCorreo: state.enviarLogoPorCorreo,
-    cronogramas: state.cronogramas,
-    nombrePuesto: state.nombrePuesto,
-    perfil: state.perfil,
-    tipoContrato: state.tipoContrato,
-    tipoPuesto: state.tipoPuesto,
-    cantidadVacantes: Number(state.cantidadVacantes),
-    funciones: state.funciones,
-    beneficios: state.beneficios,
-    modalidad: state.modalidad,
-    salario: formatSalarioForSave(state.salarioAConvenir, state.salarioMonto),
-    direccionLiteral: state.direccionLiteral,
-    latitud: state.latitud || undefined,
-    longitud: state.longitud || undefined,
-    carreraIds: state.carreraIds,
-    conocimientoIds: state.conocimientoIds,
-    aptoDiscapacidad: state.aptoDiscapacidad,
-    contactoPrincipal: state.contactoPrincipal,
-    contactoGerente: state.contactoGerente,
-    ...(isEdit ? { estado: state.estado } : {}),
-  });
-
   const handleSubmit = async () => {
     setSubmitError(null);
     if (!validateAll()) {
@@ -172,12 +148,7 @@ export function OfertaWizard({ empresaId, mode = "create", ofertaId }: Props) {
     setSubmitting(true);
 
     try {
-      const formData = new FormData();
-      formData.append("data", JSON.stringify(buildPayload(state)));
-      state.logoFiles.forEach((file) => formData.append("logoFiles", file));
-      if (state.basesFile) {
-        formData.append("basesFile", state.basesFile);
-      }
+      const formData = buildOfertaFormData(state, empresaId, isEdit);
 
       const url = isEdit && targetId ? `/api/ofertas/${targetId}` : "/api/ofertas";
       const method = isEdit ? "PATCH" : "POST";

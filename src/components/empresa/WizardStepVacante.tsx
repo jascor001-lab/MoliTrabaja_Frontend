@@ -36,7 +36,15 @@ const DireccionMapPicker = dynamic(
   }
 );
 
-export function WizardStepVacante() {
+type Props = {
+  embedded?: boolean;
+  includeEstado?: boolean;
+};
+
+export function WizardStepVacante({
+  embedded = false,
+  includeEstado = true,
+}: Props) {
   const {
     nombrePuesto,
     perfil,
@@ -78,12 +86,14 @@ export function WizardStepVacante() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h2 className="text-xl font-bold text-slate-900">Vacante ofrecida</h2>
-        <p className="text-sm text-slate-500 mt-1">
-          Datos del puesto según OfertaLaboral del diagrama UML.
-        </p>
-      </header>
+      {!embedded && (
+        <header>
+          <h2 className="text-xl font-bold text-slate-900">Vacante ofrecida</h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Datos del puesto según OfertaLaboral del diagrama UML.
+          </p>
+        </header>
+      )}
 
       <Input
         label="Nombre de la convocatoria"
@@ -280,7 +290,7 @@ export function WizardStepVacante() {
         />
       )}
 
-      {editingOfertaId && (
+      {includeEstado && editingOfertaId && (
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium text-slate-700">Estado de la oferta</legend>
           <div className="flex flex-wrap gap-2">
@@ -299,6 +309,10 @@ export function WizardStepVacante() {
               </button>
             ))}
           </div>
+          <p className="text-xs text-slate-500">
+            Activa se muestra en el portal. Pausada y Finalizada quedan ocultas para los
+            postulantes.
+          </p>
         </fieldset>
       )}
     </div>

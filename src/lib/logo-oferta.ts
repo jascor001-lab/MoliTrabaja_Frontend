@@ -18,3 +18,16 @@ export function getOfertaLogoUrl(oferta: OfertaLaboralDTO): string | null {
   if (oferta.empresa?.logo) return oferta.empresa.logo;
   return null;
 }
+
+/** Normaliza path de logo/portada para <img src>. */
+export function resolveLogoSrc(src: string): string {
+  if (src.startsWith("blob:") || src.startsWith("data:") || src.startsWith("http")) {
+    return src;
+  }
+  const normalized = src.replace(/\\/g, "/");
+  const idx = normalized.toLowerCase().lastIndexOf("/uploads/");
+  if (idx >= 0) return normalized.slice(idx);
+  if (normalized.startsWith("uploads/")) return `/${normalized}`;
+  return src.startsWith("/") ? src : `/${src}`;
+}
+

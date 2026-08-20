@@ -4,18 +4,22 @@ import { Input } from "@/components/ui/Input";
 import { SectionHint } from "@/components/ui/SectionHint";
 import { useOfertaFormStore } from "@/stores/ofertaFormStore";
 
-export function WizardStepContacto() {
+type Props = {
+  embedded?: boolean;
+};
+
+export function WizardStepContacto({ embedded = false }: Props) {
   const { contactoPrincipal, contactoGerente, setContactoField, fieldErrors } =
     useOfertaFormStore();
 
   return (
     <div className="space-y-8">
-      <header>
-        <h2 className="text-xl font-bold text-slate-900">Contactos de empresa</h2>
-        <p className="text-sm text-slate-500 mt-1">
-          
-        </p>
-      </header>
+      {!embedded && (
+        <header>
+          <h2 className="text-xl font-bold text-slate-900">Contactos de empresa</h2>
+          <p className="text-sm text-slate-500 mt-1" />
+        </header>
+      )}
 
       <section className="space-y-4">
         <SectionHint variant="success" title="Contacto principal (RRHH)">

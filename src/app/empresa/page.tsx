@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/layout/AppShell";
 import { EmpresaDashboard } from "@/components/empresa/EmpresaDashboard";
 import { backendFetch } from "@/lib/backend";
 import { requireEmpresa } from "@/lib/require-auth";
@@ -12,9 +11,5 @@ export default async function EmpresaInicioPage() {
     `/ofertas?empresaId=${empresa.id}&estado=all`
   );
 
-  return (
-    <AppShell variant="empresa">
-      <EmpresaDashboard empresaNombre={empresa.nombre} ofertas={ofertas} />
-    </AppShell>
-  );
+  return <EmpresaDashboard empresaNombre={empresa.nombre} ofertas={ofertas} />;
 }

@@ -35,12 +35,12 @@ function MetaBadge({
   icon?: string;
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3 min-w-[140px] flex-1">
+    <div className="flex min-h-[4.5rem] min-w-0 flex-col justify-center rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-3">
       <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
         {icon && <span className="mr-1">{icon}</span>}
         {label}
       </p>
-      <p className="text-sm font-bold text-slate-800 mt-1 leading-snug">{value}</p>
+      <p className="mt-1 break-words text-sm font-bold leading-snug text-slate-800">{value}</p>
     </div>
   );
 }
@@ -169,7 +169,7 @@ export function OfertaDetail({
             <div className="space-y-8">
               {/* Metadatos rápidos */}
               <section>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
                   <MetaBadge label="Salario" value={oferta.salario} icon="💰" />
                   <MetaBadge
                     label="Modalidad"

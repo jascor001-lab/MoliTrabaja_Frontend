@@ -80,6 +80,7 @@ export type OfertaFormState = OfertaFormFields & {
   setBasesFile: (file: File | null) => void;
   reset: () => void;
   hydrateFromOferta: (oferta: OfertaLaboralDTO) => void;
+  applySavedMedia: (oferta: OfertaLaboralDTO) => void;
   setSubmitting: (value: boolean) => void;
 };
 
@@ -301,6 +302,14 @@ export const useOfertaFormStore = create<OfertaFormState>((set, get) => ({
       estado: oferta.estado,
     });
   },
+
+  applySavedMedia: (oferta) =>
+    set({
+      logoFiles: [],
+      basesFile: null,
+      existingLogos: oferta.logoArchivos.filter((l) => l.path),
+      existingBases: oferta.basesArchivo,
+    }),
 
   setSubmitting: (isSubmitting) => set({ isSubmitting }),
 }));

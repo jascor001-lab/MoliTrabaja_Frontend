@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { OfertaEditClient } from "@/components/empresa/OfertaEditClient";
 import { backendFetch } from "@/lib/backend";
 import { requireEmpresa } from "@/lib/require-auth";
@@ -25,8 +24,8 @@ export default async function EditarOfertaPage({ params }: Props) {
   }
 
   return (
-    <AppShell variant="empresa">
-      <div className="mb-8 motion-enter-fade motion-gpu motion-reduce:animate-none">
+    <>
+      <div className="mb-8">
         <Link
           href="/empresa"
           className="text-sm text-emerald-700 hover:underline font-medium"
@@ -39,6 +38,6 @@ export default async function EditarOfertaPage({ params }: Props) {
         <p className="mt-1 text-slate-500">{oferta.titulo}</p>
       </div>
       <OfertaEditClient oferta={oferta} empresaId={empresa.id} />
-    </AppShell>
+    </>
   );
 }

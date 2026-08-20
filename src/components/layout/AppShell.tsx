@@ -12,7 +12,7 @@ type Props = {
 export function AppShell({ children, variant = "portal" }: Props) {
   if (variant === "admin") {
     return (
-      <div className="min-h-screen bg-mesh">
+      <div className="min-h-screen overflow-x-hidden bg-mesh">
         <header className="sticky top-0 z-40 border-b border-emerald-100/80 bg-white/90 backdrop-blur-md">
           <div className="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-4 md:px-6">
             <Link href="/admin" className="flex items-center gap-2">
@@ -46,9 +46,17 @@ export function AppShell({ children, variant = "portal" }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-mesh">
-      <header className="sticky top-0 z-40 border-b border-emerald-100/80 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 md:px-6">
+    <div
+      className={`flex flex-col bg-mesh ${
+        variant === "portal" ? "h-dvh overflow-hidden" : "min-h-dvh overflow-x-hidden"
+      }`}
+    >
+      <header className="sticky top-0 z-40 shrink-0 border-b border-emerald-100/80 bg-white/90 backdrop-blur-md">
+        <div
+          className={`mx-auto flex w-full items-center justify-between px-4 py-4 md:px-6 ${
+            variant === "portal" ? "max-w-[1440px]" : "max-w-6xl"
+          }`}
+        >
           <Link
             href={variant === "empresa" ? "/empresa" : "/"}
             className="flex items-center gap-2"
@@ -71,8 +79,8 @@ export function AppShell({ children, variant = "portal" }: Props) {
       <main
         className={
           variant === "portal"
-            ? "mx-auto w-full max-w-[1440px]"
-            : "mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-10"
+            ? "mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 flex-col"
+            : "mx-auto w-full max-w-6xl flex-1 px-4 py-6 md:px-6 md:py-10"
         }
       >
         {children}

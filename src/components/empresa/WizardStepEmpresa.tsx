@@ -1,13 +1,33 @@
 "use client";
 
-import { EmpresaLogo } from "@/components/ui/EmpresaLogo";
+import { useEffect, useState } from "react";
+
 import { DateInput } from "@/components/ui/DateInput";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { Input } from "@/components/ui/Input";
 import { SectionHint } from "@/components/ui/SectionHint";
+import { resolveLogoSrc } from "@/lib/logo-oferta";
 import { useOfertaFormStore } from "@/stores/ofertaFormStore";
 
-export function WizardStepEmpresa() {
+type Props = {
+  embedded?: boolean;
+};
+
+function LogoPortada({ src, alt }: { src: string; alt: string }) {
+  return (
+    <div className="mx-auto w-full max-w-[220px]">
+      <div className="aspect-square overflow-hidden rounded-2xl border-2 border-emerald-200 bg-white shadow-inner">
+        <img
+          src={resolveLogoSrc(src)}
+          alt={alt}
+          className="h-full w-full object-contain object-center p-3"
+        />
+      </div>
+    </div>
+  );
+}
+
+export function WizardStepEmpresa({ embedded = false }: Props) {
   const {
     cronogramas,
     existingBases,
@@ -21,6 +41,17 @@ export function WizardStepEmpresa() {
 
   const logoFile = logoFiles[0] ?? null;
   const logoActual = existingLogos.filter((l) => l.path).at(-1);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!logoFile || !logoFile.type.startsWith("image/")) {
+      setLogoPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(logoFile);
+    setLogoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [logoFile]);
 
   const conv = cronogramas[0] ?? {
     etapa: "Convocatoria",
@@ -35,25 +66,30 @@ export function WizardStepEmpresa() {
     setField("cronogramas", next);
   };
 
+  const portadaSrc = logoPreview ?? logoActual?.path ?? null;
+
   return (
     <div className="space-y-6">
-      <header>
-        <h2 className="text-xl font-bold text-slate-900">Convocatoria y bases</h2>
-        <p className="text-sm text-slate-500 mt-1">
-          Logo, cronograma y documento oficial de la convocatoria.
-        </p>
-      </header>
+      {!embedded && (
+        <header>
+          <h2 className="text-xl font-bold text-slate-900">Convocatoria y bases</h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Logo, cronograma y documento oficial de la convocatoria.
+          </p>
+        </header>
+      )}
 
-      <SectionHint title="Logo de la empresa">
-        Imagen que verán los postulantes en el portal. Preferible PNG o JPG.
+      <SectionHint title="Portada / logo de la empresa">
+        Imagen que verán los postulantes. Queda encuadrada; no se estira.
       </SectionHint>
 
-      {logoActual?.path && !logoFile && (
-        <div className="flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50/30 p-4">
-          <EmpresaLogo src={logoActual.path} alt="Logo actual" size="lg" />
-          <p className="text-sm text-slate-600">
-            Logo actual de la convocatoria. Sube uno nuevo para reemplazarlo.
-          </p>
+      {portadaSrc ? (
+        <LogoPortada src={portadaSrc} alt="Portada de la convocatoria" />
+      ) : (
+        <div className="mx-auto w-full max-w-[220px]">
+          <div className="aspect-square overflow-hidden rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 flex items-center justify-center text-sm text-slate-400">
+            Sin portada
+          </div>
         </div>
       )}
 

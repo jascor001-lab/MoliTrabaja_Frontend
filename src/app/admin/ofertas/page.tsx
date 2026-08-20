@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/layout/AppShell";
 import { backendFetch } from "@/lib/backend";
 import { requireAdmin } from "@/lib/require-auth";
 import type { OfertaLaboralDTO } from "@/types/bolsa";
@@ -10,7 +9,7 @@ export default async function AdminOfertasPage() {
   const ofertas = await backendFetch<OfertaLaboralDTO[]>("/ofertas?estado=all");
 
   return (
-    <AppShell variant="admin">
+    <>
       <header className="mb-6">
         <p className="text-sm font-medium text-emerald-600">Administración</p>
         <h1 className="mt-1 text-2xl font-bold text-slate-900">Ofertas</h1>
@@ -45,6 +44,6 @@ export default async function AdminOfertasPage() {
           </tbody>
         </table>
       </div>
-    </AppShell>
+    </>
   );
 }

@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
 import { backendFetch } from "@/lib/backend";
 import { ROL_ETIQUETA, type RolNombre } from "@/lib/rbac";
@@ -22,7 +21,7 @@ export default async function AdminUsuariosPage() {
   const usuarios = await backendFetch<UsuarioApi[]>("/usuarios");
 
   return (
-    <AppShell variant="admin">
+    <>
       <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-medium text-emerald-600">Administración</p>
@@ -80,6 +79,6 @@ export default async function AdminUsuariosPage() {
           </tbody>
         </table>
       </div>
-    </AppShell>
+    </>
   );
 }

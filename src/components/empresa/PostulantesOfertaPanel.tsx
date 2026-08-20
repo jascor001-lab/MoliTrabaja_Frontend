@@ -17,6 +17,14 @@ type Props = {
   ofertaId: string;
 };
 
+/** Solo avance: Inscritos → En proceso → Finalistas. Sin retroceso. */
+const ACCIONES_POR_CARPETA: Record<CarpetaReclutador, AccionReclutador[]> = {
+  Inscritos: ["Mover a En proceso", "Descartar"],
+  "En proceso": ["Mover a Finalistas", "Descartar"],
+  Finalistas: ["Descartar"],
+  Descartados: [],
+};
+
 const CARPETA_META: Record<
   CarpetaReclutador,
   { description: string; funnelKey: "inscritos" | "en_proceso" | "finalistas" | "descartados" }
@@ -118,7 +126,14 @@ export function PostulantesOfertaPanel({ ofertaId }: Props) {
     load();
   }, [load]);
 
+  const funnel = data?.pestaña_empresa_view.analytics.funnel_summary;
+  const pool = data?.pestaña_empresa_view.candidate_pool_actionable ?? [];
+
   const ejecutarAccion = async (dni: string, action: AccionReclutador) => {
+    const candidato = pool.find((p) => p.dni === dni);
+    if (!candidato || !ACCIONES_POR_CARPETA[candidato.carpeta].includes(action)) {
+      return;
+    }
     setMoviendo(dni);
     try {
       await fetch("/api/postulaciones/accion", {
@@ -131,9 +146,6 @@ export function PostulantesOfertaPanel({ ofertaId }: Props) {
       setMoviendo(null);
     }
   };
-
-  const funnel = data?.pestaña_empresa_view.analytics.funnel_summary;
-  const pool = data?.pestaña_empresa_view.candidate_pool_actionable ?? [];
 
   const filtrados = useMemo(
     () =>
@@ -219,7 +231,9 @@ export function PostulantesOfertaPanel({ ofertaId }: Props) {
           No hay candidatos en <strong>{carpetaActiva}</strong>.
           {analytics.total_postulantes === 0
             ? " Aún no hay postulaciones para esta vacante."
-            : " Muévelos desde otra carpeta o espera nuevas postulaciones."}
+            : carpetaActiva === "Inscritos"
+              ? " Espera nuevas postulaciones."
+              : " Avanza candidatos desde la etapa anterior del embudo."}
         </p>
       ) : (
         <ul className="space-y-3">
@@ -313,7 +327,7 @@ export function PostulantesOfertaPanel({ ofertaId }: Props) {
                     </span>
                   )}
 
-                  {p.available_actions.map((action) => (
+                  {ACCIONES_POR_CARPETA[p.carpeta].map((action) => (
                     <button
                       key={action}
                       type="button"

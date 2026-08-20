@@ -40,7 +40,11 @@ export const ESTADOS_POSTULANTE = [
 ] as const;
 export type EstadoPostulante = (typeof ESTADOS_POSTULANTE)[number];
 
-/** Acciones para mover candidatos entre carpetas. */
+/**
+ * Acciones del reclutador.
+ * Flujo lineal: Inscritos → En Proceso → Finalistas (sin retroceso).
+ * "Mover a Inscritos" se mantiene por compatibilidad, pero ya no se ofrece en UI.
+ */
 export const ACCIONES_RECLUTADOR = [
   "Mover a Inscritos",
   "Mover a En proceso",

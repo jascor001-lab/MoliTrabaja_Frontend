@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/layout/AppShell";
 import { SeguimientoPersonal } from "@/components/postulante/SeguimientoPersonal";
 import { requirePostulante } from "@/lib/require-auth";
 
@@ -6,8 +5,8 @@ export default async function PersonalPostulacionesPage() {
   const postulante = await requirePostulante();
 
   return (
-    <AppShell variant="postulante">
-      <header className="mb-8 motion-enter-fade motion-gpu motion-reduce:animate-none">
+    <>
+      <header className="mb-8">
         <p className="text-sm font-semibold uppercase tracking-wide text-emerald-600">
           Hola, {postulante.nombres}
         </p>
@@ -20,6 +19,6 @@ export default async function PersonalPostulacionesPage() {
         </p>
       </header>
       <SeguimientoPersonal dniInicial={postulante.numeroDocumento} autoload />
-    </AppShell>
+    </>
   );
 }

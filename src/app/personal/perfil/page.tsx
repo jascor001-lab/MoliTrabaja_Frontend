@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/layout/AppShell";
 import { PerfilPostulantePanel } from "@/components/postulante/perfil/PerfilPostulantePanel";
 import { requirePostulante } from "@/lib/require-auth";
 
@@ -6,8 +5,8 @@ export default async function PerfilPostulantePage() {
   await requirePostulante();
 
   return (
-    <AppShell variant="postulante">
-      <header className="mb-8 motion-enter-fade motion-gpu motion-reduce:animate-none">
+    <>
+      <header className="mb-8">
         <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
           Mi cuenta
         </p>
@@ -19,6 +18,6 @@ export default async function PerfilPostulantePage() {
         </p>
       </header>
       <PerfilPostulantePanel />
-    </AppShell>
+    </>
   );
 }

@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/layout/AppShell";
 import { backendFetch } from "@/lib/backend";
 import { requireAdmin } from "@/lib/require-auth";
 
@@ -24,7 +23,7 @@ export default async function AdminEmpresasPage() {
   const empresas = await backendFetch<EmpresaRow[]>("/admin/empresas");
 
   return (
-    <AppShell variant="admin">
+    <>
       <header className="mb-6">
         <p className="text-sm font-medium text-emerald-600">Administración</p>
         <h1 className="mt-1 text-2xl font-bold text-slate-900">Empresas</h1>
@@ -63,6 +62,6 @@ export default async function AdminEmpresasPage() {
           </tbody>
         </table>
       </div>
-    </AppShell>
+    </>
   );
 }

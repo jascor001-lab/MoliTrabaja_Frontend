@@ -8,7 +8,7 @@ import type {
 export const MODALIDADES = ["Presencial", "Remoto", "Hibrido"] as const;
 export type Modalidad = (typeof MODALIDADES)[number];
 
-export const ESTADOS_OFERTA = ["Activa", "Pausada"] as const;
+export const ESTADOS_OFERTA = ["Activa", "Pausada", "Finalizada"] as const;
 export type EstadoOferta = (typeof ESTADOS_OFERTA)[number];
 
 export const TIPOS_PUESTO = ["Part Time", "Full Time"] as const;

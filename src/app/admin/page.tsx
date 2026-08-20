@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { backendFetch } from "@/lib/backend";
 import { requireAdmin } from "@/lib/require-auth";
 import type { EmpresaDTO, OfertaLaboralDTO } from "@/types/bolsa";
@@ -34,7 +33,7 @@ export default async function AdminInicioPage() {
   ];
 
   return (
-    <AppShell variant="admin">
+    <>
       <header className="mb-8">
         <p className="text-sm font-medium text-emerald-600">Panel administrador</p>
         <h1 className="mt-1 text-2xl font-bold text-slate-900 md:text-3xl">Resumen</h1>
@@ -52,6 +51,6 @@ export default async function AdminInicioPage() {
           </Link>
         ))}
       </div>
-    </AppShell>
+    </>
   );
 }

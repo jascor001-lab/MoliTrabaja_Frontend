@@ -327,15 +327,13 @@ export function PortalHome({
   const showDrawer = (mobileOpen || drawerClosing) && selected;
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-4rem)]">
-      <section
-        className={`shrink-0 bg-white border-b border-slate-200 px-4 py-6 lg:py-8 motion-enter-fade motion-gpu ${MOTION_REDUCE}`}
-      >
-        <div className="max-w-4xl mx-auto text-center mb-6 px-1">
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <section className="shrink-0 border-b border-slate-200 bg-white px-4 py-4 lg:px-6 lg:py-5">
+        <div className="mb-4 px-1 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">
             Encuentra tu próxima oportunidad
           </h1>
-          <p className="text-sm text-slate-500 mt-2">
+          <p className="mt-2 text-sm text-slate-500">
             {filtered.length} oferta{filtered.length !== 1 ? "s" : ""} {ofertasLabel}
             {nuevasCount > 0 && nuevasCount !== filtered.length
               ? ` · ${nuevasCount} nueva${nuevasCount !== 1 ? "s" : ""}`
@@ -347,40 +345,36 @@ export function PortalHome({
           query={query}
           onQueryChange={setQuery}
         />
-        <div className="mx-auto max-w-4xl">
-          <OfertaFilters
-            value={filters}
-            empresas={filterOptions.empresas}
-            contratos={filterOptions.contratos}
-            carreras={filterOptions.carreras}
-            conocimientos={filterOptions.conocimientos}
-            mostrarFiltroVistos={esPostulante}
-            onChange={setFilters}
-          />
-        </div>
+        <OfertaFilters
+          value={filters}
+          empresas={filterOptions.empresas}
+          contratos={filterOptions.contratos}
+          carreras={filterOptions.carreras}
+          conocimientos={filterOptions.conocimientos}
+          mostrarFiltroVistos={esPostulante}
+          onChange={setFilters}
+        />
       </section>
 
-      <div className="flex-1 bg-slate-100">
+      <div className="flex min-h-0 flex-1 flex-col bg-slate-100 lg:overflow-hidden">
         {filtered.length === 0 ? (
-          <div
-            className={`flex items-center justify-center py-24 px-4 motion-enter-fade motion-gpu ${MOTION_REDUCE}`}
-          >
-            <div className="text-center max-w-md">
+          <div className="flex items-center justify-center px-4 py-24">
+            <div className="max-w-md text-center">
               <p className="text-lg font-semibold text-slate-700">
                 No hay ofertas que coincidan
               </p>
-              <p className="text-sm text-slate-500 mt-2">
+              <p className="mt-2 text-sm text-slate-500">
                 Prueba con otras palabras clave o cambia la modalidad de trabajo.
               </p>
             </div>
           </div>
         ) : (
-          <div className="flex flex-col lg:flex-row lg:gap-0 lg:min-h-[520px] lg:h-[calc(100vh-13rem)] lg:max-h-[calc(100vh-13rem)] lg:overflow-hidden">
-            <aside className="w-full lg:w-[40%] lg:shrink-0 lg:min-h-0 lg:border-r lg:border-slate-200 bg-slate-100">
-              <div className="lg:h-full lg:min-h-0 lg:overflow-y-auto scroll-panel">
+          <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:overflow-hidden">
+            <aside className="flex min-h-0 w-full flex-1 flex-col bg-slate-100 lg:w-[38%] lg:flex-none lg:border-r lg:border-slate-200">
+              <div className="min-h-0 flex-1 overflow-y-auto scroll-panel">
                 <ul
                   key={listAnimKey}
-                  className="flex flex-col gap-2 p-3 lg:p-4"
+                  className="flex flex-col gap-2 p-3 pr-4 lg:p-4 lg:pr-5"
                 >
                   {filtered.map((oferta, index) => (
                     <li
@@ -404,8 +398,8 @@ export function PortalHome({
               </div>
             </aside>
 
-            <div className="hidden lg:flex lg:w-[60%] lg:min-w-0 lg:min-h-0 p-4 bg-slate-100 h-full">
-              <div className="flex flex-col w-full h-full min-h-0 max-h-full">
+            <div className="hidden min-h-0 min-w-0 flex-1 bg-slate-100 p-4 lg:flex">
+              <div className="flex h-full min-h-0 w-full flex-col">
                 {selected ? (
                   <SlideView
                     viewKey={selected.id}
@@ -420,9 +414,7 @@ export function PortalHome({
                     />
                   </SlideView>
                 ) : (
-                  <div
-                    className={`flex h-full items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white motion-enter-fade motion-gpu ${MOTION_REDUCE}`}
-                  >
+                  <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white">
                     <p className="text-sm text-slate-400">
                       Selecciona una oferta del listado
                     </p>

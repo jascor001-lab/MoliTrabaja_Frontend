@@ -19,10 +19,7 @@ export function PageTransition({ children }: Props) {
   }, [pathname]);
 
   return (
-    <div
-      key={pathname}
-      className={`${pageEnterClass(direction)} ${MOTION_REDUCE}`}
-    >
+    <div key={pathname} className={`${pageEnterClass(direction)} ${MOTION_REDUCE}`}>
       {children}
     </div>
   );

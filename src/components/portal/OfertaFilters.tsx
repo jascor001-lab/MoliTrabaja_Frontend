@@ -87,7 +87,7 @@ function FilterSelect({
       value={value}
       onChange={(event) => onChange(event.target.value)}
       aria-label={label}
-      className={`max-w-[240px] cursor-pointer rounded-xl border px-3 py-2 text-sm font-semibold shadow-sm outline-none transition-colors ${
+      className={`h-10 w-full min-w-0 cursor-pointer rounded-xl border px-3 py-2 text-sm font-semibold shadow-sm outline-none transition-colors ${
         active
           ? "border-emerald-200 bg-emerald-50 text-emerald-800"
           : "border-slate-200 bg-white text-slate-600 hover:border-emerald-200"
@@ -159,7 +159,7 @@ function SalarioRadioFilter({
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
         aria-haspopup="listbox"
-        className={`inline-flex max-w-[240px] items-center gap-2 cursor-pointer rounded-xl border py-2 pl-3 pr-2 text-sm font-semibold shadow-sm outline-none transition-colors ${
+        className={`inline-flex h-10 w-full min-w-0 items-center justify-between gap-2 cursor-pointer rounded-xl border py-2 pl-3 pr-2 text-sm font-semibold shadow-sm outline-none transition-colors ${
           active || open
             ? "border-emerald-200 bg-emerald-50 text-emerald-800"
             : "border-slate-200 bg-white text-slate-600 hover:border-emerald-200"
@@ -247,7 +247,7 @@ export function OfertaFilters({
 
   return (
     <div className="mt-3 space-y-2">
-      <div className="flex flex-wrap items-center justify-center gap-2">
+      <div className="grid grid-cols-2 items-center gap-2 sm:grid-cols-3 lg:grid-cols-5">
         <FilterSelect
           label="Empresa"
           value={value.empresa}
@@ -274,31 +274,33 @@ export function OfertaFilters({
           onChange={(next) => set("salario", next)}
         />
 
-        <button
-          type="button"
-          onClick={() => setMoreOpen((open) => !open)}
-          aria-expanded={moreOpen}
-          aria-controls="filtros-adicionales"
-          className="inline-flex items-center gap-2 rounded-full bg-emerald-800 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-900"
-        >
-          <FilterIcon />
-          Filtros
-          {extraActiveCount > 0 && (
-            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1.5 text-[11px] font-bold text-emerald-800">
-              {extraActiveCount}
-            </span>
-          )}
-        </button>
-
-        {hasFilters && (
+        <div className="col-span-2 flex h-10 items-center gap-2 sm:col-span-3 lg:col-span-1">
           <button
             type="button"
-            onClick={() => onChange({ ...EMPTY_FILTERS })}
-            className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+            onClick={() => setMoreOpen((open) => !open)}
+            aria-expanded={moreOpen}
+            aria-controls="filtros-adicionales"
+            className="inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-800 px-4 text-sm font-semibold text-white shadow-sm hover:bg-emerald-900"
           >
-            Limpiar filtros
+            <FilterIcon />
+            Filtros
+            {extraActiveCount > 0 && (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1.5 text-[11px] font-bold text-emerald-800">
+                {extraActiveCount}
+              </span>
+            )}
           </button>
-        )}
+
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={() => onChange({ ...EMPTY_FILTERS })}
+              className="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+            >
+              Limpiar
+            </button>
+          )}
+        </div>
       </div>
 
       <div
@@ -307,7 +309,7 @@ export function OfertaFilters({
         aria-hidden={!moreOpen}
       >
         <div className="motion-filters-panel-inner">
-          <div className="flex flex-wrap items-center justify-center gap-2 border-t border-slate-100 pt-2">
+          <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-2 sm:grid-cols-3 lg:grid-cols-4">
             <span className="motion-filter-chip motion-gpu">
               <FilterSelect
                 label="Ordenar"
@@ -368,8 +370,7 @@ export function OfertaFilters({
             {mostrarFiltroVistos && (
             <span className="motion-filter-chip motion-gpu">
               <FilterSelect
-                label="Vistos"
-                emptyLabel="Todos"
+                label="Estado de Revisión"
                 value={value.vistos}
                 onChange={(next) => set("vistos", next)}
                 options={[
