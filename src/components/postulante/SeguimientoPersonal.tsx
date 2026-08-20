@@ -160,7 +160,7 @@ export function SeguimientoPersonal({ dniInicial, autoload = false }: Props) {
     }
 
     if (!/^\d{8}$/.test(dni)) {
-      setFieldErrors({ dni: "El DNI debe tener 8 dígitos." });
+      { dni: "El DNI debe tener 8setFieldErrors( dígitos." });
       return;
     }
     setFieldErrors({});
