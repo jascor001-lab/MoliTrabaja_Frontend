@@ -4,7 +4,7 @@ import path from "path";
 import type { ArchivoAdjuntoMeta, LogoArchivoMeta } from "@/types/bolsa";
 
 const BASES_MAX_BYTES = 15 * 1024 * 1024;
-const BASES_ACCEPT_EXT = [".pdf", ".doc", ".docx", ".txt"];
+const BASES_ACCEPT_EXT = [".pdf"];
 
 const UPLOAD_ROOT = path.join(process.cwd(), "public", "uploads", "ofertas");
 
@@ -56,7 +56,7 @@ export async function guardarBasesOferta(
 ): Promise<ArchivoAdjuntoMeta> {
   const ext = path.extname(file.name).toLowerCase();
   if (!BASES_ACCEPT_EXT.includes(ext)) {
-    throw new Error("Formato no permitido. Usa PDF, Word o TXT.");
+    throw new Error("Formato no permitido. Solo se acepta PDF.");
   }
   if (file.size > BASES_MAX_BYTES) {
     throw new Error("Las bases no pueden superar 15 MB.");

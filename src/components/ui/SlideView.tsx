@@ -85,7 +85,9 @@ export function SlideView({
         </div>
       )}
       <div
-        className={`relative z-10 h-full min-h-0 flex flex-col motion-gpu ${motionEnterClass(enterDir)} ${MOTION_REDUCE}`}
+        className={`relative z-10 min-h-0 w-full motion-gpu ${
+          className.includes("h-full") ? "flex h-full flex-col" : ""
+        } ${motionEnterClass(enterDir)} ${MOTION_REDUCE}`}
       >
         {current.node}
       </div>

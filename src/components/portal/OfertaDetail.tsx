@@ -74,8 +74,13 @@ export function OfertaDetail({
 
   const shellClass =
     variant === "drawer"
-      ? "flex flex-col h-full min-h-0 bg-white"
-      : "flex flex-col h-full min-h-0 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden";
+      ? "flex h-full min-h-0 flex-col bg-white"
+      : "flex w-full flex-col rounded-xl border border-slate-200 bg-white shadow-sm";
+
+  const bodyClass =
+    variant === "drawer"
+      ? "scroll-panel min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-smooth px-5 py-5 pb-8 lg:px-6"
+      : "px-5 py-5 pb-6 lg:px-6";
 
   return (
     <article className={shellClass}>
@@ -162,9 +167,9 @@ export function OfertaDetail({
         />
       )}
 
-      {/* Cuerpo con scroll */}
-      <div className="scroll-panel flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-5 pb-8 lg:px-6 scroll-smooth">
-        <SlideView viewKey={modo} direction={modoDirection} className="min-h-0">
+      {/* Cuerpo: en panel crece con el contenido; en drawer hace scroll interno */}
+      <div className={bodyClass}>
+        <SlideView viewKey={modo} direction={modoDirection} className="min-h-0 w-full">
           {modo === "detalle" && (
             <div className="space-y-8">
               {/* Metadatos rápidos */}

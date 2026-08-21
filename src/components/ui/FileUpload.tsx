@@ -8,6 +8,21 @@ const MAX_BYTES = 10 * 1024 * 1024;
 const DEFAULT_ACCEPT =
   ".png,.jpg,.jpeg,.gif,.webp,.pdf,image/*,application/pdf";
 
+function acceptIncludesPdfOnly(accept: string): boolean {
+  const parts = accept
+    .toLowerCase()
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length === 0) return false;
+  return parts.every((p) => p === ".pdf" || p === "application/pdf");
+}
+
+function isPdfFile(file: File): boolean {
+  const name = file.name.toLowerCase();
+  return name.endsWith(".pdf") || file.type === "application/pdf";
+}
+
 type Props = {
   label: string;
   hint?: string;
@@ -16,6 +31,7 @@ type Props = {
   onRemove: (index: number) => void;
   disabled?: boolean;
   maxFiles?: number;
+  maxBytes?: number;
   accept?: string;
   multiple?: boolean;
   error?: string;
@@ -29,6 +45,7 @@ export function FileUpload({
   onRemove,
   disabled,
   maxFiles = DEFAULT_MAX_FILES,
+  maxBytes = MAX_BYTES,
   accept = DEFAULT_ACCEPT,
   multiple = maxFiles > 1,
   error,
@@ -45,8 +62,14 @@ export function FileUpload({
         errors.push(`Máximo ${maxFiles} archivo${maxFiles > 1 ? "s" : ""}.`);
         break;
       }
-      if (file.size > MAX_BYTES) {
-        errors.push(`${file.name} supera 10 MB.`);
+      if (file.size > maxBytes) {
+        errors.push(
+          `${file.name} supera ${(maxBytes / (1024 * 1024)).toFixed(0)} MB.`
+        );
+        continue;
+      }
+      if (acceptIncludesPdfOnly(accept) && !isPdfFile(file)) {
+        errors.push(`${file.name}: solo se permite PDF.`);
         continue;
       }
       valid.push(file);

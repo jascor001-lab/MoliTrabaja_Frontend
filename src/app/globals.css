@@ -15,16 +15,19 @@
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+  height: 100%;
 }
 
 html,
 body {
   height: 100%;
+  max-height: 100%;
 }
 
 body {
   margin: 0;
   overflow-x: hidden;
+  overflow-y: auto;
   color: var(--foreground);
   background: var(--background);
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -67,6 +70,23 @@ button {
 
   .scroll-panel::-webkit-scrollbar-track {
     background: transparent;
+  }
+
+  /* Listado de ofertas: encuadra cada tarjeta al hacer scroll */
+  .oferta-list-scroll {
+    scroll-snap-type: y mandatory;
+    scroll-padding-block: 0.75rem;
+    scroll-behavior: smooth;
+  }
+
+  .oferta-list-scroll > ul {
+    /* Espacio inferior para poder alinear la última tarjeta completa */
+    padding-bottom: max(2rem, 40%);
+  }
+
+  .oferta-list-item {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
   }
 }
 

@@ -38,7 +38,7 @@ export function OfertaCard({
         motion-reduce:transition-none
         ${
           selected
-            ? "border-emerald-500 bg-emerald-50/60 shadow-sm ring-1 ring-inset ring-emerald-500/20"
+            ? "border-emerald-500 bg-emerald-50/60 shadow-sm ring-1 ring-inset ring-emerald-500/25"
             : "border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30 hover:shadow-sm"
         }
       `}

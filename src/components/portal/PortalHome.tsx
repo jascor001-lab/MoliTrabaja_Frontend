@@ -327,7 +327,7 @@ export function PortalHome({
   const showDrawer = (mobileOpen || drawerClosing) && selected;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
       <section className="shrink-0 border-b border-slate-200 bg-white px-4 py-4 lg:px-6 lg:py-5">
         <div className="mb-4 px-1 text-center">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">
@@ -356,9 +356,9 @@ export function PortalHome({
         />
       </section>
 
-      <div className="flex min-h-0 flex-1 flex-col bg-slate-100 lg:overflow-hidden">
+      <div className="relative min-h-0 flex-1 overflow-hidden bg-slate-100">
         {filtered.length === 0 ? (
-          <div className="flex items-center justify-center px-4 py-24">
+          <div className="flex h-full items-center justify-center px-4">
             <div className="max-w-md text-center">
               <p className="text-lg font-semibold text-slate-700">
                 No hay ofertas que coincidan
@@ -369,9 +369,9 @@ export function PortalHome({
             </div>
           </div>
         ) : (
-          <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:overflow-hidden">
-            <aside className="flex min-h-0 w-full flex-1 flex-col bg-slate-100 lg:w-[38%] lg:flex-none lg:border-r lg:border-slate-200">
-              <div className="min-h-0 flex-1 overflow-y-auto scroll-panel">
+          <div className="absolute inset-0 flex flex-col lg:flex-row">
+            <aside className="flex min-h-0 w-full flex-1 flex-col overflow-hidden border-slate-200 lg:w-[38%] lg:flex-none lg:border-r">
+              <div className="oferta-list-scroll h-full min-h-0 overflow-y-auto overscroll-contain scroll-panel">
                 <ul
                   key={listAnimKey}
                   className="flex flex-col gap-2 p-3 pr-4 lg:p-4 lg:pr-5"
@@ -379,7 +379,7 @@ export function PortalHome({
                   {filtered.map((oferta, index) => (
                     <li
                       key={oferta.id}
-                      className={`motion-stagger-in motion-gpu ${MOTION_REDUCE}`}
+                      className={`oferta-list-item motion-stagger-in motion-gpu ${MOTION_REDUCE}`}
                       style={staggerStyleObj(index, 30, 38)}
                     >
                       <OfertaCard
@@ -398,29 +398,27 @@ export function PortalHome({
               </div>
             </aside>
 
-            <div className="hidden min-h-0 min-w-0 flex-1 bg-slate-100 p-4 lg:flex">
-              <div className="flex h-full min-h-0 w-full flex-col">
-                {selected ? (
-                  <SlideView
-                    viewKey={selected.id}
-                    direction={detailDirection}
-                    className="h-full min-h-0 flex-1"
-                  >
-                    <OfertaDetail
-                      oferta={selected}
-                      variant="panel"
-                      yaPostulado={idsPostulados.has(selected.id)}
-                      onPostulado={marcarPostulado}
-                    />
-                  </SlideView>
-                ) : (
-                  <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white">
-                    <p className="text-sm text-slate-400">
-                      Selecciona una oferta del listado
-                    </p>
-                  </div>
-                )}
-              </div>
+            <div className="hidden min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain scroll-panel p-4 lg:block">
+              {selected ? (
+                <SlideView
+                  viewKey={selected.id}
+                  direction={detailDirection}
+                  className="w-full"
+                >
+                  <OfertaDetail
+                    oferta={selected}
+                    variant="panel"
+                    yaPostulado={idsPostulados.has(selected.id)}
+                    onPostulado={marcarPostulado}
+                  />
+                </SlideView>
+              ) : (
+                <div className="flex min-h-[10rem] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-4 py-8">
+                  <p className="text-sm text-slate-400">
+                    Selecciona una oferta del listado
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}

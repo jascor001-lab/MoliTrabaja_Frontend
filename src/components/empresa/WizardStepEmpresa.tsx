@@ -151,10 +151,11 @@ export function WizardStepEmpresa({ embedded = false }: Props) {
 
       <FileUpload
         label="Bases del trabajo (obligatorio)"
-        hint="PDF, Word o TXT. Máx. 15 MB."
+        hint="Solo PDF. Máx. 15 MB."
         maxFiles={1}
+        maxBytes={15 * 1024 * 1024}
         multiple={false}
-        accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+        accept="application/pdf,.pdf"
         files={basesFile ? [basesFile] : []}
         error={fieldErrors.bases}
         onAdd={(files) => setBasesFile(files[0] ?? null)}

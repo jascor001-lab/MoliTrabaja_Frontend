@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { readApiError } from "@/lib/api-error";
@@ -171,17 +171,26 @@ function validateBlock(id: BlockId): boolean {
   return !hasFieldErrors(errors);
 }
 
+function scrollBlockIntoView(id: BlockId) {
+  const el = document.getElementById(`oferta-bloque-${id}`);
+  if (!el) return;
+  window.requestAnimationFrame(() => {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
 export function OfertaEditBlocks({ empresaId, ofertaId }: Props) {
   const applySavedMedia = useOfertaFormStore((s) => s.applySavedMedia);
   const setSubmitting = useOfertaFormStore((s) => s.setSubmitting);
   const isSubmitting = useOfertaFormStore((s) => s.isSubmitting);
 
   const [open, setOpen] = useState<Record<BlockId, boolean>>({
-    convocatoria: true,
-    vacante: true,
-    contactos: true,
-    revision: true,
+    convocatoria: false,
+    vacante: false,
+    contactos: false,
+    revision: false,
   });
+  const [activeId, setActiveId] = useState<BlockId | null>(null);
   const [savingId, setSavingId] = useState<BlockId | null>(null);
   const [messages, setMessages] = useState<
     Partial<Record<BlockId, { type: "ok" | "error"; text: string }>>
@@ -210,8 +219,27 @@ export function OfertaEditBlocks({ empresaId, ofertaId }: Props) {
     };
   }
 
-  const toggle = (id: BlockId) => {
-    setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+  useEffect(() => {
+    if (!activeId || !open[activeId]) return;
+    const timer = window.setTimeout(() => scrollBlockIntoView(activeId), 80);
+    return () => window.clearTimeout(timer);
+  }, [activeId, open]);
+
+  const selectBlock = (id: BlockId) => {
+    setOpen((prev) => {
+      const nextOpen = !prev[id];
+      // Al elegir uno, se abre como principal y se cierran los demás.
+      if (nextOpen) {
+        return {
+          convocatoria: id === "convocatoria",
+          vacante: id === "vacante",
+          contactos: id === "contactos",
+          revision: id === "revision",
+        };
+      }
+      return { ...prev, [id]: false };
+    });
+    setActiveId(id);
     setMessages((prev) => ({ ...prev, [id]: undefined }));
   };
 
@@ -223,7 +251,13 @@ export function OfertaEditBlocks({ empresaId, ofertaId }: Props) {
 
   const save = async (id: BlockId) => {
     if (!validateBlock(id)) {
-      setOpen((prev) => ({ ...prev, [id]: true }));
+      setOpen({
+        convocatoria: id === "convocatoria",
+        vacante: id === "vacante",
+        contactos: id === "contactos",
+        revision: id === "revision",
+      });
+      setActiveId(id);
       setMessages((prev) => ({
         ...prev,
         [id]: { type: "error", text: "Revisa los campos marcados en este bloque." },
@@ -278,27 +312,30 @@ export function OfertaEditBlocks({ empresaId, ofertaId }: Props) {
   };
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-3">
+    <div className="mx-auto flex max-w-3xl flex-col gap-3 pb-16">
       {BLOCKS.map((block) => {
         const isOpen = open[block.id];
         const msg = messages[block.id];
         const busy = savingId === block.id;
+        const isActive = activeId === block.id && isOpen;
 
         return (
           <article
             key={block.id}
             id={`oferta-bloque-${block.id}`}
-            className={`scroll-mt-24 overflow-hidden rounded-2xl border bg-white shadow-sm transition-colors ${
-              isOpen
-                ? "border-emerald-400 ring-1 ring-emerald-100"
-                : "border-emerald-100 hover:border-emerald-300"
+            className={`scroll-mt-28 overflow-hidden rounded-2xl border bg-white shadow-sm transition-[border-color,box-shadow] duration-300 ${
+              isActive
+                ? "border-emerald-500 shadow-md ring-2 ring-emerald-200/70"
+                : isOpen
+                  ? "border-emerald-400 ring-1 ring-emerald-100"
+                  : "border-emerald-100 hover:border-emerald-300"
             }`}
           >
             <button
               type="button"
               aria-expanded={isOpen}
               disabled={isSubmitting}
-              onClick={() => toggle(block.id)}
+              onClick={() => selectBlock(block.id)}
               className="flex w-full items-center justify-between gap-3 px-5 py-3 text-left disabled:opacity-60"
             >
               <div className="min-w-0">

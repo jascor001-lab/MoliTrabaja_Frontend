@@ -51,7 +51,7 @@ export function AppShell({ children, variant = "portal" }: Props) {
         variant === "portal" ? "h-dvh overflow-hidden" : "min-h-dvh overflow-x-hidden"
       }`}
     >
-      <header className="sticky top-0 z-40 shrink-0 border-b border-emerald-100/80 bg-white/90 backdrop-blur-md">
+      <header className="relative z-40 shrink-0 border-b border-emerald-100/80 bg-white/90 backdrop-blur-md">
         <div
           className={`mx-auto flex w-full items-center justify-between px-4 py-4 md:px-6 ${
             variant === "portal" ? "max-w-[1440px]" : "max-w-6xl"
@@ -79,7 +79,7 @@ export function AppShell({ children, variant = "portal" }: Props) {
       <main
         className={
           variant === "portal"
-            ? "mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 flex-col"
+            ? "mx-auto flex h-full min-h-0 w-full max-w-[1440px] flex-1 flex-col overflow-hidden"
             : "mx-auto w-full max-w-6xl flex-1 px-4 py-6 md:px-6 md:py-10"
         }
       >
