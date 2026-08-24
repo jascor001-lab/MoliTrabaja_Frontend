@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -91,7 +92,14 @@ export function LoginForm() {
       </Button>
 
       <p className="text-sm text-center text-slate-500">
-        Si no tienes cuenta, un administrador debe creártela.
+        ¿Eres postulante y no tienes cuenta?{" "}
+        <Link
+          href="/registro/postulante"
+          className="font-semibold text-emerald-700 hover:underline"
+        >
+          Créala aquí
+        </Link>
+        . Las empresas las registra un administrador.
       </p>
     </form>
   );

@@ -25,7 +25,7 @@ export function Input({
         aria-required={required}
         aria-invalid={Boolean(error)}
         className={`
-          w-full rounded-xl border bg-white px-4 py-3
+          h-12 w-full min-w-0 rounded-xl border bg-white px-4 py-3
           text-slate-900 placeholder:text-slate-400
           focus:outline-none focus:ring-2
           ${

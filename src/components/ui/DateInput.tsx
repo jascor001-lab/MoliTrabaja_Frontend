@@ -54,10 +54,12 @@ export function DateInput({
         value={iso}
         onChange={(e) => onChange(e.target.value)}
         className={`
-          w-full rounded-xl border bg-white px-4 py-3
-          text-slate-900
+          h-12 w-full min-w-0 max-w-full rounded-xl border bg-white px-3 py-2.5
+          text-slate-900 [color-scheme:light]
           focus:outline-none focus:ring-2
           disabled:bg-slate-50 disabled:text-slate-500
+          [&::-webkit-calendar-picker-indicator]:ml-1
+          [&::-webkit-datetime-edit]:min-w-0
           ${
             error
               ? "border-red-300 focus:border-red-400 focus:ring-red-200"

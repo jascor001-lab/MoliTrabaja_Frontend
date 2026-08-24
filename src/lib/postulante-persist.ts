@@ -4,8 +4,7 @@ import type { PostulanteFormInput } from "@/lib/validacion-postulante";
 
 export async function crearPostulanteConDireccion(
   prisma: PrismaClient,
-  data: PostulanteFormInput,
-  passwordHash: string
+  data: PostulanteFormInput
 ) {
   const direccion = await prisma.direccion.create({
     data: {
@@ -29,7 +28,6 @@ export async function crearPostulanteConDireccion(
       correo: data.correo.toLowerCase(),
       telefono: data.telefono,
       direccionId: direccion.id,
-      passwordHash,
       tieneDiscapacidad: data.tieneDiscapacidad,
     },
     include: { direccion: true, tipoDoc: true, pais: true },

@@ -13,7 +13,6 @@ model Empresa {
   razonSocial   String            @default("") @map("razon_social")
   ruc           String            @unique
   email         String            @unique @map("correo")
-  passwordHash  String            @map("hash_contrasena")
   logo          String?
   telefono      String            @default("")
   paginaWeb     String            @default("") @map("pagina_web")
@@ -183,7 +182,6 @@ model Postulante {
   genero            String
   estadoCivil       String                   @default("Soltero") @map("estado_civil")
   correo            String                   @unique
-  passwordHash      String                   @map("hash_contrasena")
   telefono          String
   direccionId       String?                  @map("direccion_id") @db.Uuid
   direccion         Direccion?               @relation(fields: [direccionId], references: [id])
