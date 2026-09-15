@@ -121,6 +121,32 @@ export type CandidateActionable = {
   correo: string;
   telefono: string;
   match_score_percentage: number;
+  /** Desglose opcional del encaje (carreras, conocimientos, CV, experiencia). */
+  match_detalle?: {
+    percentage: number;
+    carreras: {
+      weight: number;
+      score: number;
+      matched: string[];
+      missing: string[];
+    };
+    conocimientos: {
+      weight: number;
+      score: number;
+      matched: string[];
+      missing: string[];
+    };
+    cv: {
+      weight: number;
+      score: number;
+      hits: string[];
+    };
+    experiencia: {
+      weight: number;
+      score: number;
+      years: number;
+    };
+  };
   /** Estado interno persistido */
   current_status: EstadoPipeline;
   /** Carpeta visible para la empresa */

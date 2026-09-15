@@ -39,7 +39,7 @@ export function erroresPaso1(data: {
     }
   }
   if (!data.tieneBases) {
-    errors.bases = "Adjunta el documento de bases del trabajo.";
+    errors.bases = "Adjunta las bases de la convocatoria en PDF.";
   }
   return errors;
 }

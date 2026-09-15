@@ -38,6 +38,24 @@ export function PostulacionForm({ oferta, onSuccess, onCancel }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [addingId, setAddingId] = useState<number | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
+  const [encaje, setEncaje] = useState<{
+    percentage: number;
+    tips: string[];
+  } | null>(null);
+
+  const cargarEncaje = () => {
+    fetch(`/api/ofertas/${oferta.id}/encaje`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && typeof data.percentage === "number") {
+          setEncaje({
+            percentage: data.percentage,
+            tips: Array.isArray(data.tips) ? data.tips : [],
+          });
+        }
+      })
+      .catch(() => undefined);
+  };
 
   useEffect(() => {
     fetch("/api/auth/login")
@@ -62,10 +80,11 @@ export function PostulacionForm({ oferta, onSuccess, onCancel }: Props) {
             conocimientos: Array.isArray(data.conocimientos) ? data.conocimientos : [],
           });
           sincronizarDni(dni);
+          cargarEncaje();
         }
       })
       .finally(() => setAuthChecked(true));
-  }, []);
+  }, [oferta.id]);
 
   const conocimientosFaltantes = useMemo(() => {
     const requeridos = oferta.conocimientosRequeridos ?? [];
@@ -110,6 +129,7 @@ export function PostulacionForm({ oferta, onSuccess, onCancel }: Props) {
         }
         return { ...prev, conocimientos: [...prev.conocimientos, next] };
       });
+      cargarEncaje();
     } catch (e) {
       setAddError(e instanceof Error ? e.message : "No se pudo añadir el conocimiento");
     } finally {
@@ -215,6 +235,32 @@ export function PostulacionForm({ oferta, onSuccess, onCancel }: Props) {
               Doc. {perfil.dni} · {perfil.correo}
             </p>
           </div>
+          {encaje && (
+            <div className="rounded-lg border border-emerald-100 bg-white px-3 py-2">
+              <div className="flex items-end justify-between gap-2">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-600">
+                    Tu encaje estimado
+                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Perfil + CV PDF vs. esta oferta
+                  </p>
+                </div>
+                <p className="text-2xl font-extrabold text-emerald-700 tabular-nums">
+                  {encaje.percentage}%
+                </p>
+              </div>
+              {encaje.tips.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {encaje.tips.slice(0, 3).map((tip) => (
+                    <li key={tip} className="text-[11px] text-slate-500">
+                      · {tip}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
           {!perfil.cvDisponible && (
             <p className="text-amber-800 text-xs">
               No tienes CV en el perfil.{" "}

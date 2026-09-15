@@ -47,6 +47,38 @@ const CARPETA_META: Record<
   },
 };
 
+function EncajeBar({
+  label,
+  score,
+  weight,
+  hint,
+}: {
+  label: string;
+  score: number;
+  weight: number;
+  hint?: string;
+}) {
+  if (weight <= 0) return null;
+  const pct = Math.round((score / weight) * 100);
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2 text-[11px]">
+        <span className="font-medium text-slate-600">{label}</span>
+        <span className="tabular-nums text-slate-500">
+          {score}/{weight}
+          {hint ? ` · ${hint}` : ""}
+        </span>
+      </div>
+      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-200">
+        <div
+          className="h-full rounded-full bg-emerald-500 transition-[width] duration-500"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function RequisitoChips({
   requeridos,
   cumplidos,
@@ -278,6 +310,50 @@ export function PostulantesOfertaPanel({ ofertaId }: Props) {
                     </p>
                   </div>
                 </div>
+
+                {p.match_detalle && (
+                  <div className="mt-3 rounded-xl border border-emerald-50 bg-slate-50/80 px-3 py-3 space-y-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                      Cómo se calcula este encaje
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <EncajeBar
+                        label="Carreras"
+                        score={p.match_detalle.carreras.score}
+                        weight={p.match_detalle.carreras.weight}
+                      />
+                      <EncajeBar
+                        label="Conocimientos"
+                        score={p.match_detalle.conocimientos.score}
+                        weight={p.match_detalle.conocimientos.weight}
+                      />
+                      <EncajeBar
+                        label="CV (PDF)"
+                        score={p.match_detalle.cv.score}
+                        weight={p.match_detalle.cv.weight}
+                      />
+                      <EncajeBar
+                        label="Experiencia"
+                        score={p.match_detalle.experiencia.score}
+                        weight={p.match_detalle.experiencia.weight}
+                        hint={
+                          p.match_detalle.experiencia.years > 0
+                            ? `${p.match_detalle.experiencia.years} año(s) en CV`
+                            : undefined
+                        }
+                      />
+                    </div>
+                    {p.match_detalle.cv.hits.length > 0 && (
+                      <p className="text-[11px] text-slate-500">
+                        Coincidencias en CV:{" "}
+                        <span className="font-medium text-slate-700">
+                          {p.match_detalle.cv.hits.slice(0, 6).join(", ")}
+                          {p.match_detalle.cv.hits.length > 6 ? "…" : ""}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {tieneReq && (
                   <div className="mt-3 space-y-2 border-t border-emerald-50 pt-3">

@@ -19,8 +19,13 @@ export function PageTransition({ children }: Props) {
   }, [pathname]);
 
   return (
-    <div key={pathname} className={`${pageEnterClass(direction)} ${MOTION_REDUCE}`}>
-      {children}
+    <div className="overflow-x-hidden">
+      <div
+        key={pathname}
+        className={`will-change-transform ${pageEnterClass(direction)} ${MOTION_REDUCE}`}
+      >
+        {children}
+      </div>
     </div>
   );
 }

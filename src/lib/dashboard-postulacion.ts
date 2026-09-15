@@ -1,7 +1,7 @@
 import type { OfertaLaboral, Postulacion, Postulante } from "@prisma/client";
 
 import { cvViewUrl } from "@/lib/cv-urls";
-import { calcularMatchScorePercentage } from "@/lib/match-score";
+import { calcularMatchDetalle } from "@/lib/match-score";
 import { numeroDocumentoDe } from "@/lib/postulante-doc";
 import { calcularEdad, nombreCompleto } from "@/lib/validacion-postulante";
 import { construirHistorialActividad } from "@/lib/postulacion-actividad";
@@ -275,10 +275,13 @@ export function buildDashboardDual(params: {
       const postCarr =
         p.postulante.educaciones?.map((e) => e.carrera.nombre) ?? [];
 
-      const matchScore =
-        p.matchScore > 0
-          ? p.matchScore
-          : calcularMatchScorePercentage(cv, matchOferta, postConoc, postCarr);
+      const matchDetalle = calcularMatchDetalle(
+        cv,
+        matchOferta,
+        postConoc,
+        postCarr
+      );
+      const matchScore = matchDetalle.percentage;
 
       const cvPath = p.cvPath || p.postulante.cvPath;
       const cvAvailable = Boolean(cvPath?.startsWith("/uploads/cv/"));
@@ -290,6 +293,7 @@ export function buildDashboardDual(params: {
         correo: p.postulante.correo,
         telefono: p.postulante.telefono,
         match_score_percentage: matchScore,
+        match_detalle: matchDetalle,
         current_status: estado,
         carpeta: carpetaDesdePipeline(estado),
         available_actions: accionesDisponibles(estado),

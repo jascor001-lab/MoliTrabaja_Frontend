@@ -173,10 +173,10 @@ export function AdminSideNav() {
           <Link
             key={item.href}
             href={item.href}
-            className={`block rounded-xl px-3 py-2.5 text-sm font-semibold ${
+            className={`block rounded-xl px-3 py-2.5 text-sm font-semibold transition-[background-color,color,transform,box-shadow] duration-300 ease-out ${
               activo
-                ? "bg-emerald-600 text-white"
-                : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-800"
+                ? "bg-emerald-600 text-white shadow-sm"
+                : "text-slate-600 hover:translate-x-0.5 hover:bg-emerald-50 hover:text-emerald-800"
             }`}
           >
             {item.label}

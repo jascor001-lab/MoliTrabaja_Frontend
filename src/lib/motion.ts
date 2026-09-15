@@ -7,12 +7,20 @@ export const MOTION_REDUCE =
 
 export const MOTION_DURATION_MS = 520;
 export const DRAWER_DURATION_MS = 380;
-export const PAGE_DURATION_MS = 560;
+export const PAGE_DURATION_MS = 520;
 
 const SLIDE_DURATION_MS = MOTION_DURATION_MS;
 export { SLIDE_DURATION_MS };
 
 function routeRank(path: string): number {
+  if (path.startsWith("/admin/usuarios/nuevo")) return 115;
+  if (path.startsWith("/admin/usuarios")) return 110;
+  if (path.startsWith("/admin/empresas")) return 120;
+  if (path.startsWith("/admin/ofertas")) return 130;
+  if (path.startsWith("/admin/postulantes")) return 140;
+  if (path.startsWith("/admin/roles")) return 150;
+  if (path.startsWith("/admin")) return 100;
+
   if (path.startsWith("/empresa/ofertas/")) return 40;
   if (path.startsWith("/empresa/ofertas")) return 35;
   if (path.startsWith("/empresa/publicar")) return 30;

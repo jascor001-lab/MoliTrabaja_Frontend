@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { AdminSideNav, AppNav } from "@/components/layout/AppNav";
+import { PageTransition } from "@/components/layout/PageTransition";
 import { APP_INITIALS, APP_NAME_PARTS } from "@/lib/brand";
 
 type Props = {
@@ -36,7 +37,9 @@ export function AppShell({ children, variant = "portal" }: Props) {
               <AdminSideNav />
             </div>
           </aside>
-          <main className="min-w-0 flex-1">{children}</main>
+          <main className="min-w-0 flex-1 overflow-x-hidden">
+            <PageTransition>{children}</PageTransition>
+          </main>
         </div>
         <div className="border-t border-emerald-100 bg-white px-4 py-3 md:hidden">
           <AdminSideNav />
@@ -80,10 +83,10 @@ export function AppShell({ children, variant = "portal" }: Props) {
         className={
           variant === "portal"
             ? "mx-auto flex h-full min-h-0 w-full max-w-[1440px] flex-1 flex-col overflow-hidden"
-            : "mx-auto w-full max-w-6xl flex-1 px-4 py-6 md:px-6 md:py-10"
+            : "mx-auto w-full max-w-6xl flex-1 overflow-x-hidden px-4 py-6 md:px-6 md:py-10"
         }
       >
-        {children}
+        {variant === "portal" ? children : <PageTransition>{children}</PageTransition>}
       </main>
     </div>
   );

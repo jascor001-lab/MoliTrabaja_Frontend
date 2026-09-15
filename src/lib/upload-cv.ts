@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 
 const MAX_BYTES = 10 * 1024 * 1024;
-const ALLOWED = [".pdf", ".doc", ".docx", ".txt"];
+const ALLOWED = [".pdf"];
 
 export async function guardarCvPostulante(
   dni: string,
@@ -10,7 +10,7 @@ export async function guardarCvPostulante(
 ): Promise<{ path: string; name: string }> {
   const ext = path.extname(file.name).toLowerCase();
   if (!ALLOWED.includes(ext)) {
-    throw new Error("Formato de CV no permitido. Use PDF, Word o TXT.");
+    throw new Error("Formato de CV no permitido. Solo se acepta PDF.");
   }
   if (file.size > MAX_BYTES) {
     throw new Error("El CV no puede superar 10 MB.");

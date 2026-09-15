@@ -65,6 +65,13 @@ type PerfilPostulanteState = {
   personal: PerfilPersonal | null;
   cvDisponible: boolean;
   cvFilename: string | null;
+  cvAnalisis: {
+    skills: string[];
+    experience_years: number;
+    education: string[];
+    textoExtraido?: boolean;
+    aviso?: string | null;
+  } | null;
   educaciones: EducacionDTO[];
   experiencias: ExpLaboralDTO[];
   conocimientos: ConocimientoPostulanteDTO[];
@@ -134,6 +141,7 @@ export const usePerfilPostulanteStore = create<PerfilPostulanteState>((set, get)
   personal: null,
   cvDisponible: false,
   cvFilename: null,
+  cvAnalisis: null,
   educaciones: [],
   experiencias: [],
   conocimientos: [],
@@ -275,10 +283,20 @@ export const usePerfilPostulanteStore = create<PerfilPostulanteState>((set, get)
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "No se pudo guardar el CV");
+      const analisis = data.cvAnalisis ?? null;
       set({
         cvDisponible: true,
         cvFilename: data.cvFilename ?? file.name,
-        message: data.message ?? "CV guardado en tu perfil.",
+        cvAnalisis: analisis
+          ? {
+              skills: Array.isArray(analisis.skills) ? analisis.skills : [],
+              experience_years: Number(analisis.experience_years) || 0,
+              education: Array.isArray(analisis.education) ? analisis.education : [],
+              textoExtraido: Boolean(analisis.textoExtraido),
+              aviso: analisis.aviso ?? null,
+            }
+          : null,
+        message: data.message ?? "CV guardado y analizado para el encaje.",
         saving: false,
       });
       return true;

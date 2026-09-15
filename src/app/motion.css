@@ -51,11 +51,15 @@
     animation: motion-exit-fade var(--motion-duration-fast) var(--motion-ease-out) both;
   }
 
-  /* Página completa — solo opacidad, el encuadre no se desplaza */
-  .motion-page-forward,
-  .motion-page-back,
+  /* Página (contenido) — desplazamiento horizontal notorio, el marco queda fijo */
+  .motion-page-forward {
+    animation: motion-page-forward 520ms var(--motion-ease) both;
+  }
+  .motion-page-back {
+    animation: motion-page-back 520ms var(--motion-ease) both;
+  }
   .motion-page-neutral {
-    animation: motion-page-fade 280ms var(--motion-ease-out) both;
+    animation: motion-page-neutral 420ms var(--motion-ease) both;
   }
 
   /* Drawer móvil */
@@ -284,6 +288,45 @@
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes motion-page-forward {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translate3d(56px, 10px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes motion-page-back {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translate3d(-56px, 10px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes motion-page-neutral {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+    transform: translate3d(0, 22px, 0) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 

@@ -150,7 +150,7 @@ export function WizardStepEmpresa({ embedded = false }: Props) {
       )}
 
       <FileUpload
-        label="Bases del trabajo (obligatorio)"
+        label="Bases de la convocatoria (obligatorio)"
         hint="Solo PDF. Máx. 15 MB."
         maxFiles={1}
         maxBytes={15 * 1024 * 1024}

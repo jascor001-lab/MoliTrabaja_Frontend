@@ -15,7 +15,7 @@ export function validarBases(
   hasExistingBases: boolean
 ): string | null {
   if (basesFile || hasExistingBases) return null;
-  return "Adjunta el documento de bases del trabajo (PDF).";
+  return "Adjunta las bases de la convocatoria en PDF.";
 }
 
 export function validarPayloadOferta(
